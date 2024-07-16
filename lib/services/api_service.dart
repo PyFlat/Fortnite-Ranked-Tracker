@@ -8,17 +8,13 @@ import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 
 class ApiService {
-  final BuildContext context;
-
-  ApiService(this.context);
-
-  Future<void> periodicGetRequests() async {
+  static Future<void> periodicGetRequests(BuildContext context) async {
     Timer.periodic(Duration(seconds: 15), (Timer t) async {
-      await bulkProgress();
+      await bulkProgress(context);
     });
   }
 
-  String interpolate(String string, List<String> params) {
+  static String interpolate(String string, List<String> params) {
     String result = string;
     for (int i = 0; i < params.length; i++) {
       result = result.replaceAll('%${i + 1}\$', params[i]);
@@ -26,39 +22,42 @@ class ApiService {
     return result;
   }
 
-  Future<String> postData(String url, Map<String, List<String>> body) async {
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+  static Future<String> postData(String url, dynamic body,
+      String headerAuthorization, String contentType) async {
+    final headers = {
+      'Authorization': headerAuthorization,
+    };
+    if (body != null && body.isNotEmpty) {
+      headers['Content-Type'] = contentType;
+    }
 
-    final response = await http.post(Uri.parse(url),
-        headers: {
-          'Authorization': 'Bearer ${authProvider.accessToken}',
-          'Content-Type': Constants.dataJson
-        },
-        body: jsonEncode(body));
+    final response = body == null || body.isEmpty
+        ? await http.post(Uri.parse(url), headers: headers)
+        : await http.post(Uri.parse(url), headers: headers, body: body);
+
     if (response.statusCode == 200) {
       return response.body;
     } else {
-      return "Error occured ${response.body}";
+      return "Error occurred: ${response.body}";
     }
   }
 
-  Future<String> getData(String url) async {
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+  static Future<String> getData(String url, String headerAuthorization) async {
     final response = await http.get(
       Uri.parse(url),
       headers: {
-        'Authorization': 'Bearer ${authProvider.accessToken}',
+        'Authorization': headerAuthorization,
       },
     );
 
     if (response.statusCode == 200) {
       return response.body;
     } else {
-      return "Error occured ${response.body}";
+      return "Error occurred ${response.body}";
     }
   }
 
-  Future<void> bulkProgress() async {
+  static Future<void> bulkProgress(BuildContext context) async {
     const params = ["fortnite", "L1GHT5"];
     String url = interpolate(Endpoints.bulkProgress, params);
     const body = {
@@ -70,13 +69,19 @@ class ApiService {
       ]
     };
 
-    //final response = await postData(url, body);
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+
+    String headerAuthorization = 'Bearer ${authProvider.accessToken}';
+
+    final response = await postData(
+        url, jsonEncode(body), headerAuthorization, Constants.dataJson);
 
     url =
         "https://fn-service-habanero-live-public.ogs.live.on.epicgames.com/api/v1/games/fortnite/tracks/activeBy/2024-05-24T14:02:02.061163Z";
 
-    final response2 = await getData(url);
+    final response2 = await getData(url, headerAuthorization);
 
+    print(response);
     print(response2);
   }
 }

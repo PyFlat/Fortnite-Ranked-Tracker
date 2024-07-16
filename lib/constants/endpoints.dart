@@ -6,6 +6,9 @@ class Endpoints {
 
   static const String authenticate = "$baseUrl/oauth/token";
 
+  static const String createDeviceAuth =
+      "$baseUrl/public/account/%1\$/deviceAuth";
+
   static const String bulkProgress =
       "$baseUrl2/v1/games/%1\$/trackprogress/byAccountIds/%2\$";
 }

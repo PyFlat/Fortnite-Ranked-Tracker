@@ -7,14 +7,9 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  late ApiService _apiService;
-
   @override
   void initState() {
     super.initState();
-    _apiService = ApiService(context);
-    _apiService
-        .periodicGetRequests(); // Example method call for periodic requests
   }
 
   @override
@@ -25,7 +20,9 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       body: Center(
         child: ElevatedButton(
-          onPressed: _apiService.bulkProgress,
+          onPressed: () {
+            ApiService.bulkProgress(context);
+          },
           child: Text('Fetch Data'),
         ),
       ),

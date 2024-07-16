@@ -71,7 +71,6 @@ class AuthProvider with ChangeNotifier {
 
     if (response.statusCode == 200) {
       final responseData = jsonDecode(response.body);
-      _accessToken = responseData['access_token'];
       _refreshToken = responseData['refresh_token'];
       notifyListeners();
     } else {

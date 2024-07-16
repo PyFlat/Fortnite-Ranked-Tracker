@@ -5,10 +5,12 @@ import 'screens/home_screen.dart';
 import 'screens/auth_screen.dart';
 
 void main() {
-  runApp(MyApp());
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
@@ -20,34 +22,37 @@ class MyApp extends StatelessWidget {
         theme: ThemeData(
           primarySwatch: Colors.blue,
         ),
-        home: AuthenticationHandler(),
+        home: const AuthenticationHandler(),
       ),
     );
   }
 }
 
 class AuthenticationHandler extends StatelessWidget {
+  const AuthenticationHandler({super.key});
+
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
 
     return FutureBuilder(
-      future: null, // Start the authentication process
-      builder: (ctx, authResultSnapshot) => authResultSnapshot
-                  .connectionState ==
-              ConnectionState.waiting
-          ? SplashScreen() // Show a loading screen while checking authentication state
-          : authProvider.accessToken.isNotEmpty
-              ? HomeScreen() // If authenticated, show the home screen
-              : AuthScreen(), // If not authenticated, show the authentication screen
+      future: null,
+      builder: (ctx, authResultSnapshot) =>
+          authResultSnapshot.connectionState == ConnectionState.waiting
+              ? const SplashScreen()
+              : authProvider.accessToken.isNotEmpty
+                  ? HomeScreen()
+                  : const AuthScreen(),
     );
   }
 }
 
 class SplashScreen extends StatelessWidget {
+  const SplashScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return const Scaffold(
       body: Center(
         child: CircularProgressIndicator(),
       ),
