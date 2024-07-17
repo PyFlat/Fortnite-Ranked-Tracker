@@ -1,8 +1,9 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:flutter/services.dart' show rootBundle;
+import 'package:path_provider/path_provider.dart';
 import '../constants/endpoints.dart';
 import '../constants/constants.dart';
 
@@ -10,6 +11,7 @@ class AuthProvider with ChangeNotifier {
   late String _accessToken;
   late String _refreshToken;
   late Timer _refreshTimer;
+  bool _isInitialized = false;
 
   AuthProvider() {
     _accessToken = "";
@@ -19,21 +21,34 @@ class AuthProvider with ChangeNotifier {
 
   String get accessToken => _accessToken;
 
+  Future<void> initializeAuth() async {
+    if (!_isInitialized) {
+      await _initAuth();
+    }
+  }
+
   Future<void> _initAuth() async {
     try {
       final authData = await _loadAuthData();
-      await _authenticate(authData);
+      if (_accessToken.isEmpty) {
+        await _authenticate(authData);
+      }
       _scheduleTokenRefresh();
+      _isInitialized = true;
     } catch (error) {
-      print('Authentication failed: $error');
-      throw error;
+      if (error is PathNotFoundException) {
+        _accessToken = "";
+      } else {
+        print('Authentication failed: $error');
+      }
     }
   }
 
   Future<Map<String, dynamic>> _loadAuthData() async {
-    final jsonString =
-        await rootBundle.loadString('assets/deviceAuthGrant.json');
-    return jsonDecode(jsonString);
+    final directory = await getApplicationDocumentsDirectory();
+    File file = File('${directory.path}/deviceAuthGrant.json');
+    String authGrant = await file.readAsString();
+    return jsonDecode(authGrant);
   }
 
   Future<void> _authenticate(Map<String, dynamic> authData) async {
@@ -71,6 +86,7 @@ class AuthProvider with ChangeNotifier {
 
     if (response.statusCode == 200) {
       final responseData = jsonDecode(response.body);
+      _accessToken = responseData['access_token'];
       _refreshToken = responseData['refresh_token'];
       notifyListeners();
     } else {

@@ -36,7 +36,7 @@ class AuthenticationHandler extends StatelessWidget {
     final authProvider = Provider.of<AuthProvider>(context);
 
     return FutureBuilder(
-      future: null,
+      future: authProvider.initializeAuth(),
       builder: (ctx, authResultSnapshot) =>
           authResultSnapshot.connectionState == ConnectionState.waiting
               ? const SplashScreen()
