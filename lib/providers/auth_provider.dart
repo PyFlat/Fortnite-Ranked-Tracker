@@ -45,7 +45,7 @@ class AuthProvider with ChangeNotifier {
   }
 
   Future<Map<String, dynamic>> _loadAuthData() async {
-    final directory = await getApplicationDocumentsDirectory();
+    final directory = await getApplicationSupportDirectory();
     File file = File('${directory.path}/deviceAuthGrant.json');
     String authGrant = await file.readAsString();
     return jsonDecode(authGrant);

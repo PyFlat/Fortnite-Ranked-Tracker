@@ -3,10 +3,12 @@ import 'dart:io';
 
 import 'package:auth_flow_example/constants/constants.dart';
 import 'package:auth_flow_example/constants/endpoints.dart';
+import 'package:auth_flow_example/providers/auth_provider.dart';
 import 'package:auth_flow_example/screens/home_screen.dart';
 import 'package:auth_flow_example/services/api_service.dart';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:provider/provider.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 void main() {
@@ -79,25 +81,23 @@ class _AuthScreenState extends State<AuthScreen> {
       "device_id": jsonObject["deviceId"],
       "secret": jsonObject["secret"]
     };
-    final directory = await getApplicationDocumentsDirectory();
+    final directory = await getApplicationSupportDirectory();
     String filePath = '${directory.path}/deviceAuthGrant.json';
-    writeToFile(filePath, jsonEncode(deviceDataJson));
+    await writeToFile(filePath, jsonEncode(deviceDataJson));
 
-    switchToMainPage();
-  }
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
-  void switchToMainPage() {
-    Navigator.push(
+    authProvider.initializeAuth();
+
+    Navigator.pushReplacement(
         context, MaterialPageRoute(builder: (context) => HomeScreen()));
-
-    Navigator.pop(context);
   }
 
-  void writeToFile(String filePath, String jsonString) {
+  Future<void> writeToFile(String filePath, String jsonString) async {
     File file = File(filePath);
 
     // Write the JSON string to the file
-    file
+    await file
         .writeAsString(jsonString)
         .then((file) => print('File saved: $filePath'))
         .catchError((error) => print('Error saving file: $error'));
