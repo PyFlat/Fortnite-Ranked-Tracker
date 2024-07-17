@@ -57,8 +57,8 @@ class ApiService {
     }
   }
 
-  static Future<void> bulkProgress(BuildContext context) async {
-    const params = ["fortnite", "L1GHT5"];
+  static Future<dynamic> bulkProgress(BuildContext context) async {
+    const params = ["fortnite", "N4PK1N"];
     String url = interpolate(Endpoints.bulkProgress, params);
     const body = {
       "accountIds": [
@@ -76,12 +76,6 @@ class ApiService {
     final response = await postData(
         url, jsonEncode(body), headerAuthorization, Constants.dataJson);
 
-    url =
-        "https://fn-service-habanero-live-public.ogs.live.on.epicgames.com/api/v1/games/fortnite/tracks/activeBy/2024-05-24T14:02:02.061163Z";
-
-    final response2 = await getData(url, headerAuthorization);
-
-    print(response);
-    print(response2);
+    return jsonDecode(response);
   }
 }
