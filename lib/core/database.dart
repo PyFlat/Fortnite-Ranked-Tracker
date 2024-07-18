@@ -21,7 +21,9 @@ class DataBase {
   }
 
   Future<void> _initDatabase() async {
-    sqfliteFfiInit();
+    if (Platform.isWindows || Platform.isLinux) {
+      sqfliteFfiInit();
+    }
     var databaseFactory = databaseFactoryFfi;
     _directory = await getApplicationSupportDirectory();
     String directoryPath = join(_directory.path, 'databases');
@@ -151,8 +153,8 @@ class DataBase {
 
       void updateAccountData(Map<String, dynamic>? account) {
         if (account != null && account.isNotEmpty) {
-          accountData["DisplayName"] ??= account["displayName"];
-          accountData["AccountType"] ??= account["accountType"];
+          accountData["DisplayName"] = account["displayName"];
+          accountData["AccountType"] = account["accountType"];
         }
       }
 

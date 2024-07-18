@@ -10,5 +10,8 @@ class Endpoints {
       "$baseUrl/public/account/%1\$/deviceAuth";
 
   static const String bulkProgress =
-      "$baseUrl2/v1/games/%1\$/trackprogress/byAccountIds/%2\$";
+      "$baseUrl2/v1/games/fortnite/trackprogress/byAccountIds/%1\$";
+
+  static const String battlePassData =
+      "https://www.fortnite.com/en-US/api/battle-pass-data";
 }

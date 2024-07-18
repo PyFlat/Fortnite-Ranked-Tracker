@@ -4,6 +4,7 @@
 
 list(APPEND FLUTTER_PLUGIN_LIST
   fullscreen_window
+  sqlite3_flutter_libs
   webview_win_floating
 )
 

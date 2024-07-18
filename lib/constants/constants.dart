@@ -4,4 +4,25 @@ class Constants {
 
   static const String dataJson = "application/json";
   static const String dataUrlEncoded = "application/x-www-form-urlencoded";
+
+  static const List<String> ranks = [
+    "Bronze I",
+    "Bronze II",
+    "Bronze III",
+    "Silver I",
+    "Silver II",
+    "Silver III",
+    "Gold I",
+    "Gold II",
+    "Gold III",
+    "Platinum I",
+    "Platinum II",
+    "Platinum III",
+    "Diamond I",
+    "Diamond II",
+    "Diamond III",
+    "Elite",
+    "Champion",
+    "Unreal"
+  ];
 }

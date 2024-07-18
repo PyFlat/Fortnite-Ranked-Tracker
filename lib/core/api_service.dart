@@ -43,12 +43,11 @@ class ApiService {
   }
 
   static Future<String> getData(String url, String headerAuthorization) async {
-    final response = await http.get(
-      Uri.parse(url),
-      headers: {
-        'Authorization': headerAuthorization,
-      },
-    );
+    Map<String, String> headers = {
+      'Authorization': headerAuthorization,
+    };
+    final response = await http.get(Uri.parse(url),
+        headers: headerAuthorization.isNotEmpty ? headers : null);
 
     if (response.statusCode == 200) {
       return response.body;

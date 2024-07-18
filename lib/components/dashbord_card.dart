@@ -88,13 +88,13 @@ class MyCardState extends State<MyCard> with SingleTickerProviderStateMixin {
     List<Widget> widgets = [];
 
     // Define a function to add widgets conditionally
-    void addWidget(String key, String displayName) {
+    void addWidget(String key) {
       if (item.containsKey(key)) {
         widgets.add(_buildContent(item[key]));
       } else {
         widgets.add(Center(
             child: Text(
-          'Tracking for `$displayName` is not active!',
+          'Tracking for `$key` is not active!',
           textAlign: TextAlign.center,
           style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
         )));
@@ -102,9 +102,9 @@ class MyCardState extends State<MyCard> with SingleTickerProviderStateMixin {
     }
 
     // Add widgets for each item key
-    addWidget("Battle Royale", "Battle Royale");
-    addWidget("Zero Build", "Zero Build");
-    addWidget("Rocket Racing", "Rocket Racing");
+    addWidget("Battle Royale");
+    addWidget("Zero Build");
+    addWidget("Rocket Racing");
 
     return widgets;
   }
@@ -116,7 +116,7 @@ class MyCardState extends State<MyCard> with SingleTickerProviderStateMixin {
         CircularPercentIndicator(
           radius: 50,
           lineWidth: 6,
-          percent: 0.69,
+          percent: item["RankProgression"] ?? 0,
           circularStrokeCap: CircularStrokeCap.round,
           progressColor: Colors.deepPurple,
           header: Padding(
@@ -136,7 +136,7 @@ class MyCardState extends State<MyCard> with SingleTickerProviderStateMixin {
           center: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text(item["RankProgression"] ?? "69%"),
+              Text(item["RankProgressionText"] ?? ""),
               Text(
                 "${item["LastProgress"]}",
                 style: const TextStyle(color: Colors.grey),

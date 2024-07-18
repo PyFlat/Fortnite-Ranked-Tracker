@@ -1,3 +1,4 @@
+import 'package:auth_flow_example/core/rank_servce.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'core/auth_provider.dart';
@@ -35,6 +36,7 @@ class AuthenticationHandler extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
+    RankService().init(context);
 
     return FutureBuilder(
       future: authProvider.initializeAuth(),

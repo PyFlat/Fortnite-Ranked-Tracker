@@ -1,8 +1,5 @@
-import 'dart:io';
-
-import 'package:path/path.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'package:auth_flow_example/core/rank_servce.dart';
+import 'package:auth_flow_example/core/utils.dart';
 
 import '../components/dashbord_card.dart';
 import '../core/database.dart';
@@ -16,37 +13,58 @@ class HomeScreen extends StatefulWidget {
 
 class HomeScreenState extends State<HomeScreen> {
   final DataBase _database = DataBase();
-  final List<Map<dynamic, dynamic>> data = [
-    {
-      "AccountId": "1",
-      "DisplayName": "Anonym 2546",
-      "Battle Royale": {
-        "DailyMatches": "0",
-        "LastProgress": "119",
-        "LastChanged": "17.07.2024 21:45",
-        "Rank": "Unreal",
-        "RankProgression": "#21677"
-      },
-      "Zero Build": {
-        "DailyMatches": "0",
-        "LastProgress": "53%",
-        "LastChanged": "10.06.2024 19:48",
-        "Rank": "Gold II",
-        "RankProgression": "42%"
-      },
-    }
-  ];
+  final RankService _rankService = RankService();
 
   Future<List<Map<String, dynamic>>> _getData() async {
     List<Map<String, dynamic>> data = await _database.getAccountDataActive();
-    // for (Map dat in data) {
-    //   var databaseFactory = databaseFactoryFfi;
-    //   Directory directory = await getApplicationSupportDirectory();
-    //   String directoryPath =
-    //       "${directory.path}/databases/${dat["AccountId"]}.db";
-    //   Database _db = await databaseFactory.openDatabase(directoryPath);
-    //   _db.query(table)
-    // }
+    final accountTypes = {
+      "Battle Royale": "br",
+      "Zero Build": "zb",
+      "Rocket Racing": "rr"
+    };
+
+    for (Map<String, dynamic> account in data) {
+      for (var entry in accountTypes.entries) {
+        String accountType = entry.key;
+        String typeCode = entry.value;
+
+        if (account.containsKey(accountType)) {
+          try {
+            List result = await _rankService.getRankedDataByAccountId(
+                account["AccountId"], typeCode);
+
+            if (result.isEmpty) {
+              continue;
+            }
+
+            var rankData = result[0];
+
+            int dataProgres = rankData["progress"];
+
+            double progress = rankData["rank"] != "Unreal"
+                ? dataProgres / 100
+                : convertProgressForUnreal(dataProgres.toDouble());
+
+            String progressText = rankData["rank"] == "Unreal"
+                ? '#$dataProgres'
+                : "$dataProgres%";
+
+            account[accountType] = {
+              "DailyMatches": rankData["daily_match_id"],
+              "LastProgress": progressText,
+              "LastChanged": "10.06.2024 19:48",
+              "Rank": rankData["rank"],
+              "RankProgression": progress,
+              "RankProgressionText": progressText
+            };
+          } catch (e) {
+            // Handle or log errors as appropriate
+            print(
+                "Error updating $accountType for account ${account['AccountId']}: $e");
+          }
+        }
+      }
+    }
 
     return data;
   }
