@@ -6,6 +6,7 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 class DataBase {
   late Database _db;
   late Directory _directory;
+  List<String> keys = ["battleRoyale", "zeroBuild", "rocketRacing"];
 
   // Private constructor
   DataBase._();
@@ -31,7 +32,6 @@ class DataBase {
 
     await Directory(directoryPath).create(recursive: true);
 
-    // Open the database
     _db = await databaseFactory.openDatabase(dbPath);
     await _createTables(_db);
   }
@@ -54,23 +54,10 @@ class DataBase {
     await batch.commit();
   }
 
-  String _remapKey(int key) {
-    switch (key) {
-      case 0:
-        return 'battleRoyale';
-      case 1:
-        return 'zeroBuild';
-      case 2:
-        return 'rocketRacing';
-      default:
-        throw ArgumentError('Invalid key');
-    }
-  }
-
   Future<void> updatePlayerTracking(
       bool tracking, int key, List<dynamic> data) async {
     await init(); // Ensure database is initialized
-    String tableName = _remapKey(key);
+    String tableName = keys[key];
     Map<String, dynamic> params = {
       'accountId': data[0],
       'accountType': data[1],
@@ -99,7 +86,7 @@ class DataBase {
 
   Future<bool> getPlayerTracking(int key, String accountId) async {
     await init(); // Ensure database is initialized
-    String tableName = _remapKey(key);
+    String tableName = keys[key];
 
     List<Map<String, dynamic>> result = await _db.query(
       tableName,
@@ -114,7 +101,7 @@ class DataBase {
   Future<void> removePlayer(String accountId) async {
     await init(); // Ensure database is initialized
     for (int i = 0; i < 3; i++) {
-      String tableName = _remapKey(i);
+      String tableName = keys[i];
 
       await _db.delete(
         tableName,
@@ -192,7 +179,7 @@ class DataBase {
   Future<List<Map<String, dynamic>>> getAccountDataByType(
       int key, String columns, bool active) async {
     await init(); // Ensure database is initialized
-    String tableName = _remapKey(key);
+    String tableName = keys[key];
 
     int activeValue = active ? 1 : 0;
 
@@ -211,7 +198,7 @@ class DataBase {
     List<List<Map<String, dynamic>>> result = [];
 
     for (int i = 0; i < 3; i++) {
-      String tableName = _remapKey(i);
+      String tableName = keys[i];
 
       List<Map<String, dynamic>> items = await _db.query(tableName,
           columns: ['accountType', 'displayName', 'accountId']);
@@ -252,7 +239,7 @@ class DataBase {
   Future<void> updatePlayerName(
       int key, String accountId, String displayName) async {
     await init(); // Ensure database is initialized
-    String tableName = _remapKey(key);
+    String tableName = keys[key];
 
     await _db.update(
       tableName,
