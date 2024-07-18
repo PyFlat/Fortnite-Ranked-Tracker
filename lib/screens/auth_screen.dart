@@ -24,6 +24,7 @@ class AuthScreen extends StatefulWidget {
 
 class _AuthScreenState extends State<AuthScreen> {
   final controller = WebViewController();
+  bool _isAuthorizationInProgress = false;
 
   @override
   void initState() {
@@ -46,6 +47,9 @@ class _AuthScreenState extends State<AuthScreen> {
   }
 
   void _handleMessageReceived(JavaScriptMessage jsMessage) {
+    if (_isAuthorizationInProgress) return;
+
+    _isAuthorizationInProgress = true;
     String msg = jsMessage.message;
 
     createDeviceAuth(msg);
@@ -62,7 +66,6 @@ class _AuthScreenState extends State<AuthScreen> {
     Map<String, dynamic> jsonObject = jsonDecode(response);
 
     String accessToken = jsonObject["access_token"];
-
     String accountId = jsonObject["account_id"];
 
     final params = [accountId];
@@ -87,10 +90,14 @@ class _AuthScreenState extends State<AuthScreen> {
 
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
-    authProvider.initializeAuth();
+    await authProvider.initializeAuth();
 
-    Navigator.pushReplacement(
-        context, MaterialPageRoute(builder: (context) => HomeScreen()));
+    if (mounted) {
+      Navigator.pushReplacement(
+          context, MaterialPageRoute(builder: (context) => HomeScreen()));
+    }
+
+    _isAuthorizationInProgress = false;
   }
 
   Future<void> writeToFile(String filePath, String jsonString) async {
