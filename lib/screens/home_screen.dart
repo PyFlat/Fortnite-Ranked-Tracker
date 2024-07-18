@@ -1,83 +1,57 @@
+import 'package:auth_flow_example/components/dashbord_card.dart';
 import 'package:flutter/material.dart';
-import '../services/api_service.dart';
+// import '../services/api_service.dart';
 
 class HomeScreen extends StatefulWidget {
   @override
-  _HomeScreenState createState() => _HomeScreenState();
+  HomeScreenState createState() => HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
-  List<dynamic> _data = [];
-  bool _isLoading = false;
-
-  @override
-  void initState() {
-    super.initState();
-  }
-
-  Future<void> _fetchData() async {
-    setState(() {
-      _isLoading = true;
-    });
-
-    try {
-      List<dynamic> data = await ApiService.bulkProgress(context);
-      setState(() {
-        _data = data;
-      });
-    } catch (e) {
-      // Handle error
-      print(e);
-    } finally {
-      setState(() {
-        _isLoading = false;
-      });
+class HomeScreenState extends State<HomeScreen> {
+  final List<Map<dynamic, dynamic>> data = [
+    {
+      "AccountId": "1",
+      "DisplayName": "Anonym 2546",
+      "Battle Royale": {
+        "DailyMatches": "0",
+        "LastProgress": "119",
+        "LastChanged": "17.07.2024 21:45",
+        "Rank": "Unreal",
+        "RankProgression": "#21677"
+      },
+      "Zero Build": {
+        "DailyMatches": "0",
+        "LastProgress": "53%",
+        "LastChanged": "10.06.2024 19:48",
+        "Rank": "Gold II",
+        "RankProgression": "42%"
+      },
     }
-  }
+  ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Home'),
-      ),
-      body: _isLoading
-          ? Center(child: CircularProgressIndicator())
-          : _data.isEmpty
-              ? Center(child: Text('No Data'))
-              : ListView.builder(
-                  itemCount: _data.length,
-                  itemBuilder: (context, index) {
-                    final item = _data[index];
-                    return Card(
-                      margin: EdgeInsets.all(10.0),
-                      child: Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('Game ID: ${item['gameId']}'),
-                            Text('Track GUID: ${item['trackguid']}'),
-                            Text('Account ID: ${item['accountId']}'),
-                            Text('Ranking Type: ${item['rankingType']}'),
-                            Text('Last Updated: ${item['lastUpdated']}'),
-                            Text(
-                                'Current Division: ${item['currentDivision']}'),
-                            Text(
-                                'Highest Division: ${item['highestDivision']}'),
-                            Text(
-                                'Promotion Progress: ${item['promotionProgress']}'),
-                            Text(
-                                'Current Player Ranking: ${item['currentPlayerRanking'] ?? 'N/A'}'),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _fetchData,
-        child: Icon(Icons.refresh),
+      body: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: SingleChildScrollView(
+          child: Center(
+            child: Wrap(
+              spacing: 10.0, // Spacing between items
+              runSpacing: 10.0, // Spacing between lines
+              children: data.map((item) {
+                return SizedBox(
+                  width: 350.0, // Fixed width of each card
+                  height: 350.0, // Fixed height of each card
+                  child: Padding(
+                    padding: EdgeInsets.all(8.0), // Padding around each card
+                    child: MyCard(item: item),
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+        ),
       ),
     );
   }

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'providers/auth_provider.dart';
-import 'screens/home_screen.dart';
+import 'screens/main_screen.dart';
 import 'screens/auth_screen.dart';
 
 void main() {
@@ -18,6 +18,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AuthProvider()),
       ],
       child: MaterialApp(
+        debugShowCheckedModeBanner: false,
         title: 'Auth Flow Example',
         theme: ThemeData(
           primarySwatch: Colors.blue,
@@ -41,7 +42,7 @@ class AuthenticationHandler extends StatelessWidget {
           authResultSnapshot.connectionState == ConnectionState.waiting
               ? const SplashScreen()
               : authProvider.accessToken.isNotEmpty
-                  ? HomeScreen()
+                  ? MainScreen()
                   : const AuthScreen(),
     );
   }
