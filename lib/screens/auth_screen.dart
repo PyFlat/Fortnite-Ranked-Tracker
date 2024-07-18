@@ -3,9 +3,9 @@ import 'dart:io';
 
 import 'package:auth_flow_example/constants/constants.dart';
 import 'package:auth_flow_example/constants/endpoints.dart';
-import 'package:auth_flow_example/providers/auth_provider.dart';
+import 'package:auth_flow_example/core/auth_provider.dart';
 import 'package:auth_flow_example/screens/home_screen.dart';
-import 'package:auth_flow_example/services/api_service.dart';
+import 'package:auth_flow_example/core/api_service.dart';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';

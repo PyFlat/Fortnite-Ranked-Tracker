@@ -5,7 +5,7 @@ import 'package:auth_flow_example/constants/endpoints.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
-import '../providers/auth_provider.dart';
+import 'auth_provider.dart';
 
 class ApiService {
   static Future<void> periodicGetRequests(BuildContext context) async {

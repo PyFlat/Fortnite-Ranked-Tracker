@@ -147,11 +147,12 @@ class MyCardState extends State<MyCard> with SingleTickerProviderStateMixin {
         Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Image.asset(
-              'assets/ranked-images/${item["Rank"]?.toLowerCase().replaceAll(" ", "")}.png',
-              width: 75,
-              height: 75,
-            ),
+            if (item["Rank"] != null)
+              Image.asset(
+                'assets/ranked-images/${item["Rank"]?.toLowerCase().replaceAll(" ", "")}.png',
+                width: 75,
+                height: 75,
+              ),
             const SizedBox(
               height: 15,
             ),
