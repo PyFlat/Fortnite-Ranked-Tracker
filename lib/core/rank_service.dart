@@ -15,6 +15,7 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 class RankService {
   late String _currentSeason;
+  late List<String> _activeTracks;
   late List<String> _rankTypes;
   bool _isInitialized = false;
   final DataBase _database = DataBase();
@@ -31,12 +32,20 @@ class RankService {
 
   String get currentSeason => _instance._currentSeason;
 
+  List<String> get activeTracks => _instance._activeTracks;
+
   Future<void> init(BuildContext context) async {
     if (!_isInitialized) {
-      _currentSeason = await _fetchCurrentSeason();
-      _rankTypes = ['br', 'zb', 'rr'];
       _buildContext = context;
+
+      _currentSeason = await _fetchCurrentSeason();
+      _activeTracks = await _fetchSeasonTracks();
+
+      _rankTypes = ['br', 'zb', 'rr'];
+
+      await startRankBulkTrack();
       _scheduleDataFetch();
+
       _isInitialized = true;
     }
   }
@@ -50,6 +59,36 @@ class RankService {
       return "${match.group(1)}_${match.group(2)}";
     });
     return replacedSlug.replaceAll("-", "_");
+  }
+
+  Future<List<String>> _fetchSeasonTracks() async {
+    List<String> tracks = ["", "", ""];
+    final authProvider =
+        Provider.of<AuthProvider>(_buildContext, listen: false);
+
+    String url = ApiService.interpolate(
+        Endpoints.activeTracks, ["${DateTime.now().toIso8601String()}Z"]);
+
+    String headerAuthorization = "Bearer ${authProvider.accessToken}";
+
+    String result = await ApiService.getData(url, headerAuthorization);
+
+    dynamic jsonObject = jsonDecode(result);
+
+    Map<String, int> rankingTypeToIndex = {
+      "ranked-br": 0,
+      "ranked-zb": 1,
+      "delmar-competitive": 2
+    };
+
+    for (var data in jsonObject) {
+      int? index = rankingTypeToIndex[data["rankingType"]];
+      if (index != null) {
+        tracks[index] = data["trackguid"];
+      }
+    }
+
+    return tracks;
   }
 
   int remapKey(String key) {
@@ -179,7 +218,7 @@ class RankService {
       result = await db.rawQuery(
           'SELECT daily_match_id, datetime, rank, progress, total_progress FROM ${_currentSeason}_$rankType ORDER BY id DESC LIMIT 2');
     } catch (error) {
-      //print("Error occured: $error");
+      print("Error occured: $error");
     }
     return result;
   }
@@ -187,7 +226,7 @@ class RankService {
   Future<void> startRankBulkTrack() async {
     final authProvider =
         Provider.of<AuthProvider>(_buildContext, listen: false);
-    List<String> tracks = ["N4PK1N", "L1GHT5", "rrwpwg"];
+    List<String> tracks = _activeTracks;
     for (int i = 0; i < 3; i++) {
       List<Map<String, dynamic>> accountData =
           await _database.getAccountDataByType(i, "accountId", true);
@@ -208,13 +247,24 @@ class RankService {
         try {
           String result = await ApiService.postData(bulkProgressUrl,
               jsonEncode(accountIds), headerAuthorization, Constants.dataJson);
-          print(bulkProgressUrl);
           storeRankData(jsonDecode(result));
         } catch (e) {
           print('Failed to post data: $e');
         }
       }
     }
+  }
+
+  Future<dynamic> getSingleProgress(String accountId) async {
+    final authProvider =
+        Provider.of<AuthProvider>(_buildContext, listen: false);
+    List<String> pathParams = [accountId, DateTime.now().toIso8601String()];
+    String url = ApiService.interpolate(Endpoints.singleProgress, pathParams);
+    String headerAuthorization = "Bearer ${authProvider.accessToken}";
+
+    String result = await ApiService.getData(url, headerAuthorization);
+
+    return jsonDecode(result);
   }
 
   Future<void> storeRankData(List<dynamic> data) async {
@@ -232,7 +282,7 @@ class RankService {
 
   void _scheduleDataFetch() {
     _refreshTimer.cancel();
-    _refreshTimer = Timer(const Duration(seconds: 2), () {
+    _refreshTimer = Timer(const Duration(seconds: 10), () {
       startRankBulkTrack();
     });
   }

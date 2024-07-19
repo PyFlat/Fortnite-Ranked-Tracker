@@ -36,7 +36,7 @@ class ApiService {
         : await http.post(Uri.parse(url), headers: headers, body: body);
 
     if (response.statusCode == 200) {
-      return response.body;
+      return utf8.decode(response.bodyBytes);
     } else {
       return "Error occurred: ${response.body}";
     }
@@ -50,9 +50,9 @@ class ApiService {
         headers: headerAuthorization.isNotEmpty ? headers : null);
 
     if (response.statusCode == 200) {
-      return response.body;
+      return utf8.decode(response.bodyBytes);
     } else {
-      return "Error occurred ${response.body}";
+      return "Error occurred ${response.body}, StatusCode: ${response.statusCode}";
     }
   }
 

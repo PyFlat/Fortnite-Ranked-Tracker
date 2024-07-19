@@ -1,3 +1,4 @@
+import '../core/rank_service.dart';
 import '../screens/home_screen.dart';
 import 'package:flutter/material.dart';
 
@@ -8,10 +9,10 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   int _selectedIndex = 0;
+  Future<void>? _initializationFuture;
 
   static final List<Widget> _widgetOptions = <Widget>[
     HomeScreen(),
-    SearchScreen(),
     PlaceholderScreen(title: 'Page 3'),
     PlaceholderScreen(title: 'Page 4'),
   ];
@@ -19,6 +20,11 @@ class _MainScreenState extends State<MainScreen> {
   @override
   void initState() {
     super.initState();
+    _initializationFuture = _initializeRankService();
+  }
+
+  Future<void> _initializeRankService() async {
+    await RankService().init(context);
   }
 
   void _onItemTapped(int index) {
@@ -48,8 +54,17 @@ class _MainScreenState extends State<MainScreen> {
           )
         ],
       ),
-      body: Center(
-        child: _widgetOptions.elementAt(_selectedIndex),
+      body: FutureBuilder<void>(
+        future: _initializationFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError) {
+            return Center(child: Text('Error initializing app'));
+          } else {
+            return Center(child: _widgetOptions.elementAt(_selectedIndex));
+          }
+        },
       ),
       drawer: Drawer(
         child: ListView(
@@ -61,33 +76,17 @@ class _MainScreenState extends State<MainScreen> {
               onTap: () => _onItemTapped(0),
             ),
             ListTile(
-              leading: Icon(Icons.search),
-              title: Text('Search'),
+              leading: Icon(Icons.pages),
+              title: Text('Page 3'),
               onTap: () => _onItemTapped(1),
             ),
             ListTile(
               leading: Icon(Icons.pages),
-              title: Text('Page 3'),
-              onTap: () => _onItemTapped(2),
-            ),
-            ListTile(
-              leading: Icon(Icons.pages),
               title: Text('Page 4'),
-              onTap: () => _onItemTapped(3),
+              onTap: () => _onItemTapped(2),
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class SearchScreen extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Center(
-        child: Text('Search Page'),
       ),
     );
   }

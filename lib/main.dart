@@ -1,4 +1,3 @@
-import '../core/rank_service.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'core/auth_provider.dart';
@@ -14,16 +13,15 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ThemeData themeData = ThemeData(brightness: Brightness.dark);
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
       ],
       child: MaterialApp(
+        theme: themeData,
         debugShowCheckedModeBanner: false,
         title: 'Fortnite Ranked Tracker',
-        theme: ThemeData(
-          primarySwatch: Colors.blue,
-        ),
         home: const AuthenticationHandler(),
       ),
     );
@@ -36,7 +34,6 @@ class AuthenticationHandler extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
-    RankService().init(context);
 
     return FutureBuilder(
       future: authProvider.initializeAuth(),

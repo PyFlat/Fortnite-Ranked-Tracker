@@ -4,7 +4,8 @@ import '../core/utils.dart';
 import '../components/dashbord_card.dart';
 import '../core/database.dart';
 import 'package:flutter/material.dart';
-// import '../services/api_service.dart';
+
+import 'search_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -58,20 +59,28 @@ class HomeScreenState extends State<HomeScreen> {
               "RankProgressionText": progressText
             };
           } catch (e) {
-            // Handle or log errors as appropriate
             print(
                 "Error updating $accountType for account ${account['AccountId']}: $e");
           }
         }
       }
     }
-
     return data;
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => SearchScreen()),
+          );
+        },
+        label: const Text("Search"),
+        icon: const Icon(Icons.search),
+      ),
       body: Padding(
         padding: const EdgeInsets.all(8.0),
         child: FutureBuilder<List<dynamic>>(
