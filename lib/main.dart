@@ -1,4 +1,4 @@
-import 'package:auth_flow_example/core/rank_service.dart';
+import '../core/rank_service.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'core/auth_provider.dart';
@@ -20,7 +20,7 @@ class MyApp extends StatelessWidget {
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
-        title: 'Auth Flow Example',
+        title: 'Fortnite Ranked Tracker',
         theme: ThemeData(
           primarySwatch: Colors.blue,
         ),

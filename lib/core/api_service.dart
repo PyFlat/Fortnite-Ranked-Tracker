@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
-import 'package:auth_flow_example/constants/constants.dart';
-import 'package:auth_flow_example/constants/endpoints.dart';
+import '../constants/constants.dart';
+import '../constants/endpoints.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';

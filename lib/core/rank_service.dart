@@ -2,11 +2,11 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:auth_flow_example/constants/constants.dart';
-import 'package:auth_flow_example/constants/endpoints.dart';
-import 'package:auth_flow_example/core/api_service.dart';
-import 'package:auth_flow_example/core/auth_provider.dart';
-import 'package:auth_flow_example/core/database.dart';
+import '../constants/constants.dart';
+import '../constants/endpoints.dart';
+import '../core/api_service.dart';
+import '../core/auth_provider.dart';
+import '../core/database.dart';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';

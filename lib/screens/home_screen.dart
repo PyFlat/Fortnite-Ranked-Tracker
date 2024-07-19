@@ -1,5 +1,5 @@
-import 'package:auth_flow_example/core/rank_service.dart';
-import 'package:auth_flow_example/core/utils.dart';
+import '../core/rank_service.dart';
+import '../core/utils.dart';
 
 import '../components/dashbord_card.dart';
 import '../core/database.dart';

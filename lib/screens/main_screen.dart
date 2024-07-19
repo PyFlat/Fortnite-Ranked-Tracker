@@ -1,4 +1,4 @@
-import 'package:auth_flow_example/screens/home_screen.dart';
+import '../screens/home_screen.dart';
 import 'package:flutter/material.dart';
 
 class MainScreen extends StatefulWidget {
