@@ -1,4 +1,4 @@
-import 'package:auth_flow_example/core/rank_servce.dart';
+import 'package:auth_flow_example/core/rank_service.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'core/auth_provider.dart';

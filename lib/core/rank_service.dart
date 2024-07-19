@@ -232,7 +232,7 @@ class RankService {
 
   void _scheduleDataFetch() {
     _refreshTimer.cancel();
-    _refreshTimer = Timer(const Duration(seconds: 15), () {
+    _refreshTimer = Timer(const Duration(seconds: 2), () {
       startRankBulkTrack();
     });
   }

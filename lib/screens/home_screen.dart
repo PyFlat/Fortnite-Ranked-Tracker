@@ -1,4 +1,4 @@
-import 'package:auth_flow_example/core/rank_servce.dart';
+import 'package:auth_flow_example/core/rank_service.dart';
 import 'package:auth_flow_example/core/utils.dart';
 
 import '../components/dashbord_card.dart';
