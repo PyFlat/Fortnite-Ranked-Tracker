@@ -1,3 +1,5 @@
+import 'package:intl/intl.dart';
+
 import '../core/rank_service.dart';
 import '../core/utils.dart';
 
@@ -15,6 +17,33 @@ class HomeScreen extends StatefulWidget {
 class HomeScreenState extends State<HomeScreen> {
   final DataBase _database = DataBase();
   final RankService _rankService = RankService();
+
+  @override
+  void initState() {
+    super.initState();
+    // Listen to rank updates
+    _rankService.rankUpdates.listen((_) {
+      setState(() {
+        _getData();
+      });
+    });
+  }
+
+  String calculatePercentageDifference(int currentProgress,
+      int previousProgress, String currentRank, String previousRank) {
+    String percentageDifference = "-";
+    if (currentRank == "Unreal") {
+      if (previousRank != "Champion") {
+        percentageDifference = (previousProgress - currentProgress).toString();
+      } else {
+        percentageDifference = "${1700 - previousProgress}%";
+      }
+    } else {
+      percentageDifference = "${currentProgress - previousProgress}%";
+    }
+
+    return percentageDifference;
+  }
 
   Future<List<Map<String, dynamic>>> _getData() async {
     List<Map<String, dynamic>> data = await _database.getAccountDataActive();
@@ -40,20 +69,41 @@ class HomeScreenState extends State<HomeScreen> {
 
             var rankData = result[0];
 
-            int dataProgres = rankData["progress"];
+            int dataProgress = rankData["progress"];
+            String lastProgress = "-";
+
+            if (result.length > 1) {
+              lastProgress = calculatePercentageDifference(
+                  rankData["total_progress"],
+                  result[1]["total_progress"],
+                  rankData["rank"],
+                  result[1]["rank"]);
+            }
 
             double progress = rankData["rank"] != "Unreal"
-                ? dataProgres / 100
-                : convertProgressForUnreal(dataProgres.toDouble());
+                ? dataProgress / 100
+                : convertProgressForUnreal(dataProgress.toDouble());
 
             String progressText = rankData["rank"] == "Unreal"
-                ? '#$dataProgres'
-                : "$dataProgres%";
+                ? '#$dataProgress'
+                : "$dataProgress%";
 
+            int dailyMatches;
+            if (DateTime.now()
+                    .difference(DateTime.parse(rankData["datetime"]))
+                    .inDays ==
+                0) {
+              dailyMatches = rankData["daily_match_id"];
+            } else {
+              dailyMatches = 0;
+            }
+            DateTime now = DateTime.parse(rankData["datetime"]);
+            String formattedDate =
+                DateFormat('dd.MM.yyyy HH:mm:ss').format(now);
             account[accountType] = {
-              "DailyMatches": rankData["daily_match_id"],
-              "LastProgress": progressText,
-              "LastChanged": "10.06.2024 19:48",
+              "DailyMatches": dailyMatches,
+              "LastProgress": lastProgress,
+              "LastChanged": formattedDate,
               "Rank": rankData["rank"],
               "RankProgression": progress,
               "RankProgressionText": progressText

@@ -34,7 +34,7 @@ class MyCardState extends State<MyCard> with SingleTickerProviderStateMixin {
         borderRadius: BorderRadius.circular(10),
       ),
       child: DefaultTabController(
-        length: 3, // Number of tabs (br, zb, rr)
+        length: 3,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

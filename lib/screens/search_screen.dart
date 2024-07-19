@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:fortnite_ranked_tracker/components/search_card.dart';
 import 'package:provider/provider.dart';
 
 import 'package:fortnite_ranked_tracker/constants/endpoints.dart';
@@ -18,6 +19,7 @@ class SearchScreen extends StatefulWidget {
 
 class _SearchScreenState extends State<SearchScreen> {
   String? _currentQuery;
+  String? _selectedDisplayName;
   late Iterable<Widget> _lastOptions = <Widget>[];
   late final _Debounceable<List<Map<String, String>>?, String> _debouncedSearch;
 
@@ -53,39 +55,45 @@ class _SearchScreenState extends State<SearchScreen> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            Center(
-              child: SearchAnchor.bar(
-                barHintText: "Type name to search",
-                suggestionsBuilder:
-                    (BuildContext context, SearchController controller) async {
-                  final List<Map<String, String>>? results =
-                      (await _debouncedSearch(controller.text))?.toList();
-                  if (results == null) {
-                    return _lastOptions;
-                  }
+            Column(
+              children: [
+                Center(
+                  child: SearchAnchor.bar(
+                    barHintText: "Type name to search",
+                    suggestionsBuilder: (BuildContext context,
+                        SearchController controller) async {
+                      final List<Map<String, String>>? results =
+                          (await _debouncedSearch(controller.text))?.toList();
+                      if (results == null) {
+                        return _lastOptions;
+                      }
 
-                  _lastOptions =
-                      List<ListTile>.generate(results.length, (int index) {
-                    final Map<String, String> item = results[index];
-                    return ListTile(
-                      leading: SvgPicture.asset(
-                        "assets/icons/${item['platform']}.svg",
-                        colorFilter:
-                            ColorFilter.mode(Colors.white, BlendMode.srcIn),
-                      ),
-                      title: Text(item['displayName'] ?? ''),
-                      onTap: () {
-                        debugPrint(item['displayName']);
-                        debugPrint('You just selected ${item['accountId']}');
-                      },
-                    );
-                  });
+                      _lastOptions =
+                          List<ListTile>.generate(results.length, (int index) {
+                        final Map<String, String> item = results[index];
+                        return ListTile(
+                          leading: SvgPicture.asset(
+                            "assets/icons/${item['platform']}.svg",
+                            colorFilter: const ColorFilter.mode(
+                                Colors.white, BlendMode.srcIn),
+                          ),
+                          title: Text(item['displayName'] ?? ''),
+                          onTap: () {
+                            setState(() {
+                              _selectedDisplayName = item['accountId'];
+                            });
+                            //controller.closeView(null);
+                          },
+                        );
+                      });
 
-                  return _lastOptions;
-                },
-              ),
+                      return _lastOptions;
+                    },
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 20),
+            if (_selectedDisplayName != null) const Center(child: SearchCard())
           ],
         ),
       ),
@@ -108,9 +116,6 @@ class _API {
       final url = ApiService.interpolate(Endpoints.userSearch, pathParams);
       final response = await ApiService.getData(url, headerAuthorization);
       if (!response.contains("StatusCode:")) {
-        if (platform == "epic") {
-          print(response);
-        }
         final List<dynamic> jsonObject = jsonDecode(response);
 
         return jsonObject.map((item) {

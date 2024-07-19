@@ -22,6 +22,11 @@ class RankService {
   final int chunkSize = 25;
   Timer _refreshTimer = Timer(Duration.zero, () {});
 
+  final StreamController<void> _rankUpdateController =
+      StreamController<void>.broadcast();
+
+  Stream<void> get rankUpdates => _rankUpdateController.stream;
+
   late BuildContext _buildContext;
 
   RankService._();
@@ -144,7 +149,7 @@ class RankService {
       'rank': data['rank'],
       'progress': data['progress'],
       'daily_match_id': 0,
-      'total_progress': data['ranking']
+      'total_progress': data['totalProgress']
     });
   }
 
@@ -252,6 +257,7 @@ class RankService {
           print('Failed to post data: $e');
         }
       }
+      _rankUpdateController.add(null);
     }
   }
 
@@ -282,7 +288,7 @@ class RankService {
 
   void _scheduleDataFetch() {
     _refreshTimer.cancel();
-    _refreshTimer = Timer(const Duration(seconds: 10), () {
+    _refreshTimer = Timer.periodic(const Duration(seconds: 15), (timer) {
       startRankBulkTrack();
     });
   }
