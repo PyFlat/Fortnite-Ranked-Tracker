@@ -258,8 +258,8 @@ class RankService {
           print('Failed to post data: $e');
         }
       }
-      _rankUpdateController.add(null);
     }
+    _rankUpdateController.add(null);
   }
 
   Future<dynamic> getSingleProgress(String accountId) async {

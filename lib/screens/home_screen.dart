@@ -3,7 +3,7 @@ import 'package:intl/intl.dart';
 import '../core/rank_service.dart';
 import '../core/utils.dart';
 
-import '../components/dashbord_card.dart';
+import '../components/dashboard_card.dart';
 import '../core/database.dart';
 import 'package:flutter/material.dart';
 
@@ -24,9 +24,11 @@ class HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _rankService.rankUpdates.listen((_) {
-      setState(() {
-        _getData();
-      });
+      if (mounted) {
+        setState(() {
+          _getData();
+        });
+      }
     });
   }
 
@@ -150,7 +152,7 @@ class HomeScreenState extends State<HomeScreen> {
                       child: Padding(
                         padding:
                             EdgeInsets.all(8.0), // Padding around each card
-                        child: MyCard(item: item),
+                        child: DashboardCard(item: item),
                       ),
                     );
                   }).toList(),

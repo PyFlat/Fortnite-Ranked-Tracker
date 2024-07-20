@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:fortnite_ranked_tracker/components/dashbord_card.dart';
 
 class SearchCard extends StatefulWidget {
   const SearchCard({super.key});
@@ -35,7 +34,7 @@ class _SearchCardState extends State<SearchCard> {
         } else if (snapshot.hasError) {
           return Text('Error: ${snapshot.error}');
         } else if (snapshot.hasData) {
-          return MyCard(item: snapshot.data!);
+          return Text('No data available'); //MyCard(item: snapshot.data!);
         } else {
           return Text('No data available');
         }
