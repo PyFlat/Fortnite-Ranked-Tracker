@@ -213,7 +213,10 @@ class RankCardState extends State<RankCard>
           ),
           footer: Padding(
             padding: const EdgeInsets.only(top: 8.0),
-            child: Text("Daily Matches: $dailyMatches"),
+            child: Visibility(
+              visible: dailyMatches != null,
+              child: Text("Daily Matches: $dailyMatches"),
+            ),
           ),
           center: Column(
             mainAxisAlignment: MainAxisAlignment.center,

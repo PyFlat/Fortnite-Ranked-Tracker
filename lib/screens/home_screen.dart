@@ -1,5 +1,3 @@
-import 'package:intl/intl.dart';
-
 import '../core/rank_service.dart';
 import '../core/utils.dart';
 
@@ -100,13 +98,12 @@ class HomeScreenState extends State<HomeScreen> {
             } else {
               dailyMatches = 0;
             }
-            DateTime parsed = DateTime.parse(rankData["datetime"]);
-            String formattedDate =
-                DateFormat('dd.MM.yyyy HH:mm:ss').format(parsed);
+            print(rankData["datetime"]);
+
             account[accountType] = {
               "DailyMatches": dailyMatches,
               "LastProgress": lastProgress,
-              "LastChanged": formattedDate,
+              "LastChanged": formatDateTime(rankData["datetime"]),
               "Rank": rankData["rank"],
               "RankProgression": progress,
               "RankProgressionText": progressText

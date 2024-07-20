@@ -19,6 +19,7 @@ class SearchScreen extends StatefulWidget {
 
 class _SearchScreenState extends State<SearchScreen> {
   String? _currentQuery;
+  String? _selectedAccountId;
   String? _selectedDisplayName;
   late Iterable<Widget> _lastOptions = <Widget>[];
   late final _Debounceable<List<Map<String, String>>?, String> _debouncedSearch;
@@ -80,9 +81,10 @@ class _SearchScreenState extends State<SearchScreen> {
                           title: Text(item['displayName'] ?? ''),
                           onTap: () {
                             setState(() {
-                              _selectedDisplayName = item['accountId'];
+                              _selectedAccountId = item['accountId'];
+                              _selectedDisplayName = item['displayName'];
                             });
-                            //controller.closeView(null);
+                            controller.closeView(null);
                           },
                         );
                       });
@@ -93,7 +95,13 @@ class _SearchScreenState extends State<SearchScreen> {
                 ),
               ],
             ),
-            if (_selectedDisplayName != null) const Center(child: SearchCard())
+            if (_selectedAccountId != null)
+              Expanded(
+                  child: Center(
+                      child: SearchCard(
+                accountId: _selectedAccountId,
+                displayName: _selectedDisplayName,
+              )))
           ],
         ),
       ),

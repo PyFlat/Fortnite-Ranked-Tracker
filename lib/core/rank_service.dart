@@ -262,12 +262,18 @@ class RankService {
     _rankUpdateController.add(null);
   }
 
-  Future<dynamic> getSingleProgress(String accountId) async {
-    List<String> pathParams = [accountId, DateTime.now().toIso8601String()];
+  Future<List<dynamic>> getSingleProgress(String accountId) async {
+    List<String> pathParams = [
+      accountId,
+      "${DateTime.now().toIso8601String()}Z"
+    ];
     String url = ApiService.interpolate(Endpoints.singleProgress, pathParams);
     String headerAuthorization = "Bearer ${authProvider.accessToken}";
 
     String result = await ApiService.getData(url, headerAuthorization);
+
+    print(result);
+    print(jsonDecode(result).runtimeType);
 
     return jsonDecode(result);
   }
