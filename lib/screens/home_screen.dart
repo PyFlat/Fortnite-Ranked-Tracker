@@ -10,6 +10,8 @@ import 'package:flutter/material.dart';
 import 'search_screen.dart';
 
 class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key});
+
   @override
   HomeScreenState createState() => HomeScreenState();
 }
@@ -21,7 +23,6 @@ class HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    // Listen to rank updates
     _rankService.rankUpdates.listen((_) {
       setState(() {
         _getData();
@@ -97,9 +98,9 @@ class HomeScreenState extends State<HomeScreen> {
             } else {
               dailyMatches = 0;
             }
-            DateTime now = DateTime.parse(rankData["datetime"]);
+            DateTime parsed = DateTime.parse(rankData["datetime"]);
             String formattedDate =
-                DateFormat('dd.MM.yyyy HH:mm:ss').format(now);
+                DateFormat('dd.MM.yyyy HH:mm:ss').format(parsed);
             account[accountType] = {
               "DailyMatches": dailyMatches,
               "LastProgress": lastProgress,
@@ -136,34 +137,26 @@ class HomeScreenState extends State<HomeScreen> {
         child: FutureBuilder<List<dynamic>>(
           future: _getData(),
           builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return Center(child: CircularProgressIndicator());
-            } else if (snapshot.hasError) {
-              return Center(child: Text('Error: ${snapshot.error}'));
-            } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-              return Center(child: Text('No data available'));
-            } else {
-              var dat = snapshot.data!;
-              return SingleChildScrollView(
-                child: Center(
-                  child: Wrap(
-                    spacing: 10.0, // Spacing between items
-                    runSpacing: 10.0, // Spacing between lines
-                    children: dat.map((item) {
-                      return SizedBox(
-                        width: 350.0, // Fixed width of each card
-                        height: 350.0, // Fixed height of each card
-                        child: Padding(
-                          padding:
-                              EdgeInsets.all(8.0), // Padding around each card
-                          child: MyCard(item: item),
-                        ),
-                      );
-                    }).toList(),
-                  ),
+            var dat = snapshot.data ?? [];
+            return SingleChildScrollView(
+              child: Center(
+                child: Wrap(
+                  spacing: 10.0, // Spacing between items
+                  runSpacing: 10.0, // Spacing between lines
+                  children: dat.map((item) {
+                    return SizedBox(
+                      width: 350.0, // Fixed width of each card
+                      height: 350.0, // Fixed height of each card
+                      child: Padding(
+                        padding:
+                            EdgeInsets.all(8.0), // Padding around each card
+                        child: MyCard(item: item),
+                      ),
+                    );
+                  }).toList(),
                 ),
-              );
-            }
+              ),
+            );
           },
         ),
       ),

@@ -1,8 +1,14 @@
+import 'package:fortnite_ranked_tracker/core/auth_provider.dart';
+
 import '../core/rank_service.dart';
 import '../screens/home_screen.dart';
 import 'package:flutter/material.dart';
 
 class MainScreen extends StatefulWidget {
+  final AuthProvider authProvider;
+
+  const MainScreen({super.key, required this.authProvider});
+
   @override
   _MainScreenState createState() => _MainScreenState();
 }
@@ -11,11 +17,13 @@ class _MainScreenState extends State<MainScreen> {
   int _selectedIndex = 0;
   Future<void>? _initializationFuture;
 
-  static final List<Widget> _widgetOptions = <Widget>[
-    HomeScreen(),
-    PlaceholderScreen(title: 'Page 3'),
-    PlaceholderScreen(title: 'Page 4'),
-  ];
+  List<Widget> get _widgetOptions {
+    return <Widget>[
+      HomeScreen(),
+      PlaceholderScreen(title: 'Page 3'),
+      PlaceholderScreen(title: 'Page 4'),
+    ];
+  }
 
   @override
   void initState() {
@@ -24,7 +32,7 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   Future<void> _initializeRankService() async {
-    await RankService().init(context);
+    await RankService().init(widget.authProvider);
   }
 
   void _onItemTapped(int index) {

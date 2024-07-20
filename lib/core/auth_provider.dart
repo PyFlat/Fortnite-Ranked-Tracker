@@ -10,12 +10,11 @@ import '../constants/constants.dart';
 class AuthProvider with ChangeNotifier {
   late String _accessToken;
   late String _refreshToken;
-  late Timer _refreshTimer;
+  Timer? _refreshTimer; // Make this nullable to handle initial state
   bool _isInitialized = false;
 
   AuthProvider() {
     _accessToken = "";
-    _refreshTimer = Timer(Duration.zero, () {});
     _initAuth();
   }
 
@@ -95,7 +94,7 @@ class AuthProvider with ChangeNotifier {
   }
 
   void _scheduleTokenRefresh() {
-    _refreshTimer.cancel();
+    _refreshTimer?.cancel();
     _refreshTimer = Timer(const Duration(minutes: 30), () {
       refreshToken().catchError((error) {
         print('Failed to refresh token: $error');
@@ -105,7 +104,7 @@ class AuthProvider with ChangeNotifier {
 
   @override
   void dispose() {
-    _refreshTimer.cancel();
+    _refreshTimer?.cancel();
     super.dispose();
   }
 }

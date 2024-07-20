@@ -11,10 +11,6 @@ import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
-void main() {
-  runApp(const AuthScreen());
-}
-
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
 
@@ -94,7 +90,7 @@ class _AuthScreenState extends State<AuthScreen> {
 
     if (mounted) {
       Navigator.pushReplacement(
-          context, MaterialPageRoute(builder: (context) => HomeScreen()));
+          context, MaterialPageRoute(builder: (context) => const HomeScreen()));
     }
 
     _isAuthorizationInProgress = false;

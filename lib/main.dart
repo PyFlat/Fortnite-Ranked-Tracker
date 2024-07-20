@@ -41,7 +41,7 @@ class AuthenticationHandler extends StatelessWidget {
           authResultSnapshot.connectionState == ConnectionState.waiting
               ? const SplashScreen()
               : authProvider.accessToken.isNotEmpty
-                  ? MainScreen()
+                  ? MainScreen(authProvider: authProvider)
                   : const AuthScreen(),
     );
   }

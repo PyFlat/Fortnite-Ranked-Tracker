@@ -2,15 +2,15 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:intl/intl.dart';
+
 import '../constants/constants.dart';
 import '../constants/endpoints.dart';
 import '../core/api_service.dart';
 import '../core/auth_provider.dart';
 import '../core/database.dart';
-import 'package:flutter/material.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:provider/provider.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 class RankService {
@@ -22,12 +22,11 @@ class RankService {
   final int chunkSize = 25;
   Timer _refreshTimer = Timer(Duration.zero, () {});
 
-  final StreamController<void> _rankUpdateController =
-      StreamController<void>.broadcast();
+  final _rankUpdateController = StreamController<void>.broadcast();
 
   Stream<void> get rankUpdates => _rankUpdateController.stream;
 
-  late BuildContext _buildContext;
+  late AuthProvider authProvider;
 
   RankService._();
 
@@ -39,9 +38,9 @@ class RankService {
 
   List<String> get activeTracks => _instance._activeTracks;
 
-  Future<void> init(BuildContext context) async {
+  Future<void> init(AuthProvider authProvider) async {
     if (!_isInitialized) {
-      _buildContext = context;
+      this.authProvider = authProvider;
 
       _currentSeason = await _fetchCurrentSeason();
       _activeTracks = await _fetchSeasonTracks();
@@ -68,13 +67,11 @@ class RankService {
 
   Future<List<String>> _fetchSeasonTracks() async {
     List<String> tracks = ["", "", ""];
-    final authProvider =
-        Provider.of<AuthProvider>(_buildContext, listen: false);
 
     String url = ApiService.interpolate(
         Endpoints.activeTracks, ["${DateTime.now().toIso8601String()}Z"]);
 
-    String headerAuthorization = "Bearer ${authProvider.accessToken}";
+    String headerAuthorization = "Bearer ${this.authProvider.accessToken}";
 
     String result = await ApiService.getData(url, headerAuthorization);
 
@@ -143,9 +140,12 @@ class RankService {
   }
 
   Future<void> insertFirstData(Database db, Map<String, dynamic> data) async {
+    DateTime now = DateTime.now();
+    String formattedDate = DateFormat('yyyy-MM-dd HH:mm:ss').format(now);
+
     await db.insert('${_currentSeason}_${data['rankingType']}', {
       'id': 0,
-      'datetime': DateTime.now().toIso8601String(),
+      'datetime': formattedDate,
       'rank': data['rank'],
       'progress': data['progress'],
       'daily_match_id': 0,
@@ -181,7 +181,7 @@ class RankService {
 
     List<Map<String, dynamic>> dailyMatchIdResult = await db.rawQuery(
         '''SELECT MAX(daily_match_id) as max_id FROM ${_currentSeason}_${rankingType}
-        WHERE strftime('%Y-%m-%d', datetime) = DATE('now')''');
+        WHERE strftime('%Y-%m-%d', datetime) = DATE('now', 'localtime')''');
     int? dailyMatchId = dailyMatchIdResult.first['max_id'];
 
     bool check = await checkForDoubleData(db, update, rankingType);
@@ -189,8 +189,11 @@ class RankService {
 
     dailyMatchId = (dailyMatchId ?? 0) + 1;
 
+    DateTime now = DateTime.now();
+    String formattedDate = DateFormat('yyyy-MM-dd HH:mm:ss').format(now);
+
     await db.insert('${_currentSeason}_${rankingType}', {
-      'datetime': DateTime.now().toIso8601String(),
+      'datetime': formattedDate,
       'rank': rank,
       'progress': progress,
       'daily_match_id': dailyMatchId,
@@ -229,8 +232,6 @@ class RankService {
   }
 
   Future<void> startRankBulkTrack() async {
-    final authProvider =
-        Provider.of<AuthProvider>(_buildContext, listen: false);
     List<String> tracks = _activeTracks;
     for (int i = 0; i < 3; i++) {
       List<Map<String, dynamic>> accountData =
@@ -262,8 +263,6 @@ class RankService {
   }
 
   Future<dynamic> getSingleProgress(String accountId) async {
-    final authProvider =
-        Provider.of<AuthProvider>(_buildContext, listen: false);
     List<String> pathParams = [accountId, DateTime.now().toIso8601String()];
     String url = ApiService.interpolate(Endpoints.singleProgress, pathParams);
     String headerAuthorization = "Bearer ${authProvider.accessToken}";
@@ -291,5 +290,9 @@ class RankService {
     _refreshTimer = Timer.periodic(const Duration(seconds: 15), (timer) {
       startRankBulkTrack();
     });
+  }
+
+  void dispose() {
+    _rankUpdateController.close();
   }
 }
