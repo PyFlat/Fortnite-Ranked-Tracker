@@ -57,7 +57,7 @@ class DashboardCard extends StatelessWidget {
       rocketRacingLastChanged:
           getStringValue(rocketRacingValues, 'LastChanged'),
       rocketRacingDailyMatches: getIntValue(rocketRacingValues, 'DailyMatches'),
-      rocketRacingRankImagePath: getImageAssetPath(zeroBuildValues),
+      rocketRacingRankImagePath: getImageAssetPath(rocketRacingValues),
       rocketRacingRank: getStringValue(rocketRacingValues, 'Rank'),
       rocketRacingActive: rocketRacingValues != null,
     );

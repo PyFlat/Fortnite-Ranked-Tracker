@@ -5,7 +5,9 @@ import 'screens/main_screen.dart';
 import 'screens/auth_screen.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(
+    MyApp(),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -13,13 +15,12 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData themeData = ThemeData(brightness: Brightness.dark);
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
       ],
       child: MaterialApp(
-        theme: themeData,
+        theme: ThemeData.dark(),
         debugShowCheckedModeBanner: false,
         title: 'Fortnite Ranked Tracker',
         home: const AuthenticationHandler(),

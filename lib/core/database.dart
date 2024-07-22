@@ -44,7 +44,6 @@ class DataBase {
       batch.execute('''
         CREATE TABLE IF NOT EXISTS $type (
           accountId TEXT PRIMARY KEY,
-          accountType TEXT,
           displayName TEXT,
           active INTEGER
         )
@@ -55,13 +54,12 @@ class DataBase {
   }
 
   Future<void> updatePlayerTracking(
-      bool tracking, int key, List<dynamic> data) async {
+      bool tracking, int key, String accountId, String displayName) async {
     await init(); // Ensure database is initialized
     String tableName = keys[key];
     Map<String, dynamic> params = {
-      'accountId': data[0],
-      'accountType': data[1],
-      'displayName': data[2],
+      'accountId': accountId,
+      'displayName': displayName,
       'active': tracking ? 1 : 0,
     };
 
@@ -112,12 +110,12 @@ class DataBase {
   }
 
   Future<List<Map<String, dynamic>>> getAccountDataActive() async {
-    List<Map<String, dynamic>> brAccounts = await getAccountDataByType(
-        0, "accountType, accountId, displayName", true);
-    List<Map<String, dynamic>> zbAccounts = await getAccountDataByType(
-        1, "accountType, accountId, displayName", true);
-    List<Map<String, dynamic>> rrAccounts = await getAccountDataByType(
-        2, "accountType, accountId, displayName", true);
+    List<Map<String, dynamic>> brAccounts =
+        await getAccountDataByType(0, "accountId, displayName", true);
+    List<Map<String, dynamic>> zbAccounts =
+        await getAccountDataByType(1, "accountId, displayName", true);
+    List<Map<String, dynamic>> rrAccounts =
+        await getAccountDataByType(2, "accountId, displayName", true);
 
     // Collect all unique account IDs
     Set<String> allAccountIds = {
@@ -132,7 +130,6 @@ class DataBase {
       var accountData = <String, dynamic>{
         "AccountId": accountId,
         "DisplayName": "",
-        "AccountType": "",
         "Battle Royale": {},
         "Zero Build": {},
         "Rocket Racing": {},
@@ -141,7 +138,6 @@ class DataBase {
       void updateAccountData(Map<String, dynamic>? account) {
         if (account != null && account.isNotEmpty) {
           accountData["DisplayName"] = account["displayName"];
-          accountData["AccountType"] = account["accountType"];
         }
       }
 
@@ -200,8 +196,8 @@ class DataBase {
     for (int i = 0; i < 3; i++) {
       String tableName = keys[i];
 
-      List<Map<String, dynamic>> items = await _db.query(tableName,
-          columns: ['accountType', 'displayName', 'accountId']);
+      List<Map<String, dynamic>> items =
+          await _db.query(tableName, columns: ['displayName', 'accountId']);
 
       result.add(items);
     }

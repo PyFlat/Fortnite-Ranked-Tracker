@@ -1,8 +1,11 @@
 import 'package:fortnite_ranked_tracker/core/auth_provider.dart';
+import 'package:fortnite_ranked_tracker/screens/graph_screen.dart';
 
 import '../core/rank_service.dart';
 import '../screens/home_screen.dart';
 import 'package:flutter/material.dart';
+
+import 'settings_screen.dart';
 
 class MainScreen extends StatefulWidget {
   final AuthProvider authProvider;
@@ -20,7 +23,7 @@ class _MainScreenState extends State<MainScreen> {
   List<Widget> get _widgetOptions {
     return <Widget>[
       HomeScreen(),
-      PlaceholderScreen(title: 'Page 3'),
+      GraphScreen(),
       PlaceholderScreen(title: 'Page 4'),
     ];
   }
@@ -110,20 +113,6 @@ class PlaceholderScreen extends StatelessWidget {
     return Scaffold(
       body: Center(
         child: Text('$title Content'),
-      ),
-    );
-  }
-}
-
-class SettingsScreen extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Settings'),
-      ),
-      body: Center(
-        child: Text('Settings Page'),
       ),
     );
   }

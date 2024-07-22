@@ -231,6 +231,18 @@ class RankService {
     return result;
   }
 
+  Future<List> getRankedDataBySeason(
+      String accountId, String seasonName) async {
+    Database db = await connectToDB(accountId);
+    List<Map<String, dynamic>> result = [];
+    try {
+      result = await db.rawQuery('SELECT * FROM $seasonName');
+    } catch (error) {
+      print("Error occured: $error");
+    }
+    return result;
+  }
+
   Future<void> startRankBulkTrack() async {
     List<String> tracks = _activeTracks;
     for (int i = 0; i < 3; i++) {
@@ -259,6 +271,10 @@ class RankService {
         }
       }
     }
+    _rankUpdateController.add(null);
+  }
+
+  void refreshMainPage() {
     _rankUpdateController.add(null);
   }
 

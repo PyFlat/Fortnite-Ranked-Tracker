@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:fortnite_ranked_tracker/core/database.dart';
+import 'package:fortnite_ranked_tracker/core/rank_service.dart';
 import 'package:percent_indicator/circular_percent_indicator.dart';
 import '../screens/search_screen.dart';
 
@@ -80,7 +82,6 @@ class RankCard extends StatefulWidget {
 
 class RankCardState extends State<RankCard>
     with SingleTickerProviderStateMixin {
-  late TabController _tabController;
   late bool _battleRoyaleTracking;
   late bool _zeroBuildTracking;
   late bool _rocketRacingTracking;
@@ -88,17 +89,9 @@ class RankCardState extends State<RankCard>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
-    // Initialize tracking states
     _battleRoyaleTracking = widget.battleRoyaleTracking ?? false;
     _zeroBuildTracking = widget.zeroBuildTracking ?? false;
     _rocketRacingTracking = widget.rocketRacingTracking ?? false;
-  }
-
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
   }
 
   void _copyText(String textToCopy) {
@@ -109,7 +102,9 @@ class RankCardState extends State<RankCard>
   }
 
   Future<void> _updatePlayerTracking(bool value, int key) async {
-    //TODO
+    await DataBase().updatePlayerTracking(
+        value, key, widget.accountId!, widget.displayName);
+    RankService().refreshMainPage();
   }
 
   @override
@@ -232,7 +227,6 @@ class RankCardState extends State<RankCard>
             ),
             Expanded(
               child: TabBarView(
-                controller: _tabController,
                 children: [
                   _buildContent(
                     widget.battleRoyaleProgressText,
@@ -310,12 +304,22 @@ class RankCardState extends State<RankCard>
       String category,
       Future<void> Function(bool) onTrackingChanged) {
     if (!active) {
-      return Center(
-        child: Text(
-          'Tracking for `$category` is not active!',
-          textAlign: TextAlign.center,
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-        ),
+      return Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            'Tracking for `$category` is not active!',
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+          ),
+          const SizedBox(height: 15),
+          FilledButton.icon(
+              onPressed: () {
+                onTrackingChanged(true);
+              },
+              icon: const Icon(Icons.check),
+              label: const Text("Activate"))
+        ],
       );
     }
 
@@ -383,29 +387,32 @@ class RankCardState extends State<RankCard>
             ),
           ],
         ),
-        if (widget.showSwitches)
-          Padding(
-            padding: const EdgeInsets.only(top: 8.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Text(
-                  "Tracking:",
-                  style: TextStyle(fontSize: 16),
-                ),
-                const SizedBox(
-                  width: 16,
-                ),
-                Switch(
-                  value: tracking!,
-                  onChanged: (bool value) {
-                    onTrackingChanged(value);
-                  },
-                ),
-              ],
-            ),
-          ),
+        if (widget.showSwitches) _buildSwitches(tracking!, onTrackingChanged)
       ],
+    );
+  }
+
+  Widget _buildSwitches(bool tracking, Function trackingChanged) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 8.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Text(
+            "Tracking:",
+            style: TextStyle(fontSize: 16),
+          ),
+          const SizedBox(
+            width: 16,
+          ),
+          Switch(
+            value: tracking,
+            onChanged: (bool value) {
+              trackingChanged(value);
+            },
+          ),
+        ],
+      ),
     );
   }
 }

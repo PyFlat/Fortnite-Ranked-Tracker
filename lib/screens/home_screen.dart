@@ -65,6 +65,14 @@ class HomeScreenState extends State<HomeScreen> {
                 account["AccountId"], typeCode);
 
             if (result.isEmpty) {
+              account[accountType] = {
+                "DailyMatches": null,
+                "LastProgress": null,
+                "LastChanged": null,
+                "Rank": "Unranked",
+                "RankProgression": null,
+                "RankProgressionText": null
+              };
               continue;
             }
 
