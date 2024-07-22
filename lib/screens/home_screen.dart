@@ -98,7 +98,6 @@ class HomeScreenState extends State<HomeScreen> {
             } else {
               dailyMatches = 0;
             }
-            print(rankData["datetime"]);
 
             account[accountType] = {
               "DailyMatches": dailyMatches,

@@ -272,9 +272,6 @@ class RankService {
 
     String result = await ApiService.getData(url, headerAuthorization);
 
-    print(result);
-    print(jsonDecode(result).runtimeType);
-
     return jsonDecode(result);
   }
 

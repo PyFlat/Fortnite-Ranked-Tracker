@@ -10,6 +10,7 @@ class DashboardCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final displayName = item['DisplayName'] as String;
+    final accountId = item["AccountId"] as String;
 
     final battleRoyaleValues = getGameModeValues(item, 'Battle Royale');
     final zeroBuildValues = getGameModeValues(item, 'Zero Build');
@@ -17,6 +18,9 @@ class DashboardCard extends StatelessWidget {
 
     return RankCard(
       displayName: displayName,
+      accountId: accountId,
+      showMenu: true,
+      showSwitches: false,
 
       // Battle Royale
       battleRoyaleProgressText:

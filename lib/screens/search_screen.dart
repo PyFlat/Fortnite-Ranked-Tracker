@@ -13,6 +13,10 @@ const Duration fakeAPIDuration = Duration(seconds: 1);
 const Duration debounceDuration = Duration(milliseconds: 500);
 
 class SearchScreen extends StatefulWidget {
+  final String? accountId;
+  final String? displayName;
+  const SearchScreen({super.key, this.accountId, this.displayName});
+
   @override
   State<SearchScreen> createState() => _SearchScreenState();
 }
@@ -44,6 +48,8 @@ class _SearchScreenState extends State<SearchScreen> {
   void initState() {
     super.initState();
     _debouncedSearch = _debounce<List<Map<String, String>>?, String>(_search);
+    _selectedAccountId = widget.accountId;
+    _selectedDisplayName = widget.displayName;
   }
 
   @override
