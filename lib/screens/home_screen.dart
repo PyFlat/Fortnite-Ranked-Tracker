@@ -17,6 +17,9 @@ class HomeScreen extends StatefulWidget {
 class HomeScreenState extends State<HomeScreen> {
   final DataBase _database = DataBase();
   final RankService _rankService = RankService();
+  List<Map<String, dynamic>> _previousData = [];
+  final List<Color?> _currentCardColors = [];
+  final List<double> _currentScales = [];
 
   @override
   void initState() {
@@ -125,6 +128,35 @@ class HomeScreenState extends State<HomeScreen> {
     return data;
   }
 
+  bool _hasDataChanged(
+      Map<String, dynamic> newData, Map<String, dynamic> oldData) {
+    return newData.toString() != oldData.toString();
+  }
+
+  int _getProgressionDifference(
+      Map<String, dynamic> newData, Map<String, dynamic> oldData) {
+    for (var key in newData.keys) {
+      if (newData[key] is Map<String, dynamic> &&
+          oldData[key] is Map<String, dynamic>) {
+        var newProgress = newData[key]['RankProgression'];
+        var oldProgress = oldData[key]['RankProgression'];
+        if (newProgress != null && oldProgress != null) {
+          return newProgress.compareTo(oldProgress);
+        }
+      }
+    }
+    return 0;
+  }
+
+  void _resetCardState(int index) {
+    if (index < _currentCardColors.length) {
+      setState(() {
+        _currentCardColors[index] = Colors.white; // Default color
+        _currentScales[index] = 1.0; // Default scale
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -140,26 +172,78 @@ class HomeScreenState extends State<HomeScreen> {
       ),
       body: Padding(
         padding: const EdgeInsets.all(8.0),
-        child: FutureBuilder<List<dynamic>>(
+        child: FutureBuilder<List<Map<String, dynamic>>>(
           future: _getData(),
           builder: (context, snapshot) {
-            var dat = snapshot.data ?? [];
+            var data = snapshot.data ?? [];
+            List<Widget> cards = [];
+
+            for (int i = 0; i < data.length; i++) {
+              var item = data[i];
+              bool hasChanged = _previousData.isNotEmpty &&
+                  _hasDataChanged(item, _previousData[i]);
+              int progressionDifference = hasChanged
+                  ? _getProgressionDifference(item, _previousData[i])
+                  : 0;
+              Color cardColor = Colors.black26;
+              double cardScale = 1.0;
+
+              if (hasChanged) {
+                if (progressionDifference > 0) {
+                  cardColor = Colors.green.withOpacity(0.5);
+                } else if (progressionDifference < 0) {
+                  cardColor = Colors.red.withOpacity(0.5);
+                } else if (progressionDifference == 0) {
+                  cardColor = Colors.yellow.withOpacity(0.5);
+                }
+                cardScale = 1.05;
+                Future.delayed(
+                    Duration(milliseconds: 400), () => _resetCardState(i));
+              }
+
+              if (_currentCardColors.length <= i) {
+                _currentCardColors.add(Colors.black26);
+                _currentScales.add(1.0);
+              }
+              _currentCardColors[i] = cardColor;
+              _currentScales[i] = cardScale;
+              _previousData = List.from(data);
+
+              cards.add(
+                TweenAnimationBuilder<Color?>(
+                  key: ValueKey(item.toString()),
+                  tween: ColorTween(
+                      begin: Colors.transparent, end: _currentCardColors[i]),
+                  duration: const Duration(milliseconds: 400),
+                  builder: (context, color, child) {
+                    return TweenAnimationBuilder<double>(
+                      tween: Tween(begin: 1.0, end: _currentScales[i]),
+                      duration: const Duration(milliseconds: 400),
+                      builder: (context, scale, child) {
+                        return Transform.scale(
+                          scale: scale,
+                          child: SizedBox(
+                            width: 350.0,
+                            height: 350.0,
+                            child: Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: DashboardCard(item: item, color: color),
+                            ),
+                          ),
+                        );
+                      },
+                    );
+                  },
+                ),
+              );
+            }
+
             return SingleChildScrollView(
               child: Center(
                 child: Wrap(
-                  spacing: 10.0, // Spacing between items
-                  runSpacing: 10.0, // Spacing between lines
-                  children: dat.map((item) {
-                    return SizedBox(
-                      width: 350.0, // Fixed width of each card
-                      height: 350.0, // Fixed height of each card
-                      child: Padding(
-                        padding:
-                            EdgeInsets.all(8.0), // Padding around each card
-                        child: DashboardCard(item: item),
-                      ),
-                    );
-                  }).toList(),
+                  spacing: 10.0,
+                  runSpacing: 10.0,
+                  children: cards,
                 ),
               ),
             );

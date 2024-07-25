@@ -41,7 +41,10 @@ class RankCard extends StatefulWidget {
   final bool rocketRacingActive;
   final bool? rocketRacingTracking;
 
+  final Color? color;
+
   const RankCard({
+    this.color = Colors.black26,
     super.key,
     required this.displayName,
     this.accountId,
@@ -110,8 +113,9 @@ class RankCardState extends State<RankCard>
   @override
   Widget build(BuildContext context) {
     return Card(
-      shadowColor: Colors.deepPurple,
-      elevation: 5,
+      //shadowColor: Colors.deepPurple,
+      color: widget.color,
+      elevation: 15,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(10),
       ),

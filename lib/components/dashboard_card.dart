@@ -4,8 +4,9 @@ import 'rank_card.dart';
 
 class DashboardCard extends StatelessWidget {
   final Map<String, dynamic> item;
+  final Color? color;
 
-  const DashboardCard({super.key, required this.item});
+  const DashboardCard({super.key, required this.item, this.color});
 
   @override
   Widget build(BuildContext context) {
@@ -21,6 +22,8 @@ class DashboardCard extends StatelessWidget {
       accountId: accountId,
       showMenu: true,
       showSwitches: false,
+
+      color: color,
 
       // Battle Royale
       battleRoyaleProgressText:
