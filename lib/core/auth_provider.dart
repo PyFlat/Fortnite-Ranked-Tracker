@@ -9,6 +9,7 @@ import '../constants/constants.dart';
 
 class AuthProvider with ChangeNotifier {
   late String _accessToken;
+  late String _accountId;
   late String _refreshToken;
   Timer? _refreshTimer; // Make this nullable to handle initial state
   bool _isInitialized = false;
@@ -19,6 +20,8 @@ class AuthProvider with ChangeNotifier {
   }
 
   String get accessToken => _accessToken;
+
+  String get accountId => _accountId;
 
   Future<void> initializeAuth() async {
     if (!_isInitialized) {
@@ -32,6 +35,7 @@ class AuthProvider with ChangeNotifier {
       if (_accessToken.isEmpty) {
         await _authenticate(authData);
       }
+      _accountId = authData["account_id"];
       _scheduleTokenRefresh();
       _isInitialized = true;
     } catch (error) {

@@ -43,8 +43,11 @@ class RankCard extends StatefulWidget {
 
   final Color? color;
 
+  final int? initialIndex;
+
   const RankCard({
     this.color = Colors.black26,
+    this.initialIndex = 0,
     super.key,
     required this.displayName,
     this.accountId,
@@ -113,13 +116,13 @@ class RankCardState extends State<RankCard>
   @override
   Widget build(BuildContext context) {
     return Card(
-      //shadowColor: Colors.deepPurple,
       color: widget.color,
       elevation: 15,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(10),
       ),
       child: DefaultTabController(
+        initialIndex: widget.initialIndex!,
         length: 3,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

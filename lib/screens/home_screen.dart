@@ -20,6 +20,7 @@ class HomeScreenState extends State<HomeScreen> {
   List<Map<String, dynamic>> _previousData = [];
   final List<Color?> _currentCardColors = [];
   final List<double> _currentScales = [];
+  final List _rankedModes = ["Battle Royale", "Zero Build", "Rocket Racing"];
 
   @override
   void initState() {
@@ -101,10 +102,15 @@ class HomeScreenState extends State<HomeScreen> {
                 : "$dataProgress%";
 
             int dailyMatches;
-            if (DateTime.now()
-                    .difference(DateTime.parse(rankData["datetime"]))
-                    .inDays ==
-                0) {
+            DateTime rankDatetime = DateTime.parse(rankData["datetime"]);
+
+            DateTime now = DateTime.now();
+
+            DateTime rankDate = DateTime(
+                rankDatetime.year, rankDatetime.month, rankDatetime.day);
+            DateTime today = DateTime(now.year, now.month, now.day);
+
+            if (rankDate == today) {
               dailyMatches = rankData["daily_match_id"];
             } else {
               dailyMatches = 0;
@@ -128,31 +134,32 @@ class HomeScreenState extends State<HomeScreen> {
     return data;
   }
 
-  bool _hasDataChanged(
+  int _hasDataChanged(
       Map<String, dynamic> newData, Map<String, dynamic> oldData) {
-    return newData.toString() != oldData.toString();
-  }
-
-  int _getProgressionDifference(
-      Map<String, dynamic> newData, Map<String, dynamic> oldData) {
-    for (var key in newData.keys) {
-      if (newData[key] is Map<String, dynamic> &&
-          oldData[key] is Map<String, dynamic>) {
-        var newProgress = newData[key]['RankProgression'];
-        var oldProgress = oldData[key]['RankProgression'];
-        if (newProgress != null && oldProgress != null) {
-          return newProgress.compareTo(oldProgress);
+    int dataChanged = -1;
+    bool dataChangedBool = newData.toString() != oldData.toString();
+    if (dataChangedBool) {
+      for (final (index, rankMode) in _rankedModes.indexed) {
+        if (newData[rankMode].toString() != oldData[rankMode].toString()) {
+          dataChanged = index;
         }
       }
     }
-    return 0;
+    return dataChanged;
+  }
+
+  int _getProgressionDifference(
+      Map<String, dynamic> newData, Map<String, dynamic> oldData, String key) {
+    double newProgress = newData[key]['RankProgression'];
+    double oldProgress = oldData[key]['RankProgression'];
+    return newProgress.compareTo(oldProgress);
   }
 
   void _resetCardState(int index) {
     if (index < _currentCardColors.length) {
       setState(() {
-        _currentCardColors[index] = Colors.white; // Default color
-        _currentScales[index] = 1.0; // Default scale
+        _currentCardColors[index] = Colors.white;
+        _currentScales[index] = 1.0;
       });
     }
   }
@@ -176,29 +183,37 @@ class HomeScreenState extends State<HomeScreen> {
           future: _getData(),
           builder: (context, snapshot) {
             var data = snapshot.data ?? [];
+
             List<Widget> cards = [];
 
             for (int i = 0; i < data.length; i++) {
               var item = data[i];
-              bool hasChanged = _previousData.isNotEmpty &&
-                  _hasDataChanged(item, _previousData[i]);
+              int dataChanged = _previousData.isNotEmpty
+                  ? _hasDataChanged(item, _previousData[i])
+                  : -1;
+
+              bool hasChanged = dataChanged >= 0;
+
               int progressionDifference = hasChanged
-                  ? _getProgressionDifference(item, _previousData[i])
+                  ? _getProgressionDifference(
+                      item, _previousData[i], _rankedModes[dataChanged])
                   : 0;
               Color cardColor = Colors.black26;
               double cardScale = 1.0;
+              int index = 0;
 
               if (hasChanged) {
                 if (progressionDifference > 0) {
-                  cardColor = Colors.green.withOpacity(0.5);
+                  cardColor = Colors.green.withOpacity(0.75);
                 } else if (progressionDifference < 0) {
-                  cardColor = Colors.red.withOpacity(0.5);
+                  cardColor = Colors.red.withOpacity(0.75);
                 } else if (progressionDifference == 0) {
-                  cardColor = Colors.yellow.withOpacity(0.5);
+                  cardColor = Colors.yellow.withOpacity(0.75);
                 }
                 cardScale = 1.05;
-                Future.delayed(
-                    Duration(milliseconds: 400), () => _resetCardState(i));
+                Future.delayed(const Duration(seconds: 1, milliseconds: 250),
+                    () => _resetCardState(i));
+                index = dataChanged;
               }
 
               if (_currentCardColors.length <= i) {
@@ -207,7 +222,6 @@ class HomeScreenState extends State<HomeScreen> {
               }
               _currentCardColors[i] = cardColor;
               _currentScales[i] = cardScale;
-              _previousData = List.from(data);
 
               cards.add(
                 TweenAnimationBuilder<Color?>(
@@ -218,7 +232,7 @@ class HomeScreenState extends State<HomeScreen> {
                   builder: (context, color, child) {
                     return TweenAnimationBuilder<double>(
                       tween: Tween(begin: 1.0, end: _currentScales[i]),
-                      duration: const Duration(milliseconds: 400),
+                      duration: const Duration(milliseconds: 100),
                       builder: (context, scale, child) {
                         return Transform.scale(
                           scale: scale,
@@ -227,7 +241,8 @@ class HomeScreenState extends State<HomeScreen> {
                             height: 350.0,
                             child: Padding(
                               padding: const EdgeInsets.all(8.0),
-                              child: DashboardCard(item: item, color: color),
+                              child: DashboardCard(
+                                  item: item, color: color!, index: index),
                             ),
                           ),
                         );
@@ -237,6 +252,8 @@ class HomeScreenState extends State<HomeScreen> {
                 ),
               );
             }
+
+            _previousData = List.from(data);
 
             return SingleChildScrollView(
               child: Center(
