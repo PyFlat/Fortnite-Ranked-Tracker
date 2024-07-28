@@ -137,6 +137,9 @@ class HomeScreenState extends State<HomeScreen> {
   int _hasDataChanged(
       Map<String, dynamic> newData, Map<String, dynamic> oldData) {
     int dataChanged = -1;
+    if (newData["DailyMatches"] == 0) {
+      return dataChanged;
+    }
     bool dataChangedBool = newData.toString() != oldData.toString();
     if (dataChangedBool) {
       for (final (index, rankMode) in _rankedModes.indexed) {
