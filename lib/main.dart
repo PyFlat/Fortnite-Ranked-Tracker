@@ -1,14 +1,32 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:tray_manager/tray_manager.dart';
+import 'package:window_manager/window_manager.dart';
 import 'core/auth_provider.dart';
 import 'screens/main_screen.dart';
 import 'screens/auth_screen.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  // Must add this line.
+  if (Platform.isLinux || Platform.isWindows || Platform.isMacOS) {
+    await windowManager.ensureInitialized();
+    windowManager.setPreventClose(true);
+
+    WindowOptions windowOptions = const WindowOptions(
+      center: true,
+      backgroundColor: Colors.transparent,
+      skipTaskbar: false,
+      titleBarStyle: TitleBarStyle.normal,
+    );
+    windowManager.waitUntilReadyToShow(windowOptions, () async {
+      await windowManager.show();
+      await windowManager.focus();
+    });
+  }
+
   runApp(
     MyApp(),
   );
@@ -21,10 +39,11 @@ class MyApp extends StatefulWidget {
   State<MyApp> createState() => _MyAppState();
 }
 
-class _MyAppState extends State<MyApp> with TrayListener {
+class _MyAppState extends State<MyApp> with TrayListener, WindowListener {
   @override
   void initState() {
     trayManager.addListener(this);
+    windowManager.addListener(this);
     _initSystemTray();
     super.initState();
   }
@@ -32,7 +51,13 @@ class _MyAppState extends State<MyApp> with TrayListener {
   @override
   void dispose() {
     trayManager.removeListener(this);
+    windowManager.removeListener(this);
     super.dispose();
+  }
+
+  @override
+  void onWindowClose() {
+    windowManager.hide();
   }
 
   void _initSystemTray() async {
@@ -52,18 +77,25 @@ class _MyAppState extends State<MyApp> with TrayListener {
         ),
       ],
     );
-    try {
+    if (Platform.isLinux || Platform.isWindows || Platform.isMacOS) {
       await trayManager.setContextMenu(menu);
       await trayManager.setIcon(iconPath);
-    } on MissingPluginException {
-      debugPrint(
-          "Failed to set AppIcon and ContextMenu because Plugin is Missing. Probably the platform is not desktop.${Platform.operatingSystem}");
     }
   }
 
   @override
   void onTrayIconMouseDown() {
     trayManager.popUpContextMenu();
+  }
+
+  @override
+  void onTrayMenuItemClick(MenuItem menuItem) {
+    if (menuItem.key == 'show_window') {
+      windowManager.show();
+    } else if (menuItem.key == 'exit_app') {
+      windowManager.setPreventClose(false);
+      windowManager.close();
+    }
   }
 
   @override

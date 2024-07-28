@@ -4,9 +4,11 @@
 
 list(APPEND FLUTTER_PLUGIN_LIST
   fullscreen_window
+  screen_retriever
   sqlite3_flutter_libs
   tray_manager
   webview_win_floating
+  window_manager
 )
 
 list(APPEND FLUTTER_FFI_PLUGIN_LIST
