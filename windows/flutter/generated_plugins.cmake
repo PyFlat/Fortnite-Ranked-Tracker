@@ -5,6 +5,7 @@
 list(APPEND FLUTTER_PLUGIN_LIST
   fullscreen_window
   sqlite3_flutter_libs
+  tray_manager
   webview_win_floating
 )
 
