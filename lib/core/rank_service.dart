@@ -470,7 +470,7 @@ class RankService {
   void _scheduleDataFetch() {
     _refreshTimer.cancel();
     _refreshNameTimer.cancel();
-    _refreshTimer = Timer.periodic(const Duration(seconds: 15), (timer) {
+    _refreshTimer = Timer.periodic(const Duration(seconds: 10), (timer) {
       startRankBulkTrack();
     });
     _refreshNameTimer = Timer.periodic(const Duration(hours: 1), (timer) {

@@ -150,9 +150,9 @@ class HomeScreenState extends State<HomeScreen> {
 
   int _getProgressionDifference(
       Map<String, dynamic> newData, Map<String, dynamic> oldData, String key) {
-    double newProgress = newData[key]['RankProgression'];
-    double oldProgress = oldData[key]['RankProgression'];
-    return newProgress.compareTo(oldProgress);
+    int newProgress1 =
+        int.parse((newData[key]['LastProgress'] as String).replaceAll("%", ""));
+    return newProgress1;
   }
 
   void _resetCardState(int index) {
