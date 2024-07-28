@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:tray_manager/tray_manager.dart';
 import 'core/auth_provider.dart';
@@ -51,9 +52,13 @@ class _MyAppState extends State<MyApp> with TrayListener {
         ),
       ],
     );
-
-    await trayManager.setContextMenu(menu);
-    await trayManager.setIcon(iconPath);
+    try {
+      await trayManager.setContextMenu(menu);
+      await trayManager.setIcon(iconPath);
+    } on MissingPluginException {
+      debugPrint(
+          "Failed to set AppIcon and ContextMenu because Plugin is Missing. Probably the platform is not desktop.${Platform.operatingSystem}");
+    }
   }
 
   @override
