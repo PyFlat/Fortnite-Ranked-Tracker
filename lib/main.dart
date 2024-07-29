@@ -13,13 +13,12 @@ import 'screens/auth_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  if (await FlutterSingleInstance.platform.isFirstInstance()) {
-    runApp(MyApp());
-  } else {
-    await setShowInstance(true);
-    exit(0);
-  }
+
   if (Platform.isLinux || Platform.isWindows || Platform.isMacOS) {
+    if (!(await FlutterSingleInstance.platform.isFirstInstance())) {
+      await setShowInstance(true);
+      exit(0);
+    }
     await windowManager.ensureInitialized();
     windowManager.setPreventClose(true);
 
@@ -34,9 +33,8 @@ void main() async {
       await windowManager.focus();
     });
   }
-
   runApp(
-    MyApp(),
+    const MyApp(),
   );
 }
 
