@@ -145,7 +145,11 @@ class DataBase {
         (account) => account["accountId"] == accountId,
         orElse: () => <String, dynamic>{},
       );
-      updateAccountData(brAccount);
+      if (brAccount.isEmpty) {
+        accountData.remove("Battle Royale");
+      } else {
+        updateAccountData(brAccount);
+      }
 
       var zbAccount = zbAccounts.firstWhere(
         (account) => account["accountId"] == accountId,

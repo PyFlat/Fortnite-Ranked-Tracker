@@ -141,7 +141,10 @@ class HomeScreenState extends State<HomeScreen> {
     if (dataChangedBool) {
       for (final (index, rankMode) in _rankedModes.indexed) {
         if (newData[rankMode].toString() != oldData[rankMode].toString()) {
-          if (newData[rankMode]["DailyMatches"] == "0") {
+          if (!newData.containsKey(rankMode) ||
+              newData[rankMode]["DailyMatches"] == "0" ||
+              newData[rankMode]["LastProgress"] == "-" ||
+              newData[rankMode]["LastProgress"] == null) {
             dataChanged = -1;
           } else {
             dataChanged = index;
@@ -197,6 +200,8 @@ class HomeScreenState extends State<HomeScreen> {
                   : -1;
 
               bool hasChanged = dataChanged >= 0;
+
+              print(dataChanged);
 
               int progressionDifference = hasChanged
                   ? _getProgressionDifference(
