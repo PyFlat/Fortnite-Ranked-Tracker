@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:dio/dio.dart';
+import 'package:fortnite_ranked_tracker/core/auth_provider.dart';
 import 'package:talker_dio_logger/talker_dio_logger.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 
@@ -11,7 +12,7 @@ class ApiService {
   static final ApiService _instance = ApiService._();
   factory ApiService() => _instance;
 
-  Future<void> init(Talker talker) async {
+  Future<void> init(Talker talker, AuthProvider authProvider) async {
     if (!_isInitialized) {
       _dio = Dio();
       _dio.interceptors.add(
@@ -27,6 +28,8 @@ class ApiService {
               if (responseObject != null) {
                 if (responseObject.statusCode == 404) {
                   return responseObject.data["numericErrorCode"] != 18007;
+                } else if (responseObject.statusCode == 401) {
+                  authProvider.initializeAuth(force: true);
                 }
                 return responseObject.statusCode != 429;
               }

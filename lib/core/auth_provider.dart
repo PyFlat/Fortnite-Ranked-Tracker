@@ -23,16 +23,16 @@ class AuthProvider with ChangeNotifier {
 
   String get accountId => _accountId;
 
-  Future<void> initializeAuth() async {
-    if (!_isInitialized) {
-      await _initAuth();
+  Future<void> initializeAuth({bool force = false}) async {
+    if (!_isInitialized || force) {
+      await _initAuth(force: force);
     }
   }
 
-  Future<void> _initAuth() async {
+  Future<void> _initAuth({bool force = false}) async {
     try {
       final authData = await _loadAuthData();
-      if (_accessToken.isEmpty) {
+      if (_accessToken.isEmpty || force) {
         await _authenticate(authData);
       }
       _accountId = authData["account_id"];

@@ -39,7 +39,7 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   Future<void> _initializeRankService() async {
-    await ApiService().init(widget.talker);
+    await ApiService().init(widget.talker, widget.authProvider);
     await RankService().init(widget.authProvider);
   }
 
