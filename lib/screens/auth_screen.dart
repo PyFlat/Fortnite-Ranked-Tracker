@@ -64,13 +64,11 @@ class _AuthScreenState extends State<AuthScreen> {
     String accessToken = jsonObject["access_token"];
     String accountId = jsonObject["account_id"];
 
-    final params = [accountId];
-
-    String url = ApiService.interpolate(Endpoints.createDeviceAuth, params);
-
     String bearerAuth = "bearer $accessToken";
 
-    response = await ApiService.postData(url, null, bearerAuth, "");
+    response = await ApiService.postData(
+        Endpoints.createDeviceAuth, null, bearerAuth, "",
+        pathParams: {"accountId": accountId});
 
     jsonObject = jsonDecode(response);
 

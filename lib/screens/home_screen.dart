@@ -201,8 +201,6 @@ class HomeScreenState extends State<HomeScreen> {
 
               bool hasChanged = dataChanged >= 0;
 
-              print(dataChanged);
-
               int progressionDifference = hasChanged
                   ? _getProgressionDifference(
                       item, _previousData[i], _rankedModes[dataChanged])

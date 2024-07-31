@@ -74,10 +74,9 @@ class RankService {
   Future<List<String>> _fetchSeasonTracks() async {
     List<String> tracks = ["", "", ""];
 
-    String url = ApiService.interpolate(
-        Endpoints.activeTracks, ["${DateTime.now().toIso8601String()}Z"]);
-
-    String result = await ApiService.getData(url, getBasicAuthHeader());
+    String result = await ApiService.getData(
+        Endpoints.activeTracks, getBasicAuthHeader(),
+        pathParams: {'activeBy': "${DateTime.now().toIso8601String()}Z"});
 
     dynamic jsonObject = jsonDecode(result);
 
@@ -277,11 +276,10 @@ class RankService {
 
       for (List<String> chunk in chunks) {
         Map<String, dynamic> accountIds = {'accountIds': chunk};
-        String bulkProgressUrl =
-            ApiService.interpolate(Endpoints.bulkProgress, [tracks[i]]);
         try {
-          String result = await ApiService.postData(bulkProgressUrl,
-              jsonEncode(accountIds), getBasicAuthHeader(), Constants.dataJson);
+          String result = await ApiService.postData(Endpoints.bulkProgress,
+              jsonEncode(accountIds), getBasicAuthHeader(), Constants.dataJson,
+              pathParams: {"trackguid": tracks[i]});
           storeRankData(jsonDecode(result));
         } catch (e) {
           print('Failed to post data: $e');
@@ -296,13 +294,10 @@ class RankService {
   }
 
   Future<List<dynamic>> getSingleProgress(String accountId) async {
-    List<String> pathParams = [
-      accountId,
-      "${DateTime.now().toIso8601String()}Z"
-    ];
-    String url = ApiService.interpolate(Endpoints.singleProgress, pathParams);
-
-    String result = await ApiService.getData(url, getBasicAuthHeader());
+    String result = await ApiService.getData(
+        Endpoints.singleProgress, getBasicAuthHeader(),
+        pathParams: {"accountId": accountId},
+        queryParams: {"endsAfter": "${DateTime.now().toIso8601String()}Z"});
 
     return jsonDecode(result);
   }
@@ -354,9 +349,11 @@ class RankService {
 
   Future<List<Map<String, String>>> _fetchResultsByPlatform(
       String platform, String query) async {
-    final pathParams = [authProvider.accountId, platform, query];
-    final url = ApiService.interpolate(Endpoints.userSearch, pathParams);
-    final response = await ApiService.getData(url, getBasicAuthHeader());
+    final response = await ApiService.getData(
+        Endpoints.userSearch, getBasicAuthHeader(),
+        pathParams: {"accountId": authProvider.accountId},
+        queryParams: {"platform": platform, "prefix": query});
+
     if (!response.contains("StatusCode:")) {
       final List<dynamic> jsonObject = jsonDecode(response);
 
@@ -373,8 +370,9 @@ class RankService {
   }
 
   Future<Map<String, String>> _fetchByAccountId(String accountId) async {
-    final url = ApiService.interpolate(Endpoints.userByAccId, [accountId]);
-    final response = await ApiService.getData(url, getBasicAuthHeader());
+    final response = await ApiService.getData(
+        Endpoints.userByAccId, getBasicAuthHeader(),
+        queryParams: {"accountId": accountId});
     Map<String, dynamic> jsonObj = jsonDecode(response)[0];
     if (jsonObj.containsKey("displayName")) {
       return {
@@ -405,14 +403,16 @@ class RankService {
   Future<Map<String, String>> _fetchDisplayNameByPlatform(
       String displayName, String platform) async {
     String url;
+    Map<String, String> pathParams;
     if (platform != "epic") {
-      final pathParams = [platform, displayName];
-      url = ApiService.interpolate(Endpoints.userByNameExt, pathParams);
+      url = Endpoints.userByNameExt;
+      pathParams = {"authType": platform, "displayName": displayName};
     } else {
-      final pathParams = [displayName];
-      url = ApiService.interpolate(Endpoints.userByName, pathParams);
+      url = Endpoints.userByName;
+      pathParams = {"displayName": displayName};
     }
-    final response = await ApiService.getData(url, getBasicAuthHeader());
+    final response = await ApiService.getData(url, getBasicAuthHeader(),
+        pathParams: pathParams);
 
     if (!response.contains("StatusCode:") && response != "[]") {
       final dynamic jsonObject = jsonDecode(response);
