@@ -56,21 +56,17 @@ class _AuthScreenState extends State<AuthScreen> {
       "grant_type": "authorization_code",
       "code": authorizationcode,
     };
-    String response = await ApiService.postData(Endpoints.authenticate, body,
-        Constants.basicAuth, Constants.dataUrlEncoded);
-
-    Map<String, dynamic> jsonObject = jsonDecode(response);
+    dynamic jsonObject = await ApiService().postData(Endpoints.authenticate,
+        body, Constants.basicAuth, Constants.dataUrlEncoded);
 
     String accessToken = jsonObject["access_token"];
     String accountId = jsonObject["account_id"];
 
     String bearerAuth = "bearer $accessToken";
 
-    response = await ApiService.postData(
+    jsonObject = await ApiService().postData(
         Endpoints.createDeviceAuth, null, bearerAuth, "",
         pathParams: {"accountId": accountId});
-
-    jsonObject = jsonDecode(response);
 
     Map<String, String> deviceDataJson = {
       "grant_type": "device_auth",

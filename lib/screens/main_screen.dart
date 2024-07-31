@@ -1,5 +1,7 @@
+import 'package:fortnite_ranked_tracker/core/api_service.dart';
 import 'package:fortnite_ranked_tracker/core/auth_provider.dart';
 import 'package:fortnite_ranked_tracker/screens/graph_screen.dart';
+import 'package:talker_flutter/talker_flutter.dart';
 
 import '../core/rank_service.dart';
 import '../screens/home_screen.dart';
@@ -9,8 +11,10 @@ import 'settings_screen.dart';
 
 class MainScreen extends StatefulWidget {
   final AuthProvider authProvider;
+  final Talker talker;
 
-  const MainScreen({super.key, required this.authProvider});
+  const MainScreen(
+      {super.key, required this.authProvider, required this.talker});
 
   @override
   _MainScreenState createState() => _MainScreenState();
@@ -35,6 +39,7 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   Future<void> _initializeRankService() async {
+    await ApiService().init(widget.talker);
     await RankService().init(widget.authProvider);
   }
 
@@ -53,8 +58,8 @@ class _MainScreenState extends State<MainScreen> {
         actions: [
           Padding(
             padding: const EdgeInsets.all(8.0),
-            child: IconButton.filled(
-                isSelected: false,
+            child: IconButton(
+                tooltip: "Settings",
                 onPressed: () {
                   Navigator.push(
                       context,
@@ -62,6 +67,19 @@ class _MainScreenState extends State<MainScreen> {
                           builder: (context) => SettingsScreen()));
                 },
                 icon: const Icon(Icons.settings)),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: IconButton(
+                tooltip: "Logs",
+                onPressed: () {
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) =>
+                              TalkerScreen(talker: widget.talker)));
+                },
+                icon: const Icon(Icons.my_library_books)),
           )
         ],
       ),
@@ -71,7 +89,7 @@ class _MainScreenState extends State<MainScreen> {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return Center(child: CircularProgressIndicator());
           } else if (snapshot.hasError) {
-            return Center(child: Text('Error initializing app'));
+            return Center(child: Text(snapshot.error.toString()));
           } else {
             return Center(child: _widgetOptions.elementAt(_selectedIndex));
           }

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_single_instance/flutter_single_instance.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:talker_flutter/talker_flutter.dart';
 import 'package:tray_manager/tray_manager.dart';
 import 'package:window_manager/window_manager.dart';
 import 'core/auth_provider.dart';
@@ -12,29 +13,37 @@ import 'screens/main_screen.dart';
 import 'screens/auth_screen.dart';
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+  final talker =
+      TalkerFlutter.init(settings: TalkerSettings(useConsoleLogs: false));
+  talker.verbose("Talker initialization completed");
+  await runZonedGuarded(
+    () async {
+      WidgetsFlutterBinding.ensureInitialized();
 
-  if (Platform.isLinux || Platform.isWindows || Platform.isMacOS) {
-    if (!(await FlutterSingleInstance.platform.isFirstInstance())) {
-      await setShowInstance(true);
-      exit(0);
-    }
-    await windowManager.ensureInitialized();
-    windowManager.setPreventClose(true);
+      if (Platform.isLinux || Platform.isWindows || Platform.isMacOS) {
+        if (!(await FlutterSingleInstance.platform.isFirstInstance())) {
+          await setShowInstance(true);
+          exit(0);
+        }
+        await windowManager.ensureInitialized();
+        windowManager.setPreventClose(true);
 
-    WindowOptions windowOptions = const WindowOptions(
-      center: true,
-      backgroundColor: Colors.transparent,
-      skipTaskbar: false,
-      titleBarStyle: TitleBarStyle.normal,
-    );
-    windowManager.waitUntilReadyToShow(windowOptions, () async {
-      await windowManager.show();
-      await windowManager.focus();
-    });
-  }
-  runApp(
-    const MyApp(),
+        WindowOptions windowOptions = const WindowOptions(
+          center: true,
+          backgroundColor: Colors.transparent,
+          skipTaskbar: false,
+          titleBarStyle: TitleBarStyle.normal,
+        );
+        windowManager.waitUntilReadyToShow(windowOptions, () async {
+          await windowManager.show();
+          await windowManager.focus();
+        });
+      }
+      runApp(MyApp(talker: talker));
+    },
+    (Object error, StackTrace stack) {
+      talker.handle(error, stack, 'Uncaught app exception');
+    },
   );
 }
 
@@ -62,7 +71,9 @@ Future<bool> getShowInstance() async {
 }
 
 class MyApp extends StatefulWidget {
-  const MyApp({super.key});
+  const MyApp({super.key, required this.talker});
+
+  final Talker talker;
 
   @override
   State<MyApp> createState() => _MyAppState();
@@ -142,17 +153,20 @@ class _MyAppState extends State<MyApp> with TrayListener, WindowListener {
         ChangeNotifierProvider(create: (_) => AuthProvider()),
       ],
       child: MaterialApp(
+        navigatorObservers: [TalkerRouteObserver(widget.talker)],
         theme: ThemeData.dark(),
         debugShowCheckedModeBanner: false,
         title: 'Fortnite Ranked Tracker',
-        home: const AuthenticationHandler(),
+        home: AuthenticationHandler(talker: widget.talker),
       ),
     );
   }
 }
 
 class AuthenticationHandler extends StatelessWidget {
-  const AuthenticationHandler({super.key});
+  const AuthenticationHandler({super.key, required this.talker});
+
+  final Talker talker;
 
   @override
   Widget build(BuildContext context) {
@@ -164,7 +178,7 @@ class AuthenticationHandler extends StatelessWidget {
           authResultSnapshot.connectionState == ConnectionState.waiting
               ? const SplashScreen()
               : authProvider.accessToken.isNotEmpty
-                  ? MainScreen(authProvider: authProvider)
+                  ? MainScreen(authProvider: authProvider, talker: talker)
                   : const AuthScreen(),
     );
   }

@@ -1,9 +1,46 @@
 import 'dart:async';
-import 'dart:convert';
 import 'package:dio/dio.dart';
+import 'package:talker_dio_logger/talker_dio_logger.dart';
+import 'package:talker_flutter/talker_flutter.dart';
 
 class ApiService {
-  static String addPathParams(String template, Map<String, String> pathParams) {
+  bool _isInitialized = false;
+  late Dio _dio;
+
+  ApiService._();
+  static final ApiService _instance = ApiService._();
+  factory ApiService() => _instance;
+
+  Future<void> init(Talker talker) async {
+    if (!_isInitialized) {
+      _dio = Dio();
+      _dio.interceptors.add(
+        TalkerDioLogger(
+          talker: talker,
+          settings: TalkerDioLoggerSettings(
+            printRequestHeaders: false,
+            printResponseHeaders: false,
+            printRequestData: false,
+            printResponseData: false,
+            errorFilter: (response) {
+              Response? responseObject = response.response;
+              if (responseObject != null) {
+                if (responseObject.statusCode == 404) {
+                  return responseObject.data["numericErrorCode"] != 18007;
+                }
+                return responseObject.statusCode != 429;
+              }
+              return true;
+            },
+          ),
+        ),
+      );
+
+      _isInitialized = true;
+    }
+  }
+
+  String addPathParams(String template, Map<String, String> pathParams) {
     String formattedUrl = template;
     pathParams.forEach((key, value) {
       formattedUrl = formattedUrl.replaceAll('{$key}', value);
@@ -11,15 +48,7 @@ class ApiService {
     return formattedUrl;
   }
 
-  static String interpolate(String string, List<String> params) {
-    String result = string;
-    for (int i = 0; i < params.length; i++) {
-      result = result.replaceAll('%${i + 1}\$', params[i]);
-    }
-    return result;
-  }
-
-  static Future<String> postData(
+  Future<dynamic> postData(
       String url, dynamic body, String headerAuthorization, String contentType,
       {Map<String, String> pathParams = const {},
       Map<String, String> queryParams = const {}}) async {
@@ -33,47 +62,43 @@ class ApiService {
     String urlEnd = pathParams.isEmpty ? url : addPathParams(url, pathParams);
 
     try {
-      final response = await Dio().post(urlEnd,
+      final response = await _dio.post(urlEnd,
           queryParameters: queryParams,
-          options: Options(headers: headers, responseType: ResponseType.bytes),
+          options: Options(headers: headers, responseType: ResponseType.json),
           data: body);
 
-      if (response.statusCode == 200) {
-        return utf8.decode(response.data);
-      } else {
-        return "Error occurred: ${utf8.decode(response.data)}";
-      }
+      return response.data;
     } on DioException catch (e) {
       if (e.response != null) {
-        print(utf8.decode(e.response!.data));
+        //print(e.response!.data);
       } else {
         print(e.message);
       }
-      return "[]";
+      return [];
     }
   }
 
-  static Future<String> getData(String url, String headerAuthorization,
+  Future<dynamic> getData(String url, String headerAuthorization,
       {Map<String, String> pathParams = const {},
       Map<String, String> queryParams = const {}}) async {
     String urlEnd = pathParams.isEmpty ? url : addPathParams(url, pathParams);
     Response response;
     try {
-      response = await Dio().get(
+      response = await _dio.get(
         urlEnd,
         queryParameters: queryParams,
         options: Options(
             headers: {"Authorization": headerAuthorization},
-            responseType: ResponseType.bytes),
+            responseType: ResponseType.json),
       );
-      return utf8.decode(response.data);
+      return response.data;
     } on DioException catch (e) {
       if (e.response != null) {
-        print(utf8.decode(e.response!.data));
+        //print(e.response!.data);
       } else {
         print(e.message);
       }
-      return "[]";
+      return [];
     }
   }
 }

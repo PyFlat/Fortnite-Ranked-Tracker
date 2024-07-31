@@ -61,8 +61,8 @@ class RankService {
   }
 
   Future<String> _fetchCurrentSeason() async {
-    String response = await ApiService.getData(Endpoints.battlePassData, "");
-    String slug = jsonDecode(response)["slug"];
+    Map response = await ApiService().getData(Endpoints.battlePassData, "");
+    String slug = response["slug"];
     RegExp regExp = RegExp(r"(\D)(\d)");
 
     String replacedSlug = slug.replaceAllMapped(regExp, (Match match) {
@@ -74,11 +74,9 @@ class RankService {
   Future<List<String>> _fetchSeasonTracks() async {
     List<String> tracks = ["", "", ""];
 
-    String result = await ApiService.getData(
+    dynamic jsonObject = await ApiService().getData(
         Endpoints.activeTracks, getBasicAuthHeader(),
         pathParams: {'activeBy': "${DateTime.now().toIso8601String()}Z"});
-
-    dynamic jsonObject = jsonDecode(result);
 
     Map<String, int> rankingTypeToIndex = {
       "ranked-br": 0,
@@ -248,15 +246,18 @@ class RankService {
 
   Future<void> checkDisplayNames() async {
     for (int i = 0; i < 3; i++) {
-      for (final oldData in await _database.getAccountDataByType(
-          i, "accountId, displayName", true)) {
-        Map<String, String> newData =
-            await _fetchByAccountId(oldData["accountId"]);
+      final accountDataList = await _database.getAccountDataByType(
+          i, "accountId, displayName", true);
+
+      final updateFutures = accountDataList.map((oldData) async {
+        final newData = await _fetchByAccountId(oldData["accountId"]);
         if (oldData["displayName"] != newData["displayName"]) {
-          _database.updatePlayerName(
+          await _database.updatePlayerName(
               i, newData["accountId"]!, newData["displayName"]!);
         }
-      }
+      }).toList();
+
+      await Future.wait(updateFutures);
     }
   }
 
@@ -277,10 +278,10 @@ class RankService {
       for (List<String> chunk in chunks) {
         Map<String, dynamic> accountIds = {'accountIds': chunk};
         try {
-          String result = await ApiService.postData(Endpoints.bulkProgress,
+          dynamic result = await ApiService().postData(Endpoints.bulkProgress,
               jsonEncode(accountIds), getBasicAuthHeader(), Constants.dataJson,
               pathParams: {"trackguid": tracks[i]});
-          storeRankData(jsonDecode(result));
+          storeRankData(result);
         } catch (e) {
           print('Failed to post data: $e');
         }
@@ -294,12 +295,12 @@ class RankService {
   }
 
   Future<List<dynamic>> getSingleProgress(String accountId) async {
-    String result = await ApiService.getData(
+    dynamic result = await ApiService().getData(
         Endpoints.singleProgress, getBasicAuthHeader(),
         pathParams: {"accountId": accountId},
         queryParams: {"endsAfter": "${DateTime.now().toIso8601String()}Z"});
 
-    return jsonDecode(result);
+    return result;
   }
 
   Future<void> storeRankData(List<dynamic> data) async {
@@ -349,14 +350,12 @@ class RankService {
 
   Future<List<Map<String, String>>> _fetchResultsByPlatform(
       String platform, String query) async {
-    final response = await ApiService.getData(
+    List jsonObject = await ApiService().getData(
         Endpoints.userSearch, getBasicAuthHeader(),
         pathParams: {"accountId": authProvider.accountId},
         queryParams: {"platform": platform, "prefix": query});
 
-    if (!response.contains("StatusCode:")) {
-      final List<dynamic> jsonObject = jsonDecode(response);
-
+    if (!jsonObject.contains("StatusCode:")) {
       return jsonObject.map((item) {
         final match = item['matches'][0];
         return {
@@ -370,10 +369,9 @@ class RankService {
   }
 
   Future<Map<String, String>> _fetchByAccountId(String accountId) async {
-    final response = await ApiService.getData(
+    Map<String, dynamic> jsonObj = (await ApiService().getData(
         Endpoints.userByAccId, getBasicAuthHeader(),
-        queryParams: {"accountId": accountId});
-    Map<String, dynamic> jsonObj = jsonDecode(response)[0];
+        queryParams: {"accountId": accountId}) as List<dynamic>)[0];
     if (jsonObj.containsKey("displayName")) {
       return {
         'accountId': jsonObj["id"] as String,
@@ -411,11 +409,10 @@ class RankService {
       url = Endpoints.userByName;
       pathParams = {"displayName": displayName};
     }
-    final response = await ApiService.getData(url, getBasicAuthHeader(),
-        pathParams: pathParams);
+    dynamic jsonObject = await ApiService()
+        .getData(url, getBasicAuthHeader(), pathParams: pathParams);
 
-    if (!response.contains("StatusCode:") && response != "[]") {
-      final dynamic jsonObject = jsonDecode(response);
+    if (jsonObject.isNotEmpty) {
       if (platform == "epic") {
         return {
           "accountId": jsonObject["id"] as String,
