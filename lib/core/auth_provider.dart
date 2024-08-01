@@ -10,6 +10,7 @@ import '../constants/constants.dart';
 class AuthProvider with ChangeNotifier {
   late String _accessToken;
   late String _accountId;
+  late String _displayName;
   late String _refreshToken;
   Timer? _refreshTimer; // Make this nullable to handle initial state
   bool _isInitialized = false;
@@ -22,6 +23,8 @@ class AuthProvider with ChangeNotifier {
   String get accessToken => _accessToken;
 
   String get accountId => _accountId;
+
+  String get displayName => _displayName;
 
   Future<void> initializeAuth({bool force = false}) async {
     if (!_isInitialized || force) {
@@ -65,9 +68,10 @@ class AuthProvider with ChangeNotifier {
     );
 
     if (response.statusCode == 200) {
-      final responseData = jsonDecode(response.body);
+      final responseData = jsonDecode(utf8.decode(response.bodyBytes));
       _accessToken = responseData['access_token'];
       _refreshToken = responseData['refresh_token'];
+      _displayName = responseData['displayName'];
       notifyListeners();
     } else {
       throw Exception('Failed to authenticate');

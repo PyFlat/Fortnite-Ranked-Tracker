@@ -31,4 +31,10 @@ class Endpoints {
 
   static const String battlePassData =
       "https://www.fortnite.com/en-US/api/battle-pass-data";
+
+  static const String accountAvatar =
+      "https://avatar-service-prod.identity.live.on.epicgames.com/v1/avatar/fortnite/ids";
+
+  static const String skinIcon =
+      "https://fortnite-api.com/images/cosmetics/br/{skinId}/smallicon.png";
 }

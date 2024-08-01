@@ -22,6 +22,8 @@ class RankService {
   final int chunkSize = 25;
   Timer _refreshTimer = Timer(Duration.zero, () {});
   Timer _refreshNameTimer = Timer(Duration.zero, () {});
+  String accountAvatar = "";
+  String accountDisplayName = "";
 
   final _rankUpdateController = StreamController<void>.broadcast();
 
@@ -58,6 +60,26 @@ class RankService {
 
   String getBasicAuthHeader() {
     return "Bearer ${authProvider.accessToken}";
+  }
+
+  Future<String> getAccountAvatar() async {
+    if (accountAvatar.isEmpty) {
+      List response = await ApiService().getData(
+          Endpoints.accountAvatar, getBasicAuthHeader(),
+          queryParams: {"accountIds": authProvider.accountId});
+      String characterId = (response[0]["avatarId"] as String).split(":")[1];
+      accountAvatar = ApiService()
+          .addPathParams(Endpoints.skinIcon, {"skinId": characterId});
+    }
+    return accountAvatar;
+  }
+
+  Future<String> getDisplayName() async {
+    if (accountDisplayName.isEmpty) {
+      Map response = await _fetchByAccountId(authProvider.accountId);
+      accountDisplayName = response["displayName"];
+    }
+    return accountDisplayName;
   }
 
   Future<String> _fetchCurrentSeason() async {
