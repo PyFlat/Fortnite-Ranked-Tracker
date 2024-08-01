@@ -26,7 +26,7 @@ class _MainScreenState extends State<MainScreen> {
 
   List<Widget> get _widgetOptions {
     return <Widget>[
-      HomeScreen(),
+      HomeScreen(talker: widget.talker),
       GraphScreen(),
       PlaceholderScreen(title: 'Page 4'),
     ];

@@ -179,7 +179,7 @@ class AuthenticationHandler extends StatelessWidget {
               ? const SplashScreen()
               : authProvider.accessToken.isNotEmpty
                   ? MainScreen(authProvider: authProvider, talker: talker)
-                  : const AuthScreen(),
+                  : AuthScreen(talker: talker),
     );
   }
 }

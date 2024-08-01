@@ -1,3 +1,5 @@
+import 'package:talker_flutter/talker_flutter.dart';
+
 import '../core/rank_service.dart';
 import '../core/utils.dart';
 
@@ -8,7 +10,8 @@ import 'package:flutter/material.dart';
 import 'search_screen.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  final Talker talker;
+  const HomeScreen({super.key, required this.talker});
 
   @override
   HomeScreenState createState() => HomeScreenState();
@@ -125,7 +128,7 @@ class HomeScreenState extends State<HomeScreen> {
               "RankProgressionText": progressText
             };
           } catch (e) {
-            print(
+            widget.talker.error(
                 "Error updating $accountType for account ${account['AccountId']}: $e");
           }
         }
@@ -142,7 +145,7 @@ class HomeScreenState extends State<HomeScreen> {
       for (final (index, rankMode) in _rankedModes.indexed) {
         if (newData[rankMode].toString() != oldData[rankMode].toString()) {
           if (!newData.containsKey(rankMode) ||
-              newData[rankMode]["DailyMatches"] == "0" ||
+              newData[rankMode]["DailyMatches"] == 0 ||
               newData[rankMode]["LastProgress"] == "-" ||
               newData[rankMode]["LastProgress"] == null) {
             dataChanged = -1;

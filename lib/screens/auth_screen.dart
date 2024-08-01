@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:talker_flutter/talker_flutter.dart';
+
 import '../constants/constants.dart';
 import '../constants/endpoints.dart';
 import '../core/auth_provider.dart';
@@ -12,7 +14,8 @@ import 'package:provider/provider.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 class AuthScreen extends StatefulWidget {
-  const AuthScreen({super.key});
+  final Talker talker;
+  const AuthScreen({super.key, required this.talker});
 
   @override
   State<AuthScreen> createState() => _AuthScreenState();
@@ -84,7 +87,9 @@ class _AuthScreenState extends State<AuthScreen> {
 
     if (mounted) {
       Navigator.pushReplacement(
-          context, MaterialPageRoute(builder: (context) => const HomeScreen()));
+          context,
+          MaterialPageRoute(
+              builder: (context) => HomeScreen(talker: widget.talker)));
     }
 
     _isAuthorizationInProgress = false;
