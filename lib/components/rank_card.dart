@@ -10,6 +10,7 @@ class RankCard extends StatefulWidget {
   final String? accountId;
   final bool showMenu;
   final bool showSwitches;
+  final String? accountAvatar;
 
   final String? battleRoyaleProgressText;
   final double? battleRoyaleProgress;
@@ -51,6 +52,7 @@ class RankCard extends StatefulWidget {
     super.key,
     required this.displayName,
     this.accountId,
+    this.accountAvatar,
     required this.showMenu,
     required this.showSwitches,
     this.battleRoyaleProgressText,
@@ -131,14 +133,24 @@ class RankCardState extends State<RankCard>
               padding: const EdgeInsets.all(15.0),
               child: Row(
                 children: [
-                  Text(
-                    widget.displayName,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 20,
+                  if (widget.accountAvatar != null)
+                    CircleAvatar(
+                      radius: 25,
+                      backgroundImage: NetworkImage(widget.accountAvatar!),
+                    ),
+                  const SizedBox(
+                    width: 24,
+                  ),
+                  Expanded(
+                    child: Text(
+                      widget.displayName,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 20,
+                      ),
                     ),
                   ),
-                  Spacer(),
                   if (widget.showMenu)
                     PopupMenuButton<String>(
                       shape: RoundedRectangleBorder(

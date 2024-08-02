@@ -1,3 +1,5 @@
+import 'package:fortnite_ranked_tracker/constants/endpoints.dart';
+import 'package:fortnite_ranked_tracker/core/api_service.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 
 import '../core/rank_service.dart';
@@ -60,11 +62,23 @@ class HomeScreenState extends State<HomeScreen> {
       "Zero Build": "zb",
       "Rocket Racing": "rr"
     };
+    List<String> accountIds =
+        data.map((item) => item['AccountId'] as String).toList();
+
+    String joinedAccountIds = accountIds.join(',');
+
+    Map<String, String> avatarImages =
+        await RankService().getAccountAvatarById(joinedAccountIds);
 
     for (Map<String, dynamic> account in data) {
       for (var entry in accountTypes.entries) {
         String accountType = entry.key;
         String typeCode = entry.value;
+        String? avatarURL = avatarImages[account["AccountId"]];
+        account["AccountAvatar"] = avatarURL != null
+            ? avatarImages[account["AccountId"]]
+            : ApiService().addPathParams(Endpoints.skinIcon,
+                {"skinId": "CID_A_402_Athena_Commando_F_RebirthFresh"});
 
         if (account.containsKey(accountType)) {
           try {
