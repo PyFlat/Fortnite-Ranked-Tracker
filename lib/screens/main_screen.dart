@@ -288,9 +288,8 @@ class _MainScreenState extends State<MainScreen> {
                               Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                      builder: (context) => DatabaseScreen(
-                                          talker: widget.talker,
-                                          account: account)));
+                                      builder: (context) =>
+                                          DatabaseScreen(account: account)));
                             },
                             leading: CircleAvatar(
                               backgroundImage:

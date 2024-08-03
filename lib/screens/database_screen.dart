@@ -1,15 +1,13 @@
 import 'package:data_table_2/data_table_2.dart';
 import 'package:flutter/material.dart';
-import 'package:fortnite_ranked_tracker/core/utils.dart'; // Ensure this import is correct
+import '../core/utils.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import '../core/database.dart';
-import 'package:talker_flutter/talker_flutter.dart';
 
 class DatabaseScreen extends StatefulWidget {
-  final Talker talker;
   final Map<String, dynamic> account;
 
-  DatabaseScreen({super.key, required this.talker, required this.account});
+  DatabaseScreen({super.key, required this.account});
 
   @override
   State<DatabaseScreen> createState() => _DatabaseScreenState();
@@ -17,13 +15,12 @@ class DatabaseScreen extends StatefulWidget {
 
 class _DatabaseScreenState extends State<DatabaseScreen> {
   final DataBase _database = DataBase();
-  String? _currentSeason; // No default season, it's now nullable
+  String? _currentSeason;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (_currentSeason == null) {
-      // Only open the bottom sheet if a season hasn't been selected
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _openSeasonBottomSheet();
       });
@@ -60,11 +57,11 @@ class _DatabaseScreenState extends State<DatabaseScreen> {
   }
 
   final List<String> columns = <String>[
-    "ID",
+    "Match Id",
     "Datetime",
     "Rank",
     "Progress",
-    "Daily Match ID",
+    "Daily Match Id",
     "Total Progress"
   ];
 
@@ -77,17 +74,17 @@ class _DatabaseScreenState extends State<DatabaseScreen> {
           builder:
               (BuildContext context, AsyncSnapshot<List<String>> snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return Center(child: CircularProgressIndicator());
+              return const Center(child: CircularProgressIndicator());
             } else if (snapshot.hasError) {
               return Center(child: Text('Error: ${snapshot.error}'));
             } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-              return Center(child: Text('No seasons available'));
+              return const Center(child: Text('No seasons available'));
             } else {
               final seasons = snapshot.data!;
               return Column(
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.all(16.0),
+                  const Padding(
+                    padding: EdgeInsets.all(16.0),
                     child: Text(
                       "Select Season",
                       style: TextStyle(
@@ -127,9 +124,7 @@ class _DatabaseScreenState extends State<DatabaseScreen> {
   }
 
   void _refreshData() {
-    setState(() {
-      // Triggers a rebuild of the screen with updated data
-    });
+    setState(() {});
   }
 
   @override
@@ -137,53 +132,58 @@ class _DatabaseScreenState extends State<DatabaseScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text("Database of ${widget.account["displayName"]}"),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.refresh),
-            onPressed: _refreshData,
-            tooltip: "Refresh Data",
-          ),
-        ],
       ),
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.start,
+            padding: const EdgeInsets.only(left: 24.0, right: 24.0, top: 12.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: Builder(
-                    builder: (context) {
-                      final seasonInfo = _currentSeason != null
-                          ? splitAndPrettifySeasonString(_currentSeason!)
-                          : null;
+                Builder(
+                  builder: (context) {
+                    final seasonInfo = _currentSeason != null
+                        ? splitAndPrettifySeasonString(_currentSeason!)
+                        : null;
 
-                      final displayText = seasonInfo != null
-                          ? "Season ${seasonInfo["season"]!}: ${seasonInfo["mode"]!}"
-                          : "Select a Season";
+                    final displayText = seasonInfo != null
+                        ? "Season: ${seasonInfo["season"]!} - ${seasonInfo["mode"]!}"
+                        : "Select a Season";
 
-                      return Text(
-                        displayText,
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      );
-                    },
-                  ),
+                    return Text(
+                      displayText,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    );
+                  },
                 ),
-                ElevatedButton(
-                  onPressed: _openSeasonBottomSheet,
-                  child: Text("Change Season"),
+                SizedBox(
+                  height: 12,
                 ),
-                Spacer(),
+                Row(
+                  children: [
+                    TextButton(
+                      onPressed: _openSeasonBottomSheet,
+                      child: const Text("Change Season"),
+                    ),
+                    SizedBox(
+                      width: 24,
+                    ),
+                    FilledButton.icon(
+                      icon: Icon(Icons.refresh),
+                      onPressed: _refreshData,
+                      label: const Text("Refresh"),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),
           Expanded(
             child: _currentSeason == null
-                ? Center(child: Text("Please select a season"))
+                ? const Center(child: Text("Please select a season"))
                 : FutureBuilder<Map<String, dynamic>>(
                     future: _fetchSchemaAndData(),
                     builder: (BuildContext context,
@@ -208,9 +208,6 @@ class _DatabaseScreenState extends State<DatabaseScreen> {
                                     textAlign: TextAlign.center,
                                   ),
                                 ),
-                                numeric: columnName
-                                    .toLowerCase()
-                                    .contains('number'), // Adjust if needed
                               );
                             }).toList(),
                             rows: [],
@@ -241,9 +238,6 @@ class _DatabaseScreenState extends State<DatabaseScreen> {
                                     textAlign: TextAlign.center,
                                   ),
                                 ),
-                                numeric: columnName
-                                    .toLowerCase()
-                                    .contains('number'), // Adjust if needed
                               );
                             }).toList(),
                             rows: data.map<DataRow>((row) {
@@ -251,11 +245,7 @@ class _DatabaseScreenState extends State<DatabaseScreen> {
                                   cells: dbColumns.map<DataCell>((columnName) {
                                 return DataCell(Center(
                                     child: Text(
-                                  row[columnName
-                                              .toLowerCase()
-                                              .replaceAll(" ", "_")]
-                                          ?.toString() ??
-                                      '',
+                                  row[columnName]?.toString() ?? '',
                                   textAlign: TextAlign.center,
                                 )));
                               }).toList());

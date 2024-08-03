@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:fortnite_ranked_tracker/core/database.dart';
 import 'package:fortnite_ranked_tracker/core/rank_service.dart';
+import 'package:fortnite_ranked_tracker/screens/database_screen.dart';
 import 'package:percent_indicator/circular_percent_indicator.dart';
 import '../screens/search_screen.dart';
 
@@ -151,71 +152,7 @@ class RankCardState extends State<RankCard>
                       ),
                     ),
                   ),
-                  if (widget.showMenu)
-                    PopupMenuButton<String>(
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16)),
-                      onSelected: (String value) {
-                        if (value == "cpy_display_name") {
-                          _copyText(widget.displayName);
-                        } else if (value == "cpy_account_id") {
-                          _copyText(widget.accountId!);
-                        } else if (value == "open_user") {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => SearchScreen(
-                                      accountId: widget.accountId,
-                                      displayName: widget.displayName,
-                                    )),
-                          );
-                        }
-                      },
-                      itemBuilder: (BuildContext context) {
-                        return [
-                          const PopupMenuItem<String>(
-                            value: "open_user",
-                            child: Row(
-                              children: [
-                                Padding(
-                                    padding: EdgeInsets.only(right: 8.0),
-                                    child: Icon(Icons.open_in_new)),
-                                Text(
-                                  'Open User',
-                                ),
-                              ],
-                            ),
-                          ),
-                          const PopupMenuDivider(),
-                          const PopupMenuItem<String>(
-                            value: "cpy_display_name",
-                            child: Row(
-                              children: [
-                                Padding(
-                                    padding: EdgeInsets.only(right: 8.0),
-                                    child: Icon(Icons.copy)),
-                                Text(
-                                  'Copy Display Name',
-                                ),
-                              ],
-                            ),
-                          ),
-                          const PopupMenuItem<String>(
-                            value: "cpy_account_id",
-                            child: Row(
-                              children: [
-                                Padding(
-                                    padding: EdgeInsets.only(right: 8.0),
-                                    child: Icon(Icons.copy)),
-                                Text(
-                                  'Copy Account Id',
-                                ),
-                              ],
-                            ),
-                          ),
-                        ];
-                      },
-                    ),
+                  if (widget.showMenu) _buildMenu()
                 ],
               ),
             ),
@@ -307,6 +244,94 @@ class RankCardState extends State<RankCard>
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildMenu() {
+    return PopupMenuButton<String>(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      onSelected: (String value) {
+        if (value == "cpy_display_name") {
+          _copyText(widget.displayName);
+        } else if (value == "cpy_account_id") {
+          _copyText(widget.accountId!);
+        } else if (value == "open_user") {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (context) => SearchScreen(
+                      accountId: widget.accountId,
+                      displayName: widget.displayName,
+                    )),
+          );
+        } else if (value == "open_database") {
+          Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => DatabaseScreen(account: {
+                        "displayName": widget.displayName,
+                        "accountId": widget.accountId
+                      })));
+        }
+      },
+      itemBuilder: (BuildContext context) {
+        return [
+          const PopupMenuItem<String>(
+            value: "open_user",
+            child: Row(
+              children: [
+                Padding(
+                    padding: EdgeInsets.only(right: 8.0),
+                    child: Icon(Icons.open_in_new)),
+                Text(
+                  'Open User',
+                ),
+              ],
+            ),
+          ),
+          const PopupMenuDivider(),
+          const PopupMenuItem<String>(
+            value: "cpy_display_name",
+            child: Row(
+              children: [
+                Padding(
+                    padding: EdgeInsets.only(right: 8.0),
+                    child: Icon(Icons.copy)),
+                Text(
+                  'Copy Display Name',
+                ),
+              ],
+            ),
+          ),
+          const PopupMenuItem<String>(
+            value: "cpy_account_id",
+            child: Row(
+              children: [
+                Padding(
+                    padding: EdgeInsets.only(right: 8.0),
+                    child: Icon(Icons.copy)),
+                Text(
+                  'Copy Account Id',
+                ),
+              ],
+            ),
+          ),
+          const PopupMenuDivider(),
+          const PopupMenuItem<String>(
+            value: "open_database",
+            child: Row(
+              children: [
+                Padding(
+                    padding: EdgeInsets.only(right: 8.0),
+                    child: Icon(Icons.storage_rounded)),
+                Text(
+                  'Open Database',
+                ),
+              ],
+            ),
+          ),
+        ];
+      },
     );
   }
 
