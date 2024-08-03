@@ -1,5 +1,6 @@
-import 'package:fortnite_ranked_tracker/constants/endpoints.dart';
-import 'package:fortnite_ranked_tracker/core/api_service.dart';
+import '../constants/constants.dart';
+import '../constants/endpoints.dart';
+import '../core/api_service.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 
 import '../core/rank_service.dart';
@@ -77,8 +78,8 @@ class HomeScreenState extends State<HomeScreen> {
         String? avatarURL = avatarImages[account["AccountId"]];
         account["AccountAvatar"] = avatarURL != null
             ? avatarImages[account["AccountId"]]
-            : ApiService().addPathParams(Endpoints.skinIcon,
-                {"skinId": "CID_A_402_Athena_Commando_F_RebirthFresh"});
+            : ApiService().addPathParams(
+                Endpoints.skinIcon, {"skinId": Constants.defaultSkinId});
 
         if (account.containsKey(accountType)) {
           try {

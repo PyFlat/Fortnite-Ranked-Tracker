@@ -36,6 +36,12 @@ class DataBase {
     await _createTables(_db);
   }
 
+  Future<Database> openDatabase(String accountId) async {
+    var databaseFactory = databaseFactoryFfi;
+    String dbPath = join(_directory.path, "databases/$accountId.db");
+    return await databaseFactory.openDatabase(dbPath);
+  }
+
   Future<void> _createTables(Database db) async {
     List<String> types = ["battleRoyale", "zeroBuild", "rocketRacing"];
     Batch batch = db.batch();
@@ -178,7 +184,7 @@ class DataBase {
 
   Future<List<Map<String, dynamic>>> getAccountDataByType(
       int key, String columns, bool active) async {
-    await init(); // Ensure database is initialized
+    await init();
     String tableName = keys[key];
 
     int activeValue = active ? 1 : 0;
@@ -193,9 +199,9 @@ class DataBase {
     return result;
   }
 
-  Future<List<List<Map<String, dynamic>>>> getAllAccountData() async {
-    await init(); // Ensure database is initialized
-    List<List<Map<String, dynamic>>> result = [];
+  Future<List<Map<String, dynamic>>> getAllAccountData() async {
+    await init();
+    List<Map<String, dynamic>> result = [];
 
     for (int i = 0; i < 3; i++) {
       String tableName = keys[i];
@@ -203,15 +209,19 @@ class DataBase {
       List<Map<String, dynamic>> items =
           await _db.query(tableName, columns: ['displayName', 'accountId']);
 
-      result.add(items);
+      for (Map<String, dynamic> item in items) {
+        if (!result.any((map) => map["accountId"] == item["accountId"])) {
+          result.add(item);
+        }
+      }
     }
 
     return result;
   }
 
   Future<List<Map<String, dynamic>>> getFilteredAccountData() async {
-    await init(); // Ensure database is initialized
-    List<List<Map<String, dynamic>>> rawAccountData = await getAllAccountData();
+    await init();
+    List<Map<String, dynamic>> rawAccountData = await getAllAccountData();
 
     List<String> existingAccounts =
         await Directory(join(_directory.path, 'databases'))
@@ -221,16 +231,12 @@ class DataBase {
 
     List<Map<String, dynamic>> filteredData = [];
 
-    for (List<Map<String, dynamic>> data in rawAccountData) {
-      for (Map<String, dynamic> currentData in data) {
-        String accountId = currentData['accountId'];
-        if (!existingAccounts.contains('$accountId.db')) {
-          continue;
-        }
-        if (!filteredData.any((item) => item['accountId'] == accountId)) {
-          filteredData.add(currentData);
-        }
+    for (Map<String, dynamic> currentData in rawAccountData) {
+      String accountId = currentData['accountId'];
+      if (!existingAccounts.any((path) => path.contains('$accountId.db'))) {
+        continue;
       }
+      filteredData.add(currentData);
     }
 
     return filteredData;
@@ -247,5 +253,14 @@ class DataBase {
       where: 'accountId = ?',
       whereArgs: [accountId],
     );
+  }
+
+  Future<int> getTableCount(accountId) async {
+    Database database = await openDatabase(accountId);
+
+    final result = await database.rawQuery(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name != 'sqlite_sequence'");
+
+    return result.length;
   }
 }

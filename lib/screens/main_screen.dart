@@ -1,8 +1,11 @@
 import 'package:fortnite_ranked_tracker/core/api_service.dart';
 import 'package:fortnite_ranked_tracker/core/auth_provider.dart';
+import 'package:fortnite_ranked_tracker/screens/database_screen.dart';
 import 'package:fortnite_ranked_tracker/screens/graph_screen.dart';
 import 'package:talker_flutter/talker_flutter.dart';
-
+import '../constants/constants.dart';
+import '../constants/endpoints.dart';
+import '../core/database.dart';
 import '../core/rank_service.dart';
 import '../screens/home_screen.dart';
 import 'package:flutter/material.dart';
@@ -21,6 +24,9 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
+  final DataBase _database = DataBase();
+  final SearchController _searchController = SearchController();
+  final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
   int _selectedIndex = 0;
   Future<void>? _initializationFuture;
 
@@ -28,7 +34,6 @@ class _MainScreenState extends State<MainScreen> {
     return <Widget>[
       HomeScreen(talker: widget.talker),
       GraphScreen(),
-      PlaceholderScreen(title: 'Page 4'),
     ];
   }
 
@@ -47,12 +52,55 @@ class _MainScreenState extends State<MainScreen> {
     setState(() {
       _selectedIndex = index;
     });
-    Navigator.pop(context); // Close the drawer
+    Navigator.pop(context);
+  }
+
+  Future<List<Map<String, dynamic>>> _getAccounts() async {
+    List<Map<String, dynamic>> data = await _database.getFilteredAccountData();
+    List<String> accountIds =
+        data.map((item) => item['accountId'] as String).toList();
+
+    String joinedAccountIds = accountIds.join(',');
+
+    Map<String, String> avatarImages =
+        await RankService().getAccountAvatarById(joinedAccountIds);
+
+    List<Map<String, dynamic>> updatedData = [];
+
+    List<Future<void>> futures = data.map((account) async {
+      Map<String, dynamic> mutableAccount = Map.from(account);
+      String? avatarURL = avatarImages[account["accountId"]];
+      mutableAccount["accountAvatar"] = avatarURL != null
+          ? avatarImages[account["accountId"]]
+          : ApiService().addPathParams(
+              Endpoints.skinIcon, {"skinId": Constants.defaultSkinId});
+
+      mutableAccount["trackedSeasons"] =
+          await _database.getTableCount(mutableAccount["accountId"]);
+
+      updatedData.add(mutableAccount);
+    }).toList();
+
+    await Future.wait(futures);
+
+    return updatedData;
+  }
+
+  List<Map<String, dynamic>> _filterAccounts(
+      String query, List<Map<String, dynamic>> accounts) {
+    if (query.isEmpty) {
+      return accounts;
+    }
+    return accounts.where((account) {
+      final displayName = (account['displayName'] as String).toLowerCase();
+      return displayName.contains(query.toLowerCase());
+    }).toList();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      key: scaffoldKey,
       appBar: AppBar(
         title: const Text('Fortnite Ranked Tracker'),
       ),
@@ -150,14 +198,7 @@ class _MainScreenState extends State<MainScreen> {
                     title: const Text('Graph', style: TextStyle(fontSize: 16)),
                     onTap: () => _onItemTapped(1),
                   ),
-                  ListTile(
-                    leading: const Icon(Icons.storage_rounded,
-                        color: Colors.blueGrey),
-                    title:
-                        const Text('Database', style: TextStyle(fontSize: 16)),
-                    onTap: () => _onItemTapped(2),
-                  ),
-                  // Spacer to push the settings to the bottom
+                  _buildDatabaseListTile()
                 ],
               ),
             ),
@@ -186,19 +227,91 @@ class _MainScreenState extends State<MainScreen> {
       ),
     );
   }
-}
 
-class PlaceholderScreen extends StatelessWidget {
-  final String title;
+  FutureBuilder<List<Map<String, dynamic>>> _buildDatabaseListTile() {
+    return FutureBuilder<List<Map<String, dynamic>>>(
+        future: _getAccounts(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return ListTile(
+              leading:
+                  const Icon(Icons.storage_rounded, color: Colors.blueGrey),
+              title: const Text('Database', style: TextStyle(fontSize: 16)),
+              onTap: () {},
+            );
+          }
+          return SearchAnchor(
+            searchController: _searchController,
+            viewLeading: IconButton(
+              icon: const Icon(Icons.arrow_back_rounded),
+              onPressed: () {
+                scaffoldKey.currentState!.closeDrawer();
 
-  PlaceholderScreen({required this.title});
+                setState(() {
+                  _searchController.closeView("");
+                });
+              },
+            ),
+            isFullScreen: true,
+            builder: (BuildContext context, SearchController controller) {
+              return ListTile(
+                leading:
+                    const Icon(Icons.storage_rounded, color: Colors.blueGrey),
+                title: const Text('Database', style: TextStyle(fontSize: 16)),
+                onTap: () {
+                  controller.openView();
+                },
+              );
+            },
+            suggestionsBuilder: (context, controller) {
+              final suggestions =
+                  _filterAccounts(controller.value.text, snapshot.data!);
+              return suggestions.isEmpty
+                  ? [
+                      const ListTile(
+                          title: Text(
+                        'No results found',
+                        textAlign: TextAlign.center,
+                      ))
+                    ]
+                  : suggestions.map((account) {
+                      return IntrinsicWidth(
+                        child: Column(children: [
+                          ListTile(
+                            onTap: () {
+                              print(account["accountId"]);
+                              // scaffoldKey.currentState!.closeDrawer();
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Center(
-        child: Text('$title Content'),
-      ),
-    );
+                              // setState(() {
+                              //   controller.closeView("");
+                              // });
+                              Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) => DatabaseScreen(
+                                          talker: widget.talker,
+                                          account: account)));
+                            },
+                            leading: CircleAvatar(
+                              backgroundImage:
+                                  NetworkImage(account["accountAvatar"]),
+                            ),
+                            trailing: IconButton(
+                              icon: const Icon(Icons.more_vert_rounded),
+                              onPressed: () {},
+                            ),
+                            title: Text(account['displayName'] ?? ''),
+                            subtitle: Text(
+                                "Tracked seasons: ${account["trackedSeasons"]}"),
+                          ),
+                          const Divider(
+                            height: 2,
+                          )
+                        ]),
+                      );
+                    }).toList();
+            },
+          );
+        });
   }
 }

@@ -25,4 +25,7 @@ class Constants {
     "Champion",
     "Unreal"
   ];
+
+  static const String defaultSkinId =
+      "CID_A_402_Athena_Commando_F_RebirthFresh";
 }
