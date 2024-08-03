@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_single_instance/flutter_single_instance.dart';
+import 'package:paged_datatable/paged_datatable.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:talker_flutter/talker_flutter.dart';
@@ -153,6 +154,7 @@ class _MyAppState extends State<MyApp> with TrayListener, WindowListener {
         ChangeNotifierProvider(create: (_) => AuthProvider()),
       ],
       child: MaterialApp(
+        localizationsDelegates: const [PagedDataTableLocalization.delegate],
         navigatorObservers: [TalkerRouteObserver(widget.talker)],
         theme: ThemeData.dark(),
         debugShowCheckedModeBanner: false,
