@@ -36,3 +36,31 @@ int? getIntValue(Map<String, dynamic>? values, String key) {
 String? getImageAssetPath(Map<String, dynamic>? values) {
   return 'assets/ranked-images/${getStringValue(values, 'Rank')?.toLowerCase().replaceAll(" ", "")}.png';
 }
+
+String prettifySeasonString(String inputStr) {
+  List<String> segments = inputStr.split('_');
+  if (segments.length < 4) {
+    throw ArgumentError('Invalid part format');
+  }
+  String chapter = segments[1];
+  String season = segments[3];
+  return 'Chapter $chapter Season $season';
+}
+
+Map<String, String> modeMappings = {
+  'BR': 'Battle Royale',
+  'ZB': 'Zero Build',
+  'RR': 'Rocket Racing',
+};
+
+Map<String, String> splitAndPrettifySeasonString(String inputStr) {
+  int lastUnderscoreIndex = inputStr.lastIndexOf("_");
+
+  String firstPart = inputStr.substring(0, lastUnderscoreIndex);
+  String secondPart = inputStr.substring(lastUnderscoreIndex + 1).toUpperCase();
+
+  return {
+    "season": prettifySeasonString(firstPart),
+    "mode": modeMappings[secondPart]!
+  };
+}

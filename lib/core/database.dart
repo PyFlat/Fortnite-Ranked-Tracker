@@ -242,6 +242,30 @@ class DataBase {
     return filteredData;
   }
 
+  Future<List<String>> getTrackedSeasons(String accountId,
+      {int limit = 1}) async {
+    await init();
+    List<String> tables = [];
+    Database database = await openDatabase(accountId);
+    List<Map<String, dynamic>> result = await database.rawQuery(
+        "SELECT name from sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%';");
+    for (Map<String, dynamic> item in result) {
+      if (limit > 0) {
+        int columnCount = (await database
+                .rawQuery('SELECT COUNT(*) as count FROM ${item["name"]}'))[0]
+            ["count"] as int;
+        if (columnCount < limit) {
+          continue;
+        }
+      }
+      tables.add(item["name"]);
+    }
+
+    tables.sort();
+
+    return tables.reversed.toList();
+  }
+
   Future<void> updatePlayerName(
       int key, String accountId, String displayName) async {
     await init(); // Ensure database is initialized
