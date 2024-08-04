@@ -251,10 +251,8 @@ class RankCardState extends State<RankCard>
     return PopupMenuButton<String>(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       onSelected: (String value) {
-        if (value == "cpy_display_name") {
-          _copyText(widget.displayName);
-        } else if (value == "cpy_account_id") {
-          _copyText(widget.accountId!);
+        if (value == "show_account_details") {
+          showCustomDialog(context, widget.displayName, widget.accountId!);
         } else if (value == "open_user") {
           Navigator.push(
             context,
@@ -291,27 +289,14 @@ class RankCardState extends State<RankCard>
           ),
           const PopupMenuDivider(),
           const PopupMenuItem<String>(
-            value: "cpy_display_name",
+            value: "show_account_details",
             child: Row(
               children: [
                 Padding(
                     padding: EdgeInsets.only(right: 8.0),
-                    child: Icon(Icons.copy)),
+                    child: Icon(Icons.remove_red_eye_rounded)),
                 Text(
-                  'Copy Display Name',
-                ),
-              ],
-            ),
-          ),
-          const PopupMenuItem<String>(
-            value: "cpy_account_id",
-            child: Row(
-              children: [
-                Padding(
-                    padding: EdgeInsets.only(right: 8.0),
-                    child: Icon(Icons.copy)),
-                Text(
-                  'Copy Account Id',
+                  'Show Account Details',
                 ),
               ],
             ),
@@ -459,4 +444,170 @@ class RankCardState extends State<RankCard>
       ),
     );
   }
+}
+
+class CustomDialog extends StatefulWidget {
+  final String accountName;
+  final String accountId;
+
+  CustomDialog({required this.accountName, required this.accountId});
+
+  @override
+  State<CustomDialog> createState() => _CustomDialogState();
+}
+
+class _CustomDialogState extends State<CustomDialog> {
+  late TextEditingController _nameController;
+  late TextEditingController _idController;
+  bool _showCheckmarkName = false;
+  bool _showCheckmarkId = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController(text: widget.accountName);
+    _idController = TextEditingController(text: widget.accountId);
+  }
+
+  void _copyToClipboard(String text, String type) {
+    Clipboard.setData(ClipboardData(text: text));
+    setState(() {
+      if (type == 'name') {
+        _showCheckmarkName = true;
+        Future.delayed(const Duration(seconds: 1), () {
+          setState(() {
+            _showCheckmarkName = false;
+          });
+        });
+      } else if (type == 'id') {
+        _showCheckmarkId = true;
+        Future.delayed(const Duration(seconds: 1), () {
+          setState(() {
+            _showCheckmarkId = false;
+          });
+        });
+      }
+    });
+  }
+
+  OutlineInputBorder _getInputBorder() {
+    return OutlineInputBorder(
+      borderRadius: BorderRadius.circular(12.0),
+      borderSide: BorderSide(
+        color: Colors.deepPurple.shade400,
+        width: 1.0,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      contentPadding: const EdgeInsets.all(16.0),
+      titlePadding: const EdgeInsets.all(16),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12.0),
+      ),
+      title: const Text(
+        'Account Details',
+        style: TextStyle(fontSize: 18.0, fontWeight: FontWeight.bold),
+      ),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Display Name Text Field
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Column(
+                  children: [
+                    TextField(
+                      readOnly: true,
+                      controller: _nameController,
+                      enableInteractiveSelection: false,
+                      textAlign: TextAlign.center,
+                      textAlignVertical: TextAlignVertical.top,
+                      decoration: InputDecoration(
+                        labelText: "Display Name",
+                        enabledBorder: _getInputBorder(),
+                        border: _getInputBorder(),
+                        focusedBorder: _getInputBorder(),
+                        suffixIcon: _showCheckmarkName
+                            ? const Icon(Icons.check_circle,
+                                color: Colors.green)
+                            : IconButton(
+                                icon: const Icon(Icons.copy),
+                                onPressed: () {
+                                  _copyToClipboard(widget.accountName, 'name');
+                                },
+                              ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16.0),
+          // Account Id Text Field
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Column(
+                  children: [
+                    TextField(
+                      readOnly: true,
+                      controller: _idController,
+                      enableInteractiveSelection: false,
+                      textAlign: TextAlign.center,
+                      textAlignVertical: TextAlignVertical.top,
+                      decoration: InputDecoration(
+                        labelText: "Account Id",
+                        enabledBorder: _getInputBorder(),
+                        border: _getInputBorder(),
+                        focusedBorder: _getInputBorder(),
+                        suffixIcon: _showCheckmarkId
+                            ? const Icon(Icons.check_circle,
+                                color: Colors.green)
+                            : IconButton(
+                                icon: const Icon(Icons.copy),
+                                onPressed: () {
+                                  _copyToClipboard(widget.accountId, 'id');
+                                },
+                              ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+          child: const Text('Close'),
+        ),
+      ],
+    );
+  }
+}
+
+void showCustomDialog(
+    BuildContext context, String accountName, String accountId) {
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return CustomDialog(
+        accountName: accountName,
+        accountId: accountId,
+      );
+    },
+  );
 }
