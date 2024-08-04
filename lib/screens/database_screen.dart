@@ -16,6 +16,8 @@ class DatabaseScreen extends StatefulWidget {
 class _DatabaseScreenState extends State<DatabaseScreen> {
   final DataBase _database = DataBase();
   String? _currentSeason;
+  int _sortedColumn = 0;
+  bool _isAscending = false;
 
   @override
   void didChangeDependencies() {
@@ -30,7 +32,6 @@ class _DatabaseScreenState extends State<DatabaseScreen> {
   Future<List<String>> _fetchSeasons() async {
     List<String> trackedSeasons =
         await _database.getTrackedSeasons(widget.account["accountId"]);
-
     return trackedSeasons;
   }
 
@@ -48,7 +49,10 @@ class _DatabaseScreenState extends State<DatabaseScreen> {
     final columnNames =
         columnsQuery.map((column) => column['name'] as String).toList();
 
-    final data = await db.rawQuery("SELECT * FROM $_currentSeason");
+    final sortClause =
+        "ORDER BY ${columns2[_sortedColumn]} ${_isAscending ? 'ASC' : 'DESC'}";
+
+    final data = await db.rawQuery("SELECT * FROM $_currentSeason $sortClause");
 
     return {
       'columns': columnNames,
@@ -57,13 +61,24 @@ class _DatabaseScreenState extends State<DatabaseScreen> {
   }
 
   final List<String> columns = <String>[
-    "Match Id",
+    "Total Match Id",
     "Datetime",
     "Rank",
-    "Progress",
+    "Rank Progression",
     "Daily Match Id",
     "Total Progress"
   ];
+
+  final List<String> columns2 = <String>[
+    "id",
+    "datetime",
+    "rank",
+    "progress",
+    "daily_match_id",
+    "total_progress"
+  ];
+
+  final List<int> sortableColumns = <int>[0, 3, 4, 5];
 
   void _openSeasonBottomSheet() {
     showModalBottomSheet(
@@ -107,6 +122,8 @@ class _DatabaseScreenState extends State<DatabaseScreen> {
                           onTap: () {
                             setState(() {
                               _currentSeason = season;
+                              _sortedColumn = 0;
+                              _isAscending = false;
                             });
                             Navigator.pop(context);
                           },
@@ -125,6 +142,22 @@ class _DatabaseScreenState extends State<DatabaseScreen> {
 
   void _refreshData() {
     setState(() {});
+  }
+
+  List<DataRow> _createRows(
+      List<Map<String, dynamic>> data, List<String> columns) {
+    return data.map<DataRow>((row) {
+      return DataRow(
+        cells: columns.map<DataCell>((columnName) {
+          return DataCell(Center(
+            child: Text(
+              row[columnName]?.toString() ?? '',
+              textAlign: TextAlign.center,
+            ),
+          ));
+        }).toList(),
+      );
+    }).toList();
   }
 
   @override
@@ -147,14 +180,13 @@ class _DatabaseScreenState extends State<DatabaseScreen> {
                         : null;
 
                     final displayText = seasonInfo != null
-                        ? "Season: ${seasonInfo["season"]!} - ${seasonInfo["mode"]!}"
+                        ? "${seasonInfo["season"]!} - ${seasonInfo["mode"]!}"
                         : "Select a Season";
 
                     return Text(
                       displayText,
                       style: const TextStyle(
                         fontSize: 16,
-                        fontWeight: FontWeight.bold,
                       ),
                     );
                   },
@@ -227,6 +259,8 @@ class _DatabaseScreenState extends State<DatabaseScreen> {
                         return Padding(
                           padding: const EdgeInsets.all(8.0),
                           child: DataTable2(
+                            sortColumnIndex: _sortedColumn,
+                            sortAscending: _isAscending,
                             columnSpacing: 12,
                             horizontalMargin: 12,
                             minWidth: 600,
@@ -238,18 +272,17 @@ class _DatabaseScreenState extends State<DatabaseScreen> {
                                     textAlign: TextAlign.center,
                                   ),
                                 ),
+                                onSort: (columnIndex, ascending) {
+                                  if (sortableColumns.contains(columnIndex)) {
+                                    setState(() {
+                                      _sortedColumn = columnIndex;
+                                      _isAscending = ascending;
+                                    });
+                                  }
+                                },
                               );
                             }).toList(),
-                            rows: data.map<DataRow>((row) {
-                              return DataRow(
-                                  cells: dbColumns.map<DataCell>((columnName) {
-                                return DataCell(Center(
-                                    child: Text(
-                                  row[columnName]?.toString() ?? '',
-                                  textAlign: TextAlign.center,
-                                )));
-                              }).toList());
-                            }).toList(),
+                            rows: _createRows(data, dbColumns),
                           ),
                         );
                       }
