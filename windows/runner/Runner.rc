@@ -89,13 +89,13 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "com.example" "\0"
-            VALUE "FileDescription", "auth_flow_example" "\0"
+            VALUE "CompanyName", "com.pyflat" "\0"
+            VALUE "FileDescription", "fortnite_ranked_tracker" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "com.pyflat.FNRankedTracker" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2024 com.example. All rights reserved." "\0"
-            VALUE "OriginalFilename", "auth_flow_example.exe" "\0"
-            VALUE "ProductName", "auth_flow_example" "\0"
+            VALUE "InternalName", "com.pyflat.fortnite_ranked_tracker" "\0"
+            VALUE "LegalCopyright", "Copyright (C) 2024 com.pyflat. All rights reserved." "\0"
+            VALUE "OriginalFilename", "fortnite_ranked_tracker.exe" "\0"
+            VALUE "ProductName", "fortnite_ranked_tracker" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END
