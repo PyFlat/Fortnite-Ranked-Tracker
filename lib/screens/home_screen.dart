@@ -213,6 +213,9 @@ class HomeScreenState extends State<HomeScreen> {
 
             for (int i = 0; i < data.length; i++) {
               var item = data[i];
+              if (i >= _previousData.length) {
+                continue;
+              }
               int dataChanged = _previousData.isNotEmpty
                   ? _hasDataChanged(item, _previousData[i])
                   : -1;
