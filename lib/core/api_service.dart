@@ -12,9 +12,9 @@ class ApiService {
   static final ApiService _instance = ApiService._();
   factory ApiService() => _instance;
 
-  Future<void> init(Talker talker, AuthProvider authProvider) async {
+  Future<void> init(Talker talker, AuthProvider authProvider, Dio dio) async {
     if (!_isInitialized) {
-      _dio = Dio();
+      _dio = dio;
       _dio.interceptors.add(
         TalkerDioLogger(
           talker: talker,

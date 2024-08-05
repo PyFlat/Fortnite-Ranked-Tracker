@@ -1,12 +1,13 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:dio/dio.dart';
+import 'package:fortnite_ranked_tracker/screens/main_screen.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 
 import '../constants/constants.dart';
 import '../constants/endpoints.dart';
 import '../core/auth_provider.dart';
-import '../screens/home_screen.dart';
 import '../core/api_service.dart';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
@@ -14,8 +15,14 @@ import 'package:provider/provider.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 class AuthScreen extends StatefulWidget {
+  final AuthProvider authProvider;
   final Talker talker;
-  const AuthScreen({super.key, required this.talker});
+  final Dio dio;
+  const AuthScreen(
+      {super.key,
+      required this.authProvider,
+      required this.talker,
+      required this.dio});
 
   @override
   State<AuthScreen> createState() => _AuthScreenState();
@@ -28,6 +35,7 @@ class _AuthScreenState extends State<AuthScreen> {
   @override
   void initState() {
     super.initState();
+    _initializeApiService();
     controller.setJavaScriptMode(JavaScriptMode.unrestricted);
     controller.addJavaScriptChannel("Print",
         onMessageReceived: _handleMessageReceived);
@@ -43,6 +51,10 @@ class _AuthScreenState extends State<AuthScreen> {
     ));
     controller
         .loadRequest(Uri.parse("https://www.epicgames.com/account/personal"));
+  }
+
+  Future<void> _initializeApiService() async {
+    await ApiService().init(widget.talker, widget.authProvider, widget.dio);
   }
 
   void _handleMessageReceived(JavaScriptMessage jsMessage) {
@@ -89,7 +101,10 @@ class _AuthScreenState extends State<AuthScreen> {
       Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-              builder: (context) => HomeScreen(talker: widget.talker)));
+              builder: (context) => MainScreen(
+                  authProvider: authProvider,
+                  talker: widget.talker,
+                  dio: widget.dio)));
     }
 
     _isAuthorizationInProgress = false;

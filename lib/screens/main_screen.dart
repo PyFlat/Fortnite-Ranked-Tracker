@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:fortnite_ranked_tracker/core/api_service.dart';
 import 'package:fortnite_ranked_tracker/core/auth_provider.dart';
 import 'package:fortnite_ranked_tracker/screens/database_screen.dart';
@@ -15,9 +16,13 @@ import 'settings_screen.dart';
 class MainScreen extends StatefulWidget {
   final AuthProvider authProvider;
   final Talker talker;
+  final Dio dio;
 
   const MainScreen(
-      {super.key, required this.authProvider, required this.talker});
+      {super.key,
+      required this.authProvider,
+      required this.talker,
+      required this.dio});
 
   @override
   _MainScreenState createState() => _MainScreenState();
@@ -44,7 +49,7 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   Future<void> _initializeRankService() async {
-    await ApiService().init(widget.talker, widget.authProvider);
+    await ApiService().init(widget.talker, widget.authProvider, widget.dio);
     await RankService().init(widget.authProvider);
   }
 

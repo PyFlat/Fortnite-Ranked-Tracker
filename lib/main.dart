@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_single_instance/flutter_single_instance.dart';
 import 'package:path_provider/path_provider.dart';
@@ -81,9 +82,11 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> with TrayListener, WindowListener {
   late Timer timer;
+  late Dio dio;
 
   @override
   void initState() {
+    dio = Dio();
     trayManager.addListener(this);
     windowManager.addListener(this);
     timer = Timer.periodic(const Duration(seconds: 1), (timer) async {
@@ -157,16 +160,18 @@ class _MyAppState extends State<MyApp> with TrayListener, WindowListener {
         theme: ThemeData.dark(),
         debugShowCheckedModeBanner: false,
         title: 'Fortnite Ranked Tracker',
-        home: AuthenticationHandler(talker: widget.talker),
+        home: AuthenticationHandler(talker: widget.talker, dio: dio),
       ),
     );
   }
 }
 
 class AuthenticationHandler extends StatelessWidget {
-  const AuthenticationHandler({super.key, required this.talker});
+  const AuthenticationHandler(
+      {super.key, required this.talker, required this.dio});
 
   final Talker talker;
+  final Dio dio;
 
   @override
   Widget build(BuildContext context) {
@@ -174,12 +179,14 @@ class AuthenticationHandler extends StatelessWidget {
 
     return FutureBuilder(
       future: authProvider.initializeAuth(),
-      builder: (ctx, authResultSnapshot) =>
-          authResultSnapshot.connectionState == ConnectionState.waiting
-              ? const SplashScreen()
-              : authProvider.accessToken.isNotEmpty
-                  ? MainScreen(authProvider: authProvider, talker: talker)
-                  : AuthScreen(talker: talker),
+      builder: (ctx, authResultSnapshot) => authResultSnapshot
+                  .connectionState ==
+              ConnectionState.waiting
+          ? const SplashScreen()
+          : authProvider.accessToken.isNotEmpty
+              ? MainScreen(authProvider: authProvider, talker: talker, dio: dio)
+              : AuthScreen(
+                  authProvider: authProvider, talker: talker, dio: dio),
     );
   }
 }
