@@ -287,7 +287,6 @@ class HomeScreenState extends State<HomeScreen> {
             _previousData = List.from(data);
 
             if (!_firstIteration && cards.isEmpty) {
-              _firstIteration = false;
               return const Center(
                 child: Text(
                   "No data available. Search for a user and start tracking to populate the dashboard.",
@@ -299,6 +298,8 @@ class HomeScreenState extends State<HomeScreen> {
                 ),
               );
             }
+
+            _firstIteration = false;
 
             return SingleChildScrollView(
               child: Center(
