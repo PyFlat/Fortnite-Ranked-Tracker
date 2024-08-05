@@ -27,6 +27,7 @@ class HomeScreenState extends State<HomeScreen> {
   final List<Color?> _currentCardColors = [];
   final List<double> _currentScales = [];
   final List _rankedModes = ["Battle Royale", "Zero Build", "Rocket Racing"];
+  bool _firstIteration = true;
 
   @override
   void initState() {
@@ -213,12 +214,14 @@ class HomeScreenState extends State<HomeScreen> {
 
             for (int i = 0; i < data.length; i++) {
               var item = data[i];
-              if (i >= _previousData.length) {
-                continue;
+              int dataChanged = -1;
+              if (_previousData.isNotEmpty) {
+                if (i >= _previousData.length) {
+                  continue;
+                } else {
+                  dataChanged = _hasDataChanged(item, _previousData[i]);
+                }
               }
-              int dataChanged = _previousData.isNotEmpty
-                  ? _hasDataChanged(item, _previousData[i])
-                  : -1;
 
               bool hasChanged = dataChanged >= 0;
 
@@ -282,6 +285,20 @@ class HomeScreenState extends State<HomeScreen> {
             }
 
             _previousData = List.from(data);
+
+            if (!_firstIteration && cards.isEmpty) {
+              _firstIteration = false;
+              return const Center(
+                child: Text(
+                  "No data available. Search for a user and start tracking to populate the dashboard.",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 18.0,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              );
+            }
 
             return SingleChildScrollView(
               child: Center(
