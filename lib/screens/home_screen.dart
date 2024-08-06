@@ -59,6 +59,7 @@ class HomeScreenState extends State<HomeScreen> {
 
   Future<List<Map<String, dynamic>>> _getData() async {
     List<Map<String, dynamic>> data = await _database.getAccountDataActive();
+    Map<String, String> avatarImages = {};
     final accountTypes = {
       "Battle Royale": "br",
       "Zero Build": "zb",
@@ -69,8 +70,9 @@ class HomeScreenState extends State<HomeScreen> {
 
     String joinedAccountIds = accountIds.join(',');
 
-    Map<String, String> avatarImages =
-        await RankService().getAccountAvatarById(joinedAccountIds);
+    if (accountIds.isNotEmpty) {
+      avatarImages = await RankService().getAccountAvatarById(joinedAccountIds);
+    }
 
     for (Map<String, dynamic> account in data) {
       for (var entry in accountTypes.entries) {

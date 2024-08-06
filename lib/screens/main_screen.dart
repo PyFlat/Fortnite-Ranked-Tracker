@@ -62,13 +62,15 @@ class _MainScreenState extends State<MainScreen> {
 
   Future<List<Map<String, dynamic>>> _getAccounts() async {
     List<Map<String, dynamic>> data = await _database.getFilteredAccountData();
+    Map<String, String> avatarImages = {};
     List<String> accountIds =
         data.map((item) => item['accountId'] as String).toList();
 
     String joinedAccountIds = accountIds.join(',');
 
-    Map<String, String> avatarImages =
-        await RankService().getAccountAvatarById(joinedAccountIds);
+    if (accountIds.isNotEmpty) {
+      avatarImages = await RankService().getAccountAvatarById(joinedAccountIds);
+    }
 
     List<Map<String, dynamic>> updatedData = [];
 

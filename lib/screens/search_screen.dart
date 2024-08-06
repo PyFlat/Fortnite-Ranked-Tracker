@@ -5,7 +5,7 @@ import 'package:fortnite_ranked_tracker/components/search_card.dart';
 import 'package:fortnite_ranked_tracker/core/rank_service.dart';
 
 const Duration fakeAPIDuration = Duration(seconds: 1);
-const Duration debounceDuration = Duration(milliseconds: 500);
+const Duration debounceDuration = Duration(seconds: 2);
 
 class SearchScreen extends StatefulWidget {
   final String? accountId;
@@ -21,7 +21,9 @@ class _SearchScreenState extends State<SearchScreen> {
   String? _selectedAccountId;
   String? _selectedDisplayName;
   late Iterable<Widget> _lastOptions = <Widget>[];
-  late final _Debounceable<List<Map<String, String>>?, String> _debouncedSearch;
+  final SearchController _searchController = SearchController();
+  bool searchRunning = false;
+  String searchTerm = "";
 
   Future<List<Map<String, String>>?> _search(String query) async {
     _currentQuery = query;
@@ -42,16 +44,21 @@ class _SearchScreenState extends State<SearchScreen> {
   @override
   void initState() {
     super.initState();
-    _debouncedSearch = _debounce<List<Map<String, String>>?, String>(_search);
     _selectedAccountId = widget.accountId;
     _selectedDisplayName = widget.displayName;
+  }
+
+  void _refreshSuggestions() {
+    final String text = _searchController.text;
+    _searchController.text = "";
+    _searchController.text = text;
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Search'),
+        title: const Text('Search'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -62,12 +69,23 @@ class _SearchScreenState extends State<SearchScreen> {
                 Center(
                   child: SearchAnchor.bar(
                     barHintText: "Type name to search",
-                    suggestionsBuilder: (BuildContext context,
-                        SearchController controller) async {
+                    searchController: _searchController,
+                    onChanged: (value) {
+                      if (searchRunning) {
+                        _searchController.text = searchTerm;
+                      }
+                    },
+                    onSubmitted: (value) async {
+                      if (searchRunning) {
+                        return;
+                      }
+                      searchTerm = value;
+                      searchRunning = true;
+                      _refreshSuggestions();
                       final List<Map<String, String>>? results =
-                          (await _debouncedSearch(controller.text))?.toList();
+                          (await _search(value))?.toList();
                       if (results == null) {
-                        return _lastOptions;
+                        return;
                       }
 
                       _lastOptions =
@@ -85,11 +103,22 @@ class _SearchScreenState extends State<SearchScreen> {
                               _selectedAccountId = item['accountId'];
                               _selectedDisplayName = item['displayName'];
                             });
-                            controller.closeView(null);
+                            _searchController.closeView(null);
                           },
                         );
                       });
-
+                      searchRunning = false;
+                      _refreshSuggestions();
+                    },
+                    suggestionsBuilder: (BuildContext context,
+                        SearchController controller) async {
+                      if (searchRunning) {
+                        return [
+                          const Center(
+                            child: LinearProgressIndicator(),
+                          )
+                        ];
+                      }
                       return _lastOptions;
                     },
                   ),
@@ -108,52 +137,4 @@ class _SearchScreenState extends State<SearchScreen> {
       ),
     );
   }
-}
-
-typedef _Debounceable<S, T> = Future<S?> Function(T parameter);
-
-_Debounceable<S, T> _debounce<S, T>(_Debounceable<S?, T> function) {
-  _DebounceTimer? debounceTimer;
-
-  return (T parameter) async {
-    if (debounceTimer != null && !debounceTimer!.isCompleted) {
-      debounceTimer!.cancel();
-    }
-    debounceTimer = _DebounceTimer();
-    try {
-      await debounceTimer!.future;
-    } catch (error) {
-      if (error is _CancelException) {
-        return null;
-      }
-      rethrow;
-    }
-    return function(parameter);
-  };
-}
-
-class _DebounceTimer {
-  _DebounceTimer() {
-    _timer = Timer(debounceDuration, _onComplete);
-  }
-
-  late final Timer _timer;
-  final Completer<void> _completer = Completer<void>();
-
-  void _onComplete() {
-    _completer.complete();
-  }
-
-  Future<void> get future => _completer.future;
-
-  bool get isCompleted => _completer.isCompleted;
-
-  void cancel() {
-    _timer.cancel();
-    _completer.completeError(const _CancelException());
-  }
-}
-
-class _CancelException implements Exception {
-  const _CancelException();
 }
