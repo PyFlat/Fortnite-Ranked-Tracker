@@ -17,7 +17,6 @@ class SearchScreen extends StatefulWidget {
 }
 
 class _SearchScreenState extends State<SearchScreen> {
-  String? _currentQuery;
   String? _selectedAccountId;
   String? _selectedDisplayName;
   late Iterable<Widget> _lastOptions = <Widget>[];
@@ -26,17 +25,7 @@ class _SearchScreenState extends State<SearchScreen> {
   String searchTerm = "";
 
   Future<List<Map<String, String>>?> _search(String query) async {
-    _currentQuery = query;
-
-    // In a real application, there should be some error handling here.
-    final List<Map<String, String>> results =
-        await RankService().search(_currentQuery!);
-
-    // If another search happened after this one, throw away these results.
-    if (_currentQuery != query) {
-      return null;
-    }
-    _currentQuery = null;
+    final List<Map<String, String>> results = await RankService().search(query);
 
     return results;
   }

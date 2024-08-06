@@ -35,6 +35,9 @@ void main() async {
           skipTaskbar: false,
           titleBarStyle: TitleBarStyle.normal,
         );
+        if (Platform.isWindows) {
+          windowManager.setIcon("assets/tray-icon.ico");
+        }
         windowManager.waitUntilReadyToShow(windowOptions, () async {
           await windowManager.show();
           await windowManager.focus();
@@ -115,7 +118,7 @@ class _MyAppState extends State<MyApp> with TrayListener, WindowListener {
 
   void _initSystemTray() async {
     String iconPath =
-        Platform.isWindows ? 'assets/app-icon.ico' : 'assets/app-icon.png';
+        Platform.isWindows ? 'assets/tray-icon.ico' : 'assets/app-icon.png';
 
     Menu menu = Menu(
       items: [

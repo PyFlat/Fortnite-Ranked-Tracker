@@ -219,7 +219,7 @@ class HomeScreenState extends State<HomeScreen> {
               int dataChanged = -1;
               if (_previousData.isNotEmpty) {
                 if (i >= _previousData.length) {
-                  continue;
+                  dataChanged = -1;
                 } else {
                   dataChanged = _hasDataChanged(item, _previousData[i]);
                 }
