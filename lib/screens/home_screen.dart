@@ -158,6 +158,9 @@ class HomeScreenState extends State<HomeScreen> {
   int _hasDataChanged(
       Map<String, dynamic> newData, Map<String, dynamic> oldData) {
     int dataChanged = -1;
+    if (newData["DisplayName"] != oldData["DisplayName"]) {
+      return -1;
+    }
     bool dataChangedBool = newData.toString() != oldData.toString();
     if (dataChangedBool) {
       for (final (index, rankMode) in _rankedModes.indexed) {
