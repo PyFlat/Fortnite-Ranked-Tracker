@@ -56,6 +56,7 @@ dependencies:
   talker_dio_logger: ^4.4.0
   talker_flutter: ^4.4.0
   data_table_2: ^2.5.15
+  flutter_settings_ui: ^3.0.1
 
 dev_dependencies:
   flutter_test:
