@@ -163,7 +163,8 @@ class _MyAppState extends State<MyApp> with TrayListener, WindowListener {
         theme: ThemeData.dark(),
         debugShowCheckedModeBanner: false,
         title: 'Fortnite Ranked Tracker',
-        home: AuthenticationHandler(talker: widget.talker, dio: dio),
+        home: SafeArea(
+            child: AuthenticationHandler(talker: widget.talker, dio: dio)),
       ),
     );
   }
