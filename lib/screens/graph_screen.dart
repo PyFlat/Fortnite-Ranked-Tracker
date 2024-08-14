@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -9,6 +7,9 @@ import 'package:fortnite_ranked_tracker/core/rank_service.dart';
 import 'package:fortnite_ranked_tracker/core/utils.dart';
 
 class GraphScreen extends StatefulWidget {
+  final Map<String, dynamic> account;
+
+  const GraphScreen({super.key, required this.account});
   @override
   State<GraphScreen> createState() => _GraphScreenState();
 }
@@ -30,7 +31,15 @@ class _GraphScreenState extends State<GraphScreen> {
 
   double _maxRangeX = 30;
 
-  double _maxRangeY = 2000;
+  double _maxRangeY = 300;
+
+  double _displayIntervall = 1;
+
+  final double _maxZoom = 10;
+
+  final double _minZoom = 0.5;
+
+  int _dataLength = 0;
 
   late Future<List<dynamic>> _dataFuture;
 
@@ -67,6 +76,20 @@ class _GraphScreenState extends State<GraphScreen> {
       Size graphSize = getGraphDimensions();
       dx /= (graphSize.width / _maxRangeX);
       dy /= (graphSize.height / _maxRangeY);
+      if (_currentOffsetX - dx < 0 ||
+          _currentOffsetX - dx + _maxRangeX > _dataLength) {
+        if (_currentOffsetY.abs() * 2 < _currentOffsetX.abs()) {
+          return;
+        }
+
+        dx = 0;
+      }
+      if (_currentOffsetY + dy < 0) {
+        if (_currentOffsetX.abs() * 2 < _currentOffsetY.abs()) {
+          return;
+        }
+        dy = 0;
+      }
       setState(() {
         _currentOffsetX = _lastOffsetX - dx;
         _currentOffsetY = _lastOffsetY + dy;
@@ -77,129 +100,179 @@ class _GraphScreenState extends State<GraphScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(),
       body: Center(
         child: FutureBuilder(
             future: _dataFuture,
             builder: (BuildContext context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return CircularProgressIndicator();
+              } else if (snapshot.hasError) {
+                print(snapshot.error);
+                return Container();
               } else if (snapshot.hasData) {
-                return Listener(
-                  onPointerDown: _onClick,
-                  onPointerMove: _updatePosition,
-                  onPointerUp: _onRelease,
-                  onPointerSignal: (event) {
-                    if (event is PointerScrollEvent) {
-                      double dx = event.scrollDelta.dx / 100;
-                      double dy = event.scrollDelta.dy / 100;
-                      if (dy < 0) {
-                        setState(() {
-                          _maxRangeY /= 1.1;
-                        });
-                      } else {
-                        setState(() {
-                          _maxRangeY *= 1.1;
-                        });
-                      }
-                    }
-                  },
-                  child: LineChart(
-                    key: _key,
-                    LineChartData(
-                      lineTouchData: LineTouchData(
-                        touchSpotThreshold: 20,
-                        touchTooltipData: LineTouchTooltipData(
-                          maxContentWidth: 200,
-                          getTooltipItems: (touchedSpots) {
-                            return touchedSpots.map((touchedSpot) {
-                              final int index = touchedSpot.spotIndex;
-                              final Map<String, dynamic> data =
-                                  snapshot.data![0][index];
-                              return LineTooltipItem(
-                                'Match: ${data["id"]}\n'
-                                'Rank: ${data["rank"]} ${data["rank"] == "Unreal" ? "#${data["progress"]}" : "${data["progress"]}%"}\n'
-                                'Datetime ${data["datetime"]}\n'
-                                'Daily Match: ${data["daily_match_id"]}',
-                                const TextStyle(color: Colors.black),
-                              );
-                            }).toList();
-                          },
-                        ),
-                      ),
-                      baselineX: _currentOffsetX.toDouble(),
-                      baselineY: _currentOffsetY.toDouble(),
-                      lineBarsData: [
-                        LineChartBarData(
-                          dotData: FlDotData(show: false),
-                          spots: snapshot.data![1],
-                          isCurved: true,
-                        ),
-                      ],
-                      titlesData: FlTitlesData(
-                        leftTitles: const AxisTitles(
-                            axisNameWidget: SizedBox(
-                          width: 40,
-                        )), // Hide left Y-axis titles
-                        rightTitles: AxisTitles(
-                            sideTitles: SideTitles(
-                          reservedSize: 125,
-                          interval: 100,
-                          getTitlesWidget: (value, meta) {
-                            int index = (value / 100).round();
-                            if (index >= 0 && index < Constants.ranks.length) {
-                              return Padding(
-                                padding: const EdgeInsets.only(left: 16.0),
-                                child: Text(Constants.ranks[index]),
-                              );
-                            } else if (index == 20) {
-                              return const Padding(
-                                padding: EdgeInsets.only(left: 16.0),
-                                child: Text("#1"),
-                              );
-                            } else {
-                              return const Text("");
-                            }
-                          },
-                          showTitles: true,
-                        )),
-                        bottomTitles: AxisTitles(
-                            sideTitles: SideTitles(
-                          interval: 1,
-                          showTitles: true,
-                          reservedSize: 40,
-                          getTitlesWidget: (value, meta) {
-                            return Text(value.toInt().toString());
-                          },
-                        )),
-                        topTitles: const AxisTitles(
-                            axisNameSize: 50,
-                            axisNameWidget: Center(
-                                child: Text(
-                                    "Progress Over Time"))), // Optional: Hide top titles
-                      ),
+                return AspectRatio(
+                  aspectRatio: 1.75,
+                  child: Column(
+                    children: [
+                      Expanded(
+                        child: Row(
+                          children: [
+                            RotatedBox(
+                              quarterTurns: 1,
+                              child: Slider(
+                                value: 0,
+                                onChanged: (newValue) {},
+                                min: -10,
+                                max: 10,
+                              ),
+                            ),
+                            Expanded(
+                              child: Listener(
+                                onPointerDown: _onClick,
+                                onPointerMove: _updatePosition,
+                                onPointerUp: _onRelease,
+                                onPointerSignal: (event) {
+                                  if (event is PointerScrollEvent) {
+                                    double dx = event.scrollDelta.dx / 100;
+                                    double dy = event.scrollDelta.dy / 100;
+                                    if (dy < 0) {
+                                      if (_displayIntervall / 1.1 < _minZoom)
+                                        return;
+                                      setState(() {
+                                        _maxRangeY /= 1.1;
+                                        _maxRangeX /= 1.1;
+                                        _displayIntervall /= 1.1;
+                                      });
+                                    } else {
+                                      if (_displayIntervall * 1.1 > _maxZoom)
+                                        return;
+                                      setState(() {
+                                        _maxRangeY *= 1.1;
+                                        _maxRangeX *= 1.1;
+                                        _displayIntervall *= 1.1;
+                                      });
+                                    }
+                                  }
+                                },
+                                child: LineChart(
+                                  key: _key,
+                                  LineChartData(
+                                    lineTouchData: LineTouchData(
+                                      touchSpotThreshold: 20,
+                                      touchTooltipData: LineTouchTooltipData(
+                                        maxContentWidth: 200,
+                                        getTooltipItems: (touchedSpots) {
+                                          return touchedSpots
+                                              .map((touchedSpot) {
+                                            final int index =
+                                                touchedSpot.spotIndex;
+                                            final Map<String, dynamic> data =
+                                                snapshot.data![0][index];
+                                            return LineTooltipItem(
+                                              'Match: ${data["id"]}\n'
+                                              'Rank: ${data["rank"]} ${data["rank"] == "Unreal" ? "#${data["progress"]}" : "${data["progress"]}%"}\n'
+                                              'Datetime ${data["datetime"]}\n'
+                                              'Daily Match: ${data["daily_match_id"]}',
+                                              const TextStyle(
+                                                  color: Colors.black),
+                                            );
+                                          }).toList();
+                                        },
+                                      ),
+                                    ),
+                                    baselineX: _currentOffsetX.toDouble(),
+                                    baselineY: _currentOffsetY.toDouble(),
+                                    lineBarsData: [
+                                      LineChartBarData(
+                                        dotData: FlDotData(show: false),
+                                        spots: snapshot.data![1],
+                                        isCurved: true,
+                                      ),
+                                    ],
+                                    titlesData: FlTitlesData(
+                                      leftTitles: const AxisTitles(
+                                          axisNameWidget: SizedBox(
+                                        width: 40,
+                                      )), // Hide left Y-axis titles
+                                      rightTitles: AxisTitles(
+                                          sideTitles: SideTitles(
+                                        reservedSize: 125,
+                                        interval: 100,
+                                        getTitlesWidget: (value, meta) {
+                                          int index = (value / 100).round();
+                                          if (index >= 0 &&
+                                              index < Constants.ranks.length) {
+                                            return Padding(
+                                              padding: const EdgeInsets.only(
+                                                  left: 16.0),
+                                              child:
+                                                  Text(Constants.ranks[index]),
+                                            );
+                                          } else if (index == 20) {
+                                            return const Padding(
+                                              padding:
+                                                  EdgeInsets.only(left: 16.0),
+                                              child: Text("#1"),
+                                            );
+                                          } else {
+                                            return const Text("");
+                                          }
+                                        },
+                                        showTitles: true,
+                                      )),
+                                      bottomTitles: AxisTitles(
+                                          sideTitles: SideTitles(
+                                        interval: _displayIntervall,
+                                        showTitles: true,
+                                        reservedSize: 40,
+                                        getTitlesWidget: (value, meta) {
+                                          return Text(value.toInt().toString());
+                                        },
+                                      )),
+                                      topTitles: const AxisTitles(
+                                          axisNameSize: 50,
+                                          axisNameWidget: Center(
+                                              child: Text(
+                                                  "Progress Over Time"))), // Optional: Hide top titles
+                                    ),
 
-                      borderData: FlBorderData(
-                        show: true,
-                        border:
-                            Border.all(color: Colors.grey.shade400, width: 2),
+                                    borderData: FlBorderData(
+                                      show: true,
+                                      border: Border.all(
+                                          color: Colors.grey.shade400,
+                                          width: 2),
+                                    ),
+                                    gridData: FlGridData(
+                                      show: true,
+                                      drawVerticalLine: false,
+                                      getDrawingHorizontalLine: (value) {
+                                        return FlLine(
+                                          color: const Color(0xff37434d),
+                                          strokeWidth: 1,
+                                        );
+                                      },
+                                    ),
+                                    minX: _currentOffsetX,
+                                    maxX: _currentOffsetX + _maxRangeX,
+                                    minY: _currentOffsetY,
+                                    maxY: _currentOffsetY + _maxRangeY,
+                                    // Enable zooming and panning
+                                    clipData: FlClipData.all(),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                      gridData: FlGridData(
-                        show: true,
-                        drawVerticalLine: false,
-                        getDrawingHorizontalLine: (value) {
-                          return FlLine(
-                            color: const Color(0xff37434d),
-                            strokeWidth: 1,
-                          );
-                        },
+                      Slider(
+                        value: 0,
+                        onChanged: (newValue) {},
+                        min: -10,
+                        max: 10,
                       ),
-                      minX: _currentOffsetX,
-                      maxX: _currentOffsetX + _maxRangeX,
-                      minY: _currentOffsetY,
-                      maxY: _currentOffsetY + _maxRangeY,
-                      // Enable zooming and panning
-                      clipData: FlClipData.all(),
-                    ),
+                    ],
                   ),
                 );
               } else {
@@ -212,7 +285,7 @@ class _GraphScreenState extends State<GraphScreen> {
 
   Future<List<dynamic>> makeData() async {
     final data = await RankService().getRankedDataBySeason(
-        "49a809c144844feea10b90b60b27d8bc", "chapter_5_season_3_br");
+        widget.account["accountId"], "chapter_5_season_3_br");
 
     List<FlSpot> spots = [];
     for (int i = 0; i < data.length; i++) {
@@ -222,6 +295,9 @@ class _GraphScreenState extends State<GraphScreen> {
       }
       spots.add(FlSpot(i.toDouble(), yValue.toDouble()));
     }
+
+    _currentOffsetY = (data[0]["total_progress"] as int).toDouble() - 10;
+    _dataLength = data.length;
 
     return [data, spots];
   }
