@@ -1,4 +1,7 @@
+import 'dart:math';
+
 import 'package:fl_chart/fl_chart.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
 import 'package:fortnite_ranked_tracker/constants/constants.dart';
@@ -85,6 +88,21 @@ class _GraphScreenState extends State<GraphScreen> {
                   onPointerDown: _onClick,
                   onPointerMove: _updatePosition,
                   onPointerUp: _onRelease,
+                  onPointerSignal: (event) {
+                    if (event is PointerScrollEvent) {
+                      double dx = event.scrollDelta.dx / 100;
+                      double dy = event.scrollDelta.dy / 100;
+                      if (dy < 0) {
+                        setState(() {
+                          _maxRangeY /= 1.1;
+                        });
+                      } else {
+                        setState(() {
+                          _maxRangeY *= 1.1;
+                        });
+                      }
+                    }
+                  },
                   child: LineChart(
                     key: _key,
                     LineChartData(
