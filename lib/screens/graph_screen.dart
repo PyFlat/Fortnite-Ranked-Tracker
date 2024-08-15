@@ -9,6 +9,7 @@ import 'package:fortnite_ranked_tracker/core/season_service.dart';
 import 'package:fortnite_ranked_tracker/core/utils.dart';
 
 import '../components/season_selector.dart';
+import 'dart:math';
 
 class GraphScreen extends StatefulWidget {
   final Map<String, dynamic> account;
@@ -41,8 +42,9 @@ class _GraphScreenState extends State<GraphScreen> {
 
   double _displayIntervall = 1;
 
-  double _sliderVerticalState = 0;
+  double _sliderVerticalStateMovment = 0;
 
+  double _sliderVerticalStateZoom = 0.5;
   double _sliderHorizontalState = 0;
 
   final double _maxZoom = 10;
@@ -132,10 +134,10 @@ class _GraphScreenState extends State<GraphScreen> {
         setState(() {
           if (_currentOffsetY + dy < 0) {
             _currentOffsetY = 0;
-            _sliderVerticalState = 0;
+            _sliderVerticalStateMovment = 0;
           } else {
             _currentOffsetY = 2000;
-            _sliderVerticalState = 1;
+            _sliderVerticalStateMovment = 1;
           }
         });
         if (_currentOffsetX.abs() * 2 < _currentOffsetY.abs()) {
@@ -152,7 +154,7 @@ class _GraphScreenState extends State<GraphScreen> {
         } else if (newsliderstate < 0) {
           newsliderstate = 0;
         }
-        _sliderVerticalState = newsliderstate;
+        _sliderVerticalStateMovment = newsliderstate;
         newsliderstate = _currentOffsetX / (_dataLength - _maxRangeX);
         if (newsliderstate > 1) {
           newsliderstate = 1;
@@ -196,12 +198,13 @@ class _GraphScreenState extends State<GraphScreen> {
                                     RotatedBox(
                                       quarterTurns: 3,
                                       child: Slider(
-                                        value: _sliderVerticalState,
+                                        value: _sliderVerticalStateMovment,
                                         onChanged: (newValue) {
                                           setState(() {
-                                            _sliderVerticalState = newValue;
-                                            _currentOffsetY =
-                                                2000 * _sliderVerticalState;
+                                            _sliderVerticalStateMovment =
+                                                newValue;
+                                            _currentOffsetY = 2000 *
+                                                _sliderVerticalStateMovment;
                                           });
                                         },
                                         min: 0,
@@ -214,6 +217,7 @@ class _GraphScreenState extends State<GraphScreen> {
                                         onPointerMove: _updatePosition,
                                         onPointerUp: _onRelease,
                                         onPointerSignal: (event) {
+                                          return; /*
                                           if (event is PointerScrollEvent) {
                                             double dx =
                                                 event.scrollDelta.dx / 100;
@@ -236,7 +240,7 @@ class _GraphScreenState extends State<GraphScreen> {
                                                 _displayIntervall *= 1.1;
                                               });
                                             }
-                                          }
+                                          }*/
                                         },
                                         child: LineChart(
                                           key: _key,
@@ -361,19 +365,27 @@ class _GraphScreenState extends State<GraphScreen> {
                                     RotatedBox(
                                       quarterTurns: 3,
                                       child: Slider(
-                                        value: _sliderVerticalState,
+                                        value: _sliderVerticalStateZoom,
                                         onChanged: (newValue) {
                                           setState(() {
-                                            _sliderVerticalState = newValue;
-                                            _currentOffsetY =
-                                                2000 * _sliderVerticalState;
+                                            _sliderVerticalStateZoom = newValue;
+                                            double v = 0;
+                                            if (newValue < 0) {
+                                              v = pow(2, newValue).toDouble();
+                                            } else {
+                                              v = pow(10, newValue).toDouble();
+                                            }
+                                            _maxRangeX = 30 * v;
+                                            _maxRangeY = 300 * v;
+                                            _displayIntervall = v;
                                           });
                                         },
-                                        min: 0,
+                                        min: -1,
                                         max: 1,
                                       ),
                                     ),
-                                    Text("Current Zoom: ")
+                                    Text(
+                                        "Current Zoom: ${(100 * _displayIntervall).toInt() / 100}")
                                   ],
                                 ),
                               ),
@@ -414,9 +426,11 @@ class _GraphScreenState extends State<GraphScreen> {
       }
       spots.add(FlSpot(i.toDouble(), yValue.toDouble()));
     }
+    if (_currentOffsetY == 0) {
+      _currentOffsetY = (data[0]["total_progress"] as int).toDouble() - 10;
+      _sliderVerticalStateMovment = _currentOffsetY / 2000;
+    }
 
-    _currentOffsetY = (data[0]["total_progress"] as int).toDouble() - 10;
-    _sliderVerticalState = _currentOffsetY / 2000;
     _dataLength = data.length;
 
     return [data, spots];
