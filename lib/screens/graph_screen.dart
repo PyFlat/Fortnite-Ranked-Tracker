@@ -35,6 +35,10 @@ class _GraphScreenState extends State<GraphScreen> {
 
   double _displayIntervall = 1;
 
+  double _sliderVerticalState = 0;
+
+  double _sliderHorizontalState = 0;
+
   final double _maxZoom = 10;
 
   final double _minZoom = 0.5;
@@ -78,13 +82,33 @@ class _GraphScreenState extends State<GraphScreen> {
       dy /= (graphSize.height / _maxRangeY);
       if (_currentOffsetX - dx < 0 ||
           _currentOffsetX - dx + _maxRangeX > _dataLength) {
+        _onClick(e);
+        setState(() {
+          if (_currentOffsetX - dx < 0) {
+            _currentOffsetX = 0;
+            _sliderHorizontalState = 0;
+          } else {
+            _currentOffsetX = _dataLength - _maxRangeX;
+            _sliderHorizontalState = 1;
+          }
+        });
         if (_currentOffsetY.abs() * 2 < _currentOffsetX.abs()) {
           return;
         }
 
         dx = 0;
       }
-      if (_currentOffsetY + dy < 0) {
+      if (_currentOffsetY + dy < 0 || _currentOffsetY + dy > 2000) {
+        _onClick(e);
+        setState(() {
+          if (_currentOffsetY + dy < 0) {
+            _currentOffsetY = 0;
+            _sliderVerticalState = 0;
+          } else {
+            _currentOffsetY = 2000;
+            _sliderVerticalState = 1;
+          }
+        });
         if (_currentOffsetX.abs() * 2 < _currentOffsetY.abs()) {
           return;
         }
@@ -93,6 +117,20 @@ class _GraphScreenState extends State<GraphScreen> {
       setState(() {
         _currentOffsetX = _lastOffsetX - dx;
         _currentOffsetY = _lastOffsetY + dy;
+        double newsliderstate = _currentOffsetY / 2000;
+        if (newsliderstate > 1) {
+          newsliderstate = 1;
+        } else if (newsliderstate < 0) {
+          newsliderstate = 0;
+        }
+        _sliderVerticalState = newsliderstate;
+        newsliderstate = _currentOffsetX / (_dataLength - _maxRangeX);
+        if (newsliderstate > 1) {
+          newsliderstate = 1;
+        } else if (newsliderstate < 0) {
+          newsliderstate = 0;
+        }
+        _sliderHorizontalState = newsliderstate;
       });
     }
   }
@@ -119,12 +157,18 @@ class _GraphScreenState extends State<GraphScreen> {
                         child: Row(
                           children: [
                             RotatedBox(
-                              quarterTurns: 1,
+                              quarterTurns: 3,
                               child: Slider(
-                                value: 0,
-                                onChanged: (newValue) {},
-                                min: -10,
-                                max: 10,
+                                value: _sliderVerticalState,
+                                onChanged: (newValue) {
+                                  setState(() {
+                                    _sliderVerticalState = newValue;
+                                    _currentOffsetY =
+                                        2000 * _sliderVerticalState;
+                                  });
+                                },
+                                min: 0,
+                                max: 1,
                               ),
                             ),
                             Expanded(
@@ -267,10 +311,16 @@ class _GraphScreenState extends State<GraphScreen> {
                         ),
                       ),
                       Slider(
-                        value: 0,
-                        onChanged: (newValue) {},
-                        min: -10,
-                        max: 10,
+                        value: _sliderHorizontalState,
+                        onChanged: (newValue) {
+                          setState(() {
+                            _sliderHorizontalState = newValue;
+                            _currentOffsetX =
+                                (_dataLength - _maxRangeX) * newValue;
+                          });
+                        },
+                        min: 0,
+                        max: 1,
                       ),
                     ],
                   ),
@@ -297,6 +347,7 @@ class _GraphScreenState extends State<GraphScreen> {
     }
 
     _currentOffsetY = (data[0]["total_progress"] as int).toDouble() - 10;
+    _sliderVerticalState = _currentOffsetY / 2000;
     _dataLength = data.length;
 
     return [data, spots];
