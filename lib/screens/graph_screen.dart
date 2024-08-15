@@ -167,7 +167,9 @@ class _GraphScreenState extends State<GraphScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(),
+      appBar: AppBar(
+        title: Text("Graph of ${widget.account["displayName"]}"),
+      ),
       body: Column(
         children: [
           IndividualPageHeader(
