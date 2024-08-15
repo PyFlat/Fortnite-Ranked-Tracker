@@ -1,6 +1,8 @@
 import 'package:data_table_2/data_table_2.dart';
 import 'package:flutter/material.dart';
-import '../core/utils.dart';
+import 'package:fortnite_ranked_tracker/components/individual_page_header.dart';
+import '../components/season_selector.dart';
+import '../core/season_service.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import '../core/database.dart';
 
@@ -14,28 +16,51 @@ class DatabaseScreen extends StatefulWidget {
 }
 
 class _DatabaseScreenState extends State<DatabaseScreen> {
+  final SeasonService _seasonService = SeasonService();
   final DataBase _database = DataBase();
-  String? _currentSeason;
   int _sortedColumn = 0;
   bool _isAscending = false;
+
+  final List<String> columns = <String>[
+    "Total Match Id",
+    "Datetime",
+    "Rank",
+    "Rank Progression",
+    "Daily Match Id",
+    "Total Progress"
+  ];
+
+  final List<String> columns2 = <String>[
+    "id",
+    "datetime",
+    "rank",
+    "progress",
+    "daily_match_id",
+    "total_progress"
+  ];
+
+  final List<int> sortableColumns = <int>[0, 3, 4, 5];
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (_currentSeason == null) {
+    if (_seasonService.getCurrentSeason() == null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _openSeasonBottomSheet();
       });
     }
   }
 
-  Future<List<String>> _fetchSeasons() async {
-    List<String> trackedSeasons =
-        await _database.getTrackedSeasons(widget.account["accountId"]);
-    return trackedSeasons;
+  void _openSeasonBottomSheet() {
+    SeasonSelector(
+      seasonService: _seasonService,
+      accountId: widget.account["accountId"],
+      onSeasonSelected: _refreshData,
+    ).openSeasonBottomSheet(context);
   }
 
   Future<Map<String, dynamic>> _fetchSchemaAndData() async {
+    final _currentSeason = _seasonService.getCurrentSeason();
     if (_currentSeason == null) {
       throw Exception("No season selected");
     }
@@ -58,86 +83,6 @@ class _DatabaseScreenState extends State<DatabaseScreen> {
       'columns': columnNames,
       'data': data,
     };
-  }
-
-  final List<String> columns = <String>[
-    "Total Match Id",
-    "Datetime",
-    "Rank",
-    "Rank Progression",
-    "Daily Match Id",
-    "Total Progress"
-  ];
-
-  final List<String> columns2 = <String>[
-    "id",
-    "datetime",
-    "rank",
-    "progress",
-    "daily_match_id",
-    "total_progress"
-  ];
-
-  final List<int> sortableColumns = <int>[0, 3, 4, 5];
-
-  void _openSeasonBottomSheet() {
-    showModalBottomSheet(
-      context: context,
-      builder: (BuildContext context) {
-        return FutureBuilder<List<String>>(
-          future: _fetchSeasons(),
-          builder:
-              (BuildContext context, AsyncSnapshot<List<String>> snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
-            } else if (snapshot.hasError) {
-              return Center(child: Text('Error: ${snapshot.error}'));
-            } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-              return const Center(child: Text('No seasons available'));
-            } else {
-              final seasons = snapshot.data!;
-              return Column(
-                children: [
-                  const Padding(
-                    padding: EdgeInsets.all(16.0),
-                    child: Text(
-                      "Select Season",
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: ListView.builder(
-                      itemCount: seasons.length,
-                      itemBuilder: (context, index) {
-                        String season = seasons[index];
-                        Map<String, String> season_ =
-                            splitAndPrettifySeasonString(season);
-
-                        return ListTile(
-                          title: Text(season_["season"]!),
-                          subtitle: Text(season_["mode"]!),
-                          onTap: () {
-                            setState(() {
-                              _currentSeason = season;
-                              _sortedColumn = 0;
-                              _isAscending = false;
-                            });
-                            Navigator.pop(context);
-                          },
-                        );
-                      },
-                    ),
-                  ),
-                ],
-              );
-            }
-          },
-        );
-      },
-    );
   }
 
   void _refreshData() {
@@ -168,53 +113,12 @@ class _DatabaseScreenState extends State<DatabaseScreen> {
       ),
       body: Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.only(left: 24.0, right: 24.0, top: 12.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Builder(
-                  builder: (context) {
-                    final seasonInfo = _currentSeason != null
-                        ? splitAndPrettifySeasonString(_currentSeason!)
-                        : null;
-
-                    final displayText = seasonInfo != null
-                        ? "${seasonInfo["season"]!} - ${seasonInfo["mode"]!}"
-                        : "Select a Season";
-
-                    return Text(
-                      displayText,
-                      style: const TextStyle(
-                        fontSize: 16,
-                      ),
-                    );
-                  },
-                ),
-                SizedBox(
-                  height: 12,
-                ),
-                Row(
-                  children: [
-                    TextButton(
-                      onPressed: _openSeasonBottomSheet,
-                      child: const Text("Change Season"),
-                    ),
-                    SizedBox(
-                      width: 24,
-                    ),
-                    FilledButton.icon(
-                      icon: Icon(Icons.refresh),
-                      onPressed: _refreshData,
-                      label: const Text("Refresh"),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
+          IndividualPageHeader(
+              seasonService: _seasonService,
+              accountId: widget.account["accountId"],
+              onSeasonSelected: _refreshData),
           Expanded(
-            child: _currentSeason == null
+            child: _seasonService.getCurrentSeason() == null
                 ? const Center(child: Text("Please select a season"))
                 : FutureBuilder<Map<String, dynamic>>(
                     future: _fetchSchemaAndData(),
