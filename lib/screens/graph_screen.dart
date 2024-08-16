@@ -86,6 +86,27 @@ class _GraphScreenState extends State<GraphScreen> {
     });
   }
 
+  void zoom(double newValue) {
+    setState(() {
+      _sliderVerticalStateZoom = newValue;
+      double v = 0;
+      if (newValue < 0) {
+        v = pow(2, newValue).toDouble();
+      } else {
+        v = pow(10, newValue).toDouble();
+      }
+      _maxRangeX = 30 * v;
+      _maxRangeY = 300 * v;
+      _displayIntervall = v;
+
+      if (_dataLength - _currentOffsetX < _maxRangeX) {
+        _currentOffsetX = _dataLength - _maxRangeX;
+        _sliderHorizontalState = 1;
+      }
+      panic();
+    });
+  }
+
   void _onClick(PointerEvent e) {
     lastClickedX = e.position.dx;
     lastClickedY = e.position.dy;
@@ -239,30 +260,21 @@ class _GraphScreenState extends State<GraphScreen> {
                                         onPointerMove: _updatePosition,
                                         onPointerUp: _onRelease,
                                         onPointerSignal: (event) {
-                                          return; /*
                                           if (event is PointerScrollEvent) {
-                                            double dx =
-                                                event.scrollDelta.dx / 100;
-                                            double dy =
-                                                event.scrollDelta.dy / 100;
-                                            if (dy < 0) {
-                                              if (_displayIntervall / 1.1 <
-                                                  _minZoom) return;
-                                              setState(() {
-                                                _maxRangeY /= 1.1;
-                                                _maxRangeX /= 1.1;
-                                                _displayIntervall /= 1.1;
-                                              });
-                                            } else {
-                                              if (_displayIntervall * 1.1 >
-                                                  _maxZoom) return;
-                                              setState(() {
-                                                _maxRangeY *= 1.1;
-                                                _maxRangeX *= 1.1;
-                                                _displayIntervall *= 1.1;
-                                              });
+                                            double delta =
+                                                event.scrollDelta.dy / 2000;
+                                            if (_sliderVerticalStateZoom +
+                                                    delta >
+                                                1) {
+                                              delta = 0;
+                                            } else if (_sliderVerticalStateZoom +
+                                                    delta <
+                                                -1) {
+                                              delta = 0;
                                             }
-                                          }*/
+                                            zoom(_sliderVerticalStateZoom +
+                                                delta);
+                                          }
                                         },
                                         child: LineChart(
                                           key: _key,
@@ -389,25 +401,14 @@ class _GraphScreenState extends State<GraphScreen> {
                                       child: Slider(
                                         value: _sliderVerticalStateZoom,
                                         onChanged: (newValue) {
-                                          setState(() {
-                                            _sliderVerticalStateZoom = newValue;
-                                            double v = 0;
-                                            if (newValue < 0) {
-                                              v = pow(2, newValue).toDouble();
-                                            } else {
-                                              v = pow(10, newValue).toDouble();
-                                            }
-                                            _maxRangeX = 30 * v;
-                                            _maxRangeY = 300 * v;
-                                            _displayIntervall = v;
-                                          });
+                                          zoom(newValue);
                                         },
                                         min: -1,
                                         max: 1,
                                       ),
                                     ),
                                     Text(
-                                        "Current Zoom: ${(100 * _displayIntervall).toInt() / 100}")
+                                        "Current Zoom: ${(100 / _displayIntervall).toInt() / 100}")
                                   ],
                                 ),
                               ),
