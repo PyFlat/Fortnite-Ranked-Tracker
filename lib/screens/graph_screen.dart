@@ -92,6 +92,7 @@ class _GraphScreenState extends State<GraphScreen> {
     _lastOffsetX = _currentOffsetX;
     _lastOffsetY = _currentOffsetY;
     _clicked = true;
+    panic();
   }
 
   Size getGraphDimensions() {
@@ -102,12 +103,20 @@ class _GraphScreenState extends State<GraphScreen> {
 
   void _onRelease(PointerEvent e) {
     _clicked = false;
+    panic();
   }
 
   void _updatePosition(PointerEvent e) {
     if (_clicked) {
       double dx = (e.position.dx - lastClickedX);
       double dy = (e.position.dy - lastClickedY);
+      if (_dataLength <= _maxRangeX) {
+        setState(() {
+          _currentOffsetX = 0;
+          _sliderHorizontalState = 0;
+        });
+        dx = 0;
+      }
       Size graphSize = getGraphDimensions();
       dx /= (graphSize.width / _maxRangeX);
       dy /= (graphSize.height / _maxRangeY);
@@ -121,6 +130,7 @@ class _GraphScreenState extends State<GraphScreen> {
           } else {
             _currentOffsetX = _dataLength - _maxRangeX;
             _sliderHorizontalState = 1;
+            panic();
           }
         });
         if (_currentOffsetY.abs() * 2 < _currentOffsetX.abs()) {
@@ -162,6 +172,16 @@ class _GraphScreenState extends State<GraphScreen> {
           newsliderstate = 0;
         }
         _sliderHorizontalState = newsliderstate;
+      });
+    }
+    panic();
+  }
+
+  void panic() {
+    if (_dataLength <= _maxRangeX) {
+      setState(() {
+        _currentOffsetX = 0;
+        _sliderHorizontalState = 0;
       });
     }
   }
@@ -395,6 +415,11 @@ class _GraphScreenState extends State<GraphScreen> {
                                 value: _sliderHorizontalState,
                                 onChanged: (newValue) {
                                   setState(() {
+                                    if (_dataLength <= _maxRangeX) {
+                                      _currentOffsetX = 0;
+                                      _sliderHorizontalState = 0;
+                                      return;
+                                    }
                                     _sliderHorizontalState = newValue;
                                     _currentOffsetX =
                                         (_dataLength - _maxRangeX) * newValue;
