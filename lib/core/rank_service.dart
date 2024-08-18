@@ -253,6 +253,11 @@ class RankService {
         DateTime.parse(result.first['datetime'] as String);
     DateTime apiDatetime = DateTime.parse(update);
 
+    apiDatetime = apiDatetime.toLocal();
+
+    apiDatetime = DateTime(apiDatetime.year, apiDatetime.month, apiDatetime.day,
+        apiDatetime.hour, apiDatetime.minute, apiDatetime.second);
+
     return databaseDatetime.isAfter(apiDatetime) ||
         databaseDatetime.isAtSameMomentAs(apiDatetime);
   }
