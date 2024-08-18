@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
+import 'package:talker_flutter/talker_flutter.dart';
 import '../constants/endpoints.dart';
 import '../constants/constants.dart';
 
@@ -12,10 +13,12 @@ class AuthProvider with ChangeNotifier {
   late String _accountId;
   late String _displayName;
   late String _refreshToken;
+  late Talker _talker;
   Timer? _refreshTimer; // Make this nullable to handle initial state
   bool _isInitialized = false;
 
-  AuthProvider() {
+  AuthProvider(Talker talker) {
+    _talker = talker;
     _accessToken = "";
     _initAuth();
   }
@@ -95,7 +98,7 @@ class AuthProvider with ChangeNotifier {
       final responseData = jsonDecode(response.body);
       _accessToken = responseData['access_token'];
       _refreshToken = responseData['refresh_token'];
-      notifyListeners();
+      _talker.info("Refreshed Token");
     } else {
       throw Exception('Failed to refresh token');
     }
@@ -103,9 +106,9 @@ class AuthProvider with ChangeNotifier {
 
   void _scheduleTokenRefresh() {
     _refreshTimer?.cancel();
-    _refreshTimer = Timer(const Duration(minutes: 30), () {
+    _refreshTimer = Timer.periodic(const Duration(minutes: 20), (callback) {
       refreshToken().catchError((error) {
-        print('Failed to refresh token: $error');
+        _talker.error('Failed to refresh token: $error');
       });
     });
   }

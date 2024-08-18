@@ -95,14 +95,18 @@ class RankService {
   }
 
   Future<String> _fetchCurrentSeason() async {
-    Map response = await ApiService().getData(Endpoints.battlePassData, "");
-    String slug = response["slug"];
-    RegExp regExp = RegExp(r"(\D)(\d)");
+    return "chapter_5_season_4";
+    //TODO The old endpoint is now deprecated and until we find a new one to get the current season the season is just hardcoded
 
-    String replacedSlug = slug.replaceAllMapped(regExp, (Match match) {
-      return "${match.group(1)}_${match.group(2)}";
-    });
-    return replacedSlug.replaceAll("-", "_");
+    // Map response = await ApiService().getData(Endpoints.battlePassData, "");
+    // String slug = response["slug"];
+    // RegExp regExp = RegExp(r"(\D)(\d)");
+
+    // String replacedSlug = slug.replaceAllMapped(regExp, (Match match) {
+    //   return "${match.group(1)}_${match.group(2)}";
+    // });
+
+    // return replacedSlug.replaceAll("-", "_");
   }
 
   Future<List<String>> _fetchSeasonTracks() async {

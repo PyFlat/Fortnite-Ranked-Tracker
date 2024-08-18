@@ -156,7 +156,7 @@ class _MyAppState extends State<MyApp> with TrayListener, WindowListener {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(create: (_) => AuthProvider(widget.talker)),
       ],
       child: MaterialApp(
         navigatorObservers: [TalkerRouteObserver(widget.talker)],

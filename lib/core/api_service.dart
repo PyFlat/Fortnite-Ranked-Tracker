@@ -19,10 +19,8 @@ class ApiService {
         TalkerDioLogger(
           talker: talker,
           settings: TalkerDioLoggerSettings(
-            printRequestHeaders: false,
-            printResponseHeaders: false,
-            printRequestData: false,
-            printResponseData: false,
+            responseFilter: (response) => false,
+            requestFilter: (requestOptions) => false,
             errorFilter: (response) {
               Response? responseObject = response.response;
               if (responseObject != null) {

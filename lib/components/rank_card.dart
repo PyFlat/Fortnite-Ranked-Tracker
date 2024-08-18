@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:fortnite_ranked_tracker/core/database.dart';
 import 'package:fortnite_ranked_tracker/core/rank_service.dart';
 import 'package:fortnite_ranked_tracker/screens/database_screen.dart';
+import 'package:fortnite_ranked_tracker/screens/graph_screen.dart';
 import 'package:percent_indicator/circular_percent_indicator.dart';
 import '../screens/search_screen.dart';
 
@@ -270,6 +271,14 @@ class RankCardState extends State<RankCard>
                         "displayName": widget.displayName,
                         "accountId": widget.accountId
                       })));
+        } else if (value == "open_graph") {
+          Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => GraphScreen(account: {
+                        "displayName": widget.displayName,
+                        "accountId": widget.accountId
+                      })));
         }
       },
       itemBuilder: (BuildContext context) {
@@ -311,6 +320,19 @@ class RankCardState extends State<RankCard>
                     child: Icon(Icons.storage_rounded)),
                 Text(
                   'Open Database',
+                ),
+              ],
+            ),
+          ),
+          const PopupMenuItem<String>(
+            value: "open_graph",
+            child: Row(
+              children: [
+                Padding(
+                    padding: EdgeInsets.only(right: 8.0),
+                    child: Icon(Icons.trending_up_rounded)),
+                Text(
+                  'Open Graph',
                 ),
               ],
             ),

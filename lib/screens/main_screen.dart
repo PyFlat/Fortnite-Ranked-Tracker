@@ -80,13 +80,15 @@ class _MainScreenState extends State<MainScreen> {
           : ApiService().addPathParams(
               Endpoints.skinIcon, {"skinId": Constants.defaultSkinId});
 
-      mutableAccount["trackedSeasons"] =
-          await _database.getTableCount(mutableAccount["accountId"]);
+      mutableAccount["trackedSeasons"] = await _database
+          .getTrackedTableCount(mutableAccount["accountId"], limit: 1);
 
       updatedData.add(mutableAccount);
     }).toList();
 
     await Future.wait(futures);
+
+    updatedData.sort((a, b) => a['displayName'].compareTo(b['displayName']));
 
     return updatedData;
   }

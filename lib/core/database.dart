@@ -279,12 +279,21 @@ class DataBase {
     );
   }
 
-  Future<int> getTableCount(accountId) async {
+  Future<int> getTrackedTableCount(String accountId, {int limit = 0}) async {
     Database database = await openDatabase(accountId);
+    int trackedSeasonCount = 0;
 
     final result = await database.rawQuery(
         "SELECT name FROM sqlite_master WHERE type='table' AND name != 'sqlite_sequence'");
 
-    return result.length;
+    for (Map table in result) {
+      List<Map> x = await database
+          .rawQuery("SELECT COUNT(*) as count FROM ${table["name"]}");
+      if (x.first["count"] >= limit) {
+        trackedSeasonCount++;
+      }
+    }
+
+    return trackedSeasonCount;
   }
 }

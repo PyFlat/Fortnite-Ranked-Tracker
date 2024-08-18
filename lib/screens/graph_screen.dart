@@ -47,10 +47,6 @@ class _GraphScreenState extends State<GraphScreen> {
   double _sliderVerticalStateZoom = 0.5;
   double _sliderHorizontalState = 0;
 
-  final double _maxZoom = 10;
-
-  final double _minZoom = 0.5;
-
   int _dataLength = 0;
 
   late Future<List<dynamic>> _dataFuture;
