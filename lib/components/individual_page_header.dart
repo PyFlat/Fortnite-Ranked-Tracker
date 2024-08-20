@@ -7,13 +7,15 @@ class IndividualPageHeader extends StatefulWidget {
   final SeasonService _seasonService;
   final String accountId;
   final VoidCallback onSeasonSelected;
+  final VoidCallback? resetSliders;
 
-  const IndividualPageHeader({
-    Key? key,
-    required SeasonService seasonService,
-    required this.accountId,
-    required this.onSeasonSelected,
-  })  : _seasonService = seasonService,
+  const IndividualPageHeader(
+      {Key? key,
+      required SeasonService seasonService,
+      required this.accountId,
+      required this.onSeasonSelected,
+      this.resetSliders})
+      : _seasonService = seasonService,
         super(key: key);
 
   @override
@@ -65,6 +67,17 @@ class _IndividualPageHeaderState extends State<IndividualPageHeader> {
                 onPressed: _refreshData,
                 label: const Text("Refresh"),
               ),
+              SizedBox(
+                width: 24,
+              ),
+              if (widget.resetSliders != null)
+                FilledButton.icon(
+                  icon: Icon(Icons.settings_backup_restore_rounded),
+                  onPressed: () {
+                    widget.resetSliders!();
+                  },
+                  label: const Text("Reset Sliders"),
+                ),
             ],
           ),
         ],

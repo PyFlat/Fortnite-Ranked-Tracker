@@ -57,7 +57,7 @@ class _GraphScreenState extends State<GraphScreen> {
   @override
   void initState() {
     super.initState();
-    zoom(0.5);
+    _resetMovement();
   }
 
   void _resetMovement() {
@@ -70,7 +70,7 @@ class _GraphScreenState extends State<GraphScreen> {
       _maxRangeY = 300;
       _currentOffsetX = 0;
       _currentOffsetY = 0;
-      makeData();
+      _dataFuture = makeData();
     });
   }
 
@@ -230,9 +230,11 @@ class _GraphScreenState extends State<GraphScreen> {
       body: Column(
         children: [
           IndividualPageHeader(
-              seasonService: _seasonService,
-              accountId: widget.account["accountId"],
-              onSeasonSelected: _refreshData),
+            seasonService: _seasonService,
+            accountId: widget.account["accountId"],
+            onSeasonSelected: _refreshData,
+            resetSliders: _resetMovement,
+          ),
           SizedBox(
             height: 30,
           ),
@@ -477,6 +479,9 @@ class _GraphScreenState extends State<GraphScreen> {
   }
 
   Future<List<dynamic>> makeData() async {
+    if (_seasonService.getCurrentSeason() == null) {
+      return [];
+    }
     final data = await RankService().getRankedDataBySeason(
         widget.account["accountId"], _seasonService.getCurrentSeason()!);
 
