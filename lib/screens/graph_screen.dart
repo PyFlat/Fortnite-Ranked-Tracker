@@ -7,6 +7,7 @@ import 'package:fortnite_ranked_tracker/constants/constants.dart';
 import 'package:fortnite_ranked_tracker/core/rank_service.dart';
 import 'package:fortnite_ranked_tracker/core/season_service.dart';
 import 'package:fortnite_ranked_tracker/core/utils.dart';
+import 'package:syncfusion_flutter_sliders/sliders.dart';
 
 import '../components/season_selector.dart';
 import 'dart:math';
@@ -56,6 +57,7 @@ class _GraphScreenState extends State<GraphScreen> {
   @override
   void initState() {
     super.initState();
+    zoom(0.5);
   }
 
   @override
@@ -215,6 +217,9 @@ class _GraphScreenState extends State<GraphScreen> {
               seasonService: _seasonService,
               accountId: widget.account["accountId"],
               onSeasonSelected: _refreshData),
+          SizedBox(
+            height: 30,
+          ),
           Expanded(
             child: _seasonService.getCurrentSeason() == null
                 ? const Center(child: Text("Please select a season"))
@@ -309,7 +314,6 @@ class _GraphScreenState extends State<GraphScreen> {
                                               LineChartBarData(
                                                 dotData: FlDotData(show: false),
                                                 spots: snapshot.data![1],
-                                                isCurved: true,
                                               ),
                                             ],
                                             titlesData: FlTitlesData(
@@ -320,10 +324,17 @@ class _GraphScreenState extends State<GraphScreen> {
                                               rightTitles: AxisTitles(
                                                   sideTitles: SideTitles(
                                                 reservedSize: 125,
-                                                interval: 100,
+                                                interval: 1,
                                                 getTitlesWidget: (value, meta) {
+                                                  if (value.round() % 100 !=
+                                                      0) {
+                                                    return const SizedBox
+                                                        .shrink();
+                                                  }
+
                                                   int index =
                                                       (value / 100).round();
+
                                                   if (index >= 0 &&
                                                       index <
                                                           Constants
@@ -335,15 +346,18 @@ class _GraphScreenState extends State<GraphScreen> {
                                                       child: Text(Constants
                                                           .ranks[index]),
                                                     );
-                                                  } else if (index == 20) {
+                                                  }
+
+                                                  if (index == 20) {
                                                     return const Padding(
                                                       padding: EdgeInsets.only(
                                                           left: 16.0),
                                                       child: Text("#1"),
                                                     );
-                                                  } else {
-                                                    return const Text("");
                                                   }
+
+                                                  return const SizedBox
+                                                      .shrink();
                                                 },
                                                 showTitles: true,
                                               )),
@@ -357,11 +371,7 @@ class _GraphScreenState extends State<GraphScreen> {
                                                       value.toInt().toString());
                                                 },
                                               )),
-                                              topTitles: const AxisTitles(
-                                                  axisNameSize: 50,
-                                                  axisNameWidget: Center(
-                                                      child: Text(
-                                                          "Progress Over Time"))), // Optional: Hide top titles
+                                              topTitles: const AxisTitles(),
                                             ),
 
                                             borderData: FlBorderData(
@@ -373,11 +383,24 @@ class _GraphScreenState extends State<GraphScreen> {
                                             gridData: FlGridData(
                                               show: true,
                                               drawVerticalLine: false,
+                                              horizontalInterval: 1,
                                               getDrawingHorizontalLine:
                                                   (value) {
-                                                return FlLine(
-                                                  color:
-                                                      const Color(0xff37434d),
+                                                if (value.round() % 100 != 0) {
+                                                  return FlLine(strokeWidth: 0);
+                                                }
+                                                if ((value / 100).round() *
+                                                        100 ==
+                                                    1700) {
+                                                  return const FlLine(
+                                                    color: Colors.red,
+                                                    strokeWidth: 2,
+                                                    dashArray: [5, 5],
+                                                  );
+                                                }
+
+                                                return const FlLine(
+                                                  color: Colors.grey,
                                                   strokeWidth: 1,
                                                 );
                                               },
@@ -392,19 +415,18 @@ class _GraphScreenState extends State<GraphScreen> {
                                         ),
                                       ),
                                     ),
-                                    RotatedBox(
-                                      quarterTurns: 3,
-                                      child: Slider(
+                                    SfSlider.vertical(
                                         value: _sliderVerticalStateZoom,
-                                        onChanged: (newValue) {
-                                          zoom(newValue);
-                                        },
                                         min: -1,
                                         max: 1,
-                                      ),
-                                    ),
-                                    Text(
-                                        "Current Zoom: ${(100 / _displayIntervall).toInt() / 100}")
+                                        enableTooltip: true,
+                                        tooltipTextFormatterCallback:
+                                            (actualValue, formattedText) {
+                                          return "Current Zoom: ${(100 / _displayIntervall).toInt() / 100}";
+                                        },
+                                        onChanged: (newValue) {
+                                          zoom(newValue);
+                                        }),
                                   ],
                                 ),
                               ),
