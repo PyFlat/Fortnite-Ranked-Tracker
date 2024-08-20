@@ -79,9 +79,11 @@ class _GraphScreenState extends State<GraphScreen> {
   }
 
   void _refreshData() {
-    setState(() {
-      _dataFuture = makeData();
-    });
+    if (_seasonService.getCurrentSeason() != null) {
+      setState(() {
+        _dataFuture = makeData();
+      });
+    }
   }
 
   void zoom(double newValue) {
