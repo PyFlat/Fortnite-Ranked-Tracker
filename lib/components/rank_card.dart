@@ -342,6 +342,14 @@ class RankCardState extends State<RankCard>
     );
   }
 
+  Color _getProgressColor(double progress) {
+    double hue = (1 - progress) * 0 + progress * 120;
+
+    Color color = HSVColor.fromAHSV(1.0, hue, 1.0, 1.0).toColor();
+
+    return color;
+  }
+
   Widget _buildContent(
       String? progressText,
       double? progress,
@@ -386,7 +394,7 @@ class RankCardState extends State<RankCard>
                 lineWidth: 6,
                 percent: progress,
                 circularStrokeCap: CircularStrokeCap.round,
-                progressColor: Colors.deepPurple,
+                progressColor: _getProgressColor(progress).withOpacity(0.75),
                 header: Padding(
                   padding: const EdgeInsets.only(bottom: 8.0),
                   child: Text(
