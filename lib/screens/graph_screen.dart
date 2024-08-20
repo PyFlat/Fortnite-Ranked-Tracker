@@ -283,19 +283,50 @@ class _GraphScreenState extends State<GraphScreen> {
   }
 
   Widget _buildVerticalSlider() {
-    return RotatedBox(
-      quarterTurns: 3,
-      child: Slider(
-        value: _sliderVerticalStateMovment,
-        onChanged: (newValue) {
-          setState(() {
-            _sliderVerticalStateMovment = newValue;
-            _currentOffsetY = 2000 * _sliderVerticalStateMovment;
-          });
-        },
-        min: 0,
-        max: 1,
-      ),
+    return SfSlider.vertical(
+      value: _sliderVerticalStateMovment,
+      onChanged: (newValue) {
+        setState(() {
+          _sliderVerticalStateMovment = newValue;
+          _currentOffsetY = 2000 * _sliderVerticalStateMovment;
+        });
+      },
+      min: 0,
+      max: 1,
+    );
+  }
+
+  Widget _buildZoomSlider() {
+    return SfSlider.vertical(
+      value: _sliderVerticalStateZoom,
+      min: -1,
+      max: 1,
+      enableTooltip: true,
+      tooltipTextFormatterCallback: (actualValue, formattedText) {
+        return "Current Zoom: ${(100 / _displayIntervall).toInt() / 100}";
+      },
+      onChanged: (newValue) {
+        zoom(newValue);
+      },
+    );
+  }
+
+  Widget _buildHorizontalSlider() {
+    return Slider(
+      value: _sliderHorizontalState,
+      onChanged: (newValue) {
+        setState(() {
+          if (_dataLength <= _maxRangeX) {
+            _currentOffsetX = 0;
+            _sliderHorizontalState = 0;
+            return;
+          }
+          _sliderHorizontalState = newValue;
+          _currentOffsetX = (_dataLength - _maxRangeX) * newValue;
+        });
+      },
+      min: 0,
+      max: 1,
     );
   }
 
@@ -360,40 +391,6 @@ class _GraphScreenState extends State<GraphScreen> {
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildZoomSlider() {
-    return SfSlider.vertical(
-      value: _sliderVerticalStateZoom,
-      min: -1,
-      max: 1,
-      enableTooltip: true,
-      tooltipTextFormatterCallback: (actualValue, formattedText) {
-        return "Current Zoom: ${(100 / _displayIntervall).toInt() / 100}";
-      },
-      onChanged: (newValue) {
-        zoom(newValue);
-      },
-    );
-  }
-
-  Widget _buildHorizontalSlider() {
-    return Slider(
-      value: _sliderHorizontalState,
-      onChanged: (newValue) {
-        setState(() {
-          if (_dataLength <= _maxRangeX) {
-            _currentOffsetX = 0;
-            _sliderHorizontalState = 0;
-            return;
-          }
-          _sliderHorizontalState = newValue;
-          _currentOffsetX = (_dataLength - _maxRangeX) * newValue;
-        });
-      },
-      min: 0,
-      max: 1,
     );
   }
 
