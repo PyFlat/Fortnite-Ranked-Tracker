@@ -395,6 +395,7 @@ class RankCardState extends State<RankCard>
                 percent: progress,
                 circularStrokeCap: CircularStrokeCap.round,
                 progressColor: _getProgressColor(progress).withOpacity(0.75),
+                backgroundColor: Colors.transparent,
                 header: Padding(
                   padding: const EdgeInsets.only(bottom: 8.0),
                   child: Text(
