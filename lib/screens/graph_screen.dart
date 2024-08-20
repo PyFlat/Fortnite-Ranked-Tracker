@@ -60,6 +60,20 @@ class _GraphScreenState extends State<GraphScreen> {
     zoom(0.5);
   }
 
+  void _resetMovement() {
+    setState(() {
+      zoom(0);
+      _sliderHorizontalState = 0;
+      _sliderVerticalStateMovment = 0;
+      _displayIntervall = 1;
+      _maxRangeX = 30;
+      _maxRangeY = 300;
+      _currentOffsetX = 0;
+      _currentOffsetY = 0;
+      makeData();
+    });
+  }
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
