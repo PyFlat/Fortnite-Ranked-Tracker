@@ -237,9 +237,7 @@ class _GraphScreenState extends State<GraphScreen> {
             onSeasonSelected: _refreshData,
             resetSliders: _resetMovement,
           ),
-          const SizedBox(
-            height: 30,
-          ),
+          const SizedBox(height: 30),
           Expanded(
             child: _seasonService.getCurrentSeason() == null
                 ? const Center(child: Text("Please select a season"))
@@ -252,233 +250,217 @@ class _GraphScreenState extends State<GraphScreen> {
                         widget.talker.error(snapshot.error);
                         return Container();
                       } else if (snapshot.hasData) {
-                        return AspectRatio(
-                          aspectRatio: 1.75,
-                          child: Column(
-                            children: [
-                              Expanded(
-                                child: Row(
-                                  children: [
-                                    RotatedBox(
-                                      quarterTurns: 3,
-                                      child: Slider(
-                                        value: _sliderVerticalStateMovment,
-                                        onChanged: (newValue) {
-                                          setState(() {
-                                            _sliderVerticalStateMovment =
-                                                newValue;
-                                            _currentOffsetY = 2000 *
-                                                _sliderVerticalStateMovment;
-                                          });
-                                        },
-                                        min: 0,
-                                        max: 1,
-                                      ),
-                                    ),
-                                    Expanded(
-                                      child: Listener(
-                                        onPointerDown: _onClick,
-                                        onPointerMove: _updatePosition,
-                                        onPointerUp: _onRelease,
-                                        onPointerSignal: (event) {
-                                          if (event is PointerScrollEvent) {
-                                            double delta =
-                                                event.scrollDelta.dy / 2000;
-                                            if (_sliderVerticalStateZoom +
-                                                    delta >
-                                                1) {
-                                              delta = 0;
-                                            } else if (_sliderVerticalStateZoom +
-                                                    delta <
-                                                -1) {
-                                              delta = 0;
-                                            }
-                                            zoom(_sliderVerticalStateZoom +
-                                                delta);
-                                          }
-                                        },
-                                        child: LineChart(
-                                          key: _key,
-                                          LineChartData(
-                                            lineTouchData: LineTouchData(
-                                              touchSpotThreshold: 20,
-                                              touchTooltipData:
-                                                  LineTouchTooltipData(
-                                                maxContentWidth: 200,
-                                                getTooltipItems:
-                                                    (touchedSpots) {
-                                                  return touchedSpots
-                                                      .map((touchedSpot) {
-                                                    final int index =
-                                                        touchedSpot.spotIndex;
-                                                    final Map<String, dynamic>
-                                                        data = snapshot.data![0]
-                                                            [index];
-                                                    return LineTooltipItem(
-                                                      'Match: ${data["id"]}\n'
-                                                      'Rank: ${data["rank"]} ${data["rank"] == "Unreal" ? "#${data["progress"]}" : "${data["progress"]}%"}\n'
-                                                      'Datetime ${data["datetime"]}\n'
-                                                      'Daily Match: ${data["daily_match_id"]}',
-                                                      const TextStyle(
-                                                          color: Colors.black),
-                                                    );
-                                                  }).toList();
-                                                },
-                                              ),
-                                            ),
-                                            baselineX:
-                                                _currentOffsetX.toDouble(),
-                                            baselineY:
-                                                _currentOffsetY.toDouble(),
-                                            lineBarsData: [
-                                              LineChartBarData(
-                                                dotData: const FlDotData(
-                                                    show: false),
-                                                spots: snapshot.data![1],
-                                              ),
-                                            ],
-                                            titlesData: FlTitlesData(
-                                              leftTitles: const AxisTitles(
-                                                  axisNameWidget: SizedBox(
-                                                width: 40,
-                                              )), // Hide left Y-axis titles
-                                              rightTitles: AxisTitles(
-                                                  sideTitles: SideTitles(
-                                                reservedSize: 125,
-                                                interval: 1,
-                                                getTitlesWidget: (value, meta) {
-                                                  if (value.round() % 100 !=
-                                                      0) {
-                                                    return const SizedBox
-                                                        .shrink();
-                                                  }
-
-                                                  int index =
-                                                      (value / 100).round();
-
-                                                  if (index >= 0 &&
-                                                      index <
-                                                          Constants
-                                                              .ranks.length) {
-                                                    return Padding(
-                                                      padding:
-                                                          const EdgeInsets.only(
-                                                              left: 16.0),
-                                                      child: Text(Constants
-                                                          .ranks[index]),
-                                                    );
-                                                  }
-
-                                                  if (index == 20) {
-                                                    return const Padding(
-                                                      padding: EdgeInsets.only(
-                                                          left: 16.0),
-                                                      child: Text("#1"),
-                                                    );
-                                                  }
-
-                                                  return const SizedBox
-                                                      .shrink();
-                                                },
-                                                showTitles: true,
-                                              )),
-                                              bottomTitles: AxisTitles(
-                                                  sideTitles: SideTitles(
-                                                interval: _displayIntervall,
-                                                showTitles: true,
-                                                reservedSize: 40,
-                                                getTitlesWidget: (value, meta) {
-                                                  return Text(
-                                                      value.toInt().toString());
-                                                },
-                                              )),
-                                              topTitles: const AxisTitles(),
-                                            ),
-
-                                            borderData: FlBorderData(
-                                              show: true,
-                                              border: Border.all(
-                                                  color: Colors.grey.shade400,
-                                                  width: 2),
-                                            ),
-                                            gridData: FlGridData(
-                                              show: true,
-                                              drawVerticalLine: false,
-                                              horizontalInterval: 1,
-                                              getDrawingHorizontalLine:
-                                                  (value) {
-                                                if (value.round() % 100 != 0) {
-                                                  return const FlLine(
-                                                      strokeWidth: 0);
-                                                }
-                                                if ((value / 100).round() *
-                                                        100 ==
-                                                    1700) {
-                                                  return const FlLine(
-                                                    color: Colors.red,
-                                                    strokeWidth: 2,
-                                                    dashArray: [5, 5],
-                                                  );
-                                                }
-
-                                                return const FlLine(
-                                                  color: Colors.grey,
-                                                  strokeWidth: 1,
-                                                );
-                                              },
-                                            ),
-                                            minX: _currentOffsetX,
-                                            maxX: _currentOffsetX + _maxRangeX,
-                                            minY: _currentOffsetY,
-                                            maxY: _currentOffsetY + _maxRangeY,
-                                            // Enable zooming and panning
-                                            clipData: const FlClipData.all(),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                    SfSlider.vertical(
-                                        value: _sliderVerticalStateZoom,
-                                        min: -1,
-                                        max: 1,
-                                        enableTooltip: true,
-                                        tooltipTextFormatterCallback:
-                                            (actualValue, formattedText) {
-                                          return "Current Zoom: ${(100 / _displayIntervall).toInt() / 100}";
-                                        },
-                                        onChanged: (newValue) {
-                                          zoom(newValue);
-                                        }),
-                                  ],
-                                ),
-                              ),
-                              Slider(
-                                value: _sliderHorizontalState,
-                                onChanged: (newValue) {
-                                  setState(() {
-                                    if (_dataLength <= _maxRangeX) {
-                                      _currentOffsetX = 0;
-                                      _sliderHorizontalState = 0;
-                                      return;
-                                    }
-                                    _sliderHorizontalState = newValue;
-                                    _currentOffsetX =
-                                        (_dataLength - _maxRangeX) * newValue;
-                                  });
-                                },
-                                min: 0,
-                                max: 1,
-                              ),
-                            ],
-                          ),
-                        );
+                        return _buildGraph(snapshot.data!);
                       } else {
                         return Container();
                       }
-                    }),
+                    },
+                  ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildGraph(List<dynamic> data) {
+    return AspectRatio(
+      aspectRatio: 1.75,
+      child: Column(
+        children: [
+          Expanded(
+            child: Row(
+              children: [
+                _buildVerticalSlider(),
+                _buildChart(data),
+                _buildZoomSlider(),
+              ],
+            ),
+          ),
+          _buildHorizontalSlider(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildVerticalSlider() {
+    return RotatedBox(
+      quarterTurns: 3,
+      child: Slider(
+        value: _sliderVerticalStateMovment,
+        onChanged: (newValue) {
+          setState(() {
+            _sliderVerticalStateMovment = newValue;
+            _currentOffsetY = 2000 * _sliderVerticalStateMovment;
+          });
+        },
+        min: 0,
+        max: 1,
+      ),
+    );
+  }
+
+  Widget _buildChart(List<dynamic> data) {
+    return Expanded(
+      child: Listener(
+        onPointerDown: _onClick,
+        onPointerMove: _updatePosition,
+        onPointerUp: _onRelease,
+        onPointerSignal: (event) {
+          if (event is PointerScrollEvent) {
+            double delta = event.scrollDelta.dy / 2000;
+            if (_sliderVerticalStateZoom + delta > 1) {
+              delta = 0;
+            } else if (_sliderVerticalStateZoom + delta < -1) {
+              delta = 0;
+            }
+            zoom(_sliderVerticalStateZoom + delta);
+          }
+        },
+        child: LineChart(
+          key: _key,
+          LineChartData(
+            lineTouchData: LineTouchData(
+              touchSpotThreshold: 20,
+              touchTooltipData: LineTouchTooltipData(
+                maxContentWidth: 200,
+                getTooltipItems: (touchedSpots) {
+                  return touchedSpots.map((touchedSpot) {
+                    final int index = touchedSpot.spotIndex;
+                    final Map<String, dynamic> pointData = data[0][index];
+                    return LineTooltipItem(
+                      'Match: ${pointData["id"]}\n'
+                      'Rank: ${pointData["rank"]} ${pointData["rank"] == "Unreal" ? "#${pointData["progress"]}" : "${pointData["progress"]}%"}\n'
+                      'Datetime ${pointData["datetime"]}\n'
+                      'Daily Match: ${pointData["daily_match_id"]}',
+                      const TextStyle(color: Colors.black),
+                    );
+                  }).toList();
+                },
+              ),
+            ),
+            baselineX: _currentOffsetX.toDouble(),
+            baselineY: _currentOffsetY.toDouble(),
+            lineBarsData: [
+              LineChartBarData(
+                dotData: const FlDotData(show: false),
+                spots: data[1],
+              ),
+            ],
+            titlesData: _buildTitlesData(),
+            borderData: FlBorderData(
+              show: true,
+              border: Border.all(color: Colors.grey.shade400, width: 2),
+            ),
+            gridData: _buildGridData(),
+            minX: _currentOffsetX,
+            maxX: _currentOffsetX + _maxRangeX,
+            minY: _currentOffsetY,
+            maxY: _currentOffsetY + _maxRangeY,
+            clipData: const FlClipData.all(),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildZoomSlider() {
+    return SfSlider.vertical(
+      value: _sliderVerticalStateZoom,
+      min: -1,
+      max: 1,
+      enableTooltip: true,
+      tooltipTextFormatterCallback: (actualValue, formattedText) {
+        return "Current Zoom: ${(100 / _displayIntervall).toInt() / 100}";
+      },
+      onChanged: (newValue) {
+        zoom(newValue);
+      },
+    );
+  }
+
+  Widget _buildHorizontalSlider() {
+    return Slider(
+      value: _sliderHorizontalState,
+      onChanged: (newValue) {
+        setState(() {
+          if (_dataLength <= _maxRangeX) {
+            _currentOffsetX = 0;
+            _sliderHorizontalState = 0;
+            return;
+          }
+          _sliderHorizontalState = newValue;
+          _currentOffsetX = (_dataLength - _maxRangeX) * newValue;
+        });
+      },
+      min: 0,
+      max: 1,
+    );
+  }
+
+  FlTitlesData _buildTitlesData() {
+    return FlTitlesData(
+      leftTitles: const AxisTitles(axisNameWidget: SizedBox(width: 40)),
+      rightTitles: AxisTitles(
+        sideTitles: SideTitles(
+          reservedSize: 125,
+          interval: 1,
+          getTitlesWidget: (value, meta) {
+            if (value.round() % 100 != 0) {
+              return const SizedBox.shrink();
+            }
+            int index = (value / 100).round();
+            if (index >= 0 && index < Constants.ranks.length) {
+              return Padding(
+                padding: const EdgeInsets.only(left: 16.0),
+                child: Text(Constants.ranks[index]),
+              );
+            }
+            if (index == 20) {
+              return const Padding(
+                padding: EdgeInsets.only(left: 16.0),
+                child: Text("#1"),
+              );
+            }
+            return const SizedBox.shrink();
+          },
+          showTitles: true,
+        ),
+      ),
+      bottomTitles: AxisTitles(
+        sideTitles: SideTitles(
+          interval: _displayIntervall,
+          showTitles: true,
+          reservedSize: 40,
+          getTitlesWidget: (value, meta) {
+            return Text(value.toInt().toString());
+          },
+        ),
+      ),
+      topTitles: const AxisTitles(),
+    );
+  }
+
+  FlGridData _buildGridData() {
+    return FlGridData(
+      show: true,
+      drawVerticalLine: false,
+      horizontalInterval: 1,
+      getDrawingHorizontalLine: (value) {
+        if (value.round() % 100 != 0) {
+          return const FlLine(strokeWidth: 0);
+        }
+        if ((value / 100).round() * 100 == 1700) {
+          return const FlLine(
+            color: Colors.red,
+            strokeWidth: 2,
+            dashArray: [5, 5],
+          );
+        }
+        return const FlLine(
+          color: Colors.grey,
+          strokeWidth: 1,
+        );
+      },
     );
   }
 
