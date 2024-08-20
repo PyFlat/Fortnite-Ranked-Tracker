@@ -48,7 +48,7 @@ class AuthProvider with ChangeNotifier {
       if (error is PathNotFoundException) {
         _accessToken = "";
       } else {
-        print('Authentication failed: $error');
+        _talker.error('Authentication failed: $error');
       }
     }
   }

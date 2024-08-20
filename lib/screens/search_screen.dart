@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:fortnite_ranked_tracker/components/search_card.dart';
 import 'package:fortnite_ranked_tracker/core/rank_service.dart';
+import 'package:talker_flutter/talker_flutter.dart';
 
 const Duration fakeAPIDuration = Duration(seconds: 1);
 const Duration debounceDuration = Duration(seconds: 2);
@@ -10,7 +11,9 @@ const Duration debounceDuration = Duration(seconds: 2);
 class SearchScreen extends StatefulWidget {
   final String? accountId;
   final String? displayName;
-  const SearchScreen({super.key, this.accountId, this.displayName});
+  final Talker talker;
+  const SearchScreen(
+      {super.key, this.accountId, this.displayName, required this.talker});
 
   @override
   State<SearchScreen> createState() => _SearchScreenState();
@@ -118,8 +121,9 @@ class _SearchScreenState extends State<SearchScreen> {
               Expanded(
                   child: Center(
                       child: SearchCard(
-                accountId: _selectedAccountId,
-                displayName: _selectedDisplayName,
+                accountId: _selectedAccountId!,
+                displayName: _selectedDisplayName!,
+                talker: widget.talker,
               )))
           ],
         ),

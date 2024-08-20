@@ -93,18 +93,19 @@ class _AuthScreenState extends State<AuthScreen> {
     String filePath = '${directory.path}/deviceAuthGrant.json';
     await writeToFile(filePath, jsonEncode(deviceDataJson));
 
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-
-    await authProvider.initializeAuth();
-
     if (mounted) {
-      Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-              builder: (context) => MainScreen(
-                  authProvider: authProvider,
-                  talker: widget.talker,
-                  dio: widget.dio)));
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      await authProvider.initializeAuth();
+
+      if (mounted) {
+        Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+                builder: (context) => MainScreen(
+                    authProvider: authProvider,
+                    talker: widget.talker,
+                    dio: widget.dio)));
+      }
     }
 
     _isAuthorizationInProgress = false;
@@ -113,11 +114,11 @@ class _AuthScreenState extends State<AuthScreen> {
   Future<void> writeToFile(String filePath, String jsonString) async {
     File file = File(filePath);
 
-    // Write the JSON string to the file
     await file
         .writeAsString(jsonString)
-        .then((file) => print('File saved: $filePath'))
-        .catchError((error) => print('Error saving file: $error'));
+        .then((file) => widget.talker.info('File saved: $filePath'))
+        .catchError(
+            (error) => widget.talker.error('Error saving file: $error'));
   }
 
   @override

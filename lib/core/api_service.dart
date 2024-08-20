@@ -7,6 +7,7 @@ import 'package:talker_flutter/talker_flutter.dart';
 class ApiService {
   bool _isInitialized = false;
   late Dio _dio;
+  late Talker _talker;
 
   ApiService._();
   static final ApiService _instance = ApiService._();
@@ -14,6 +15,7 @@ class ApiService {
 
   Future<void> init(Talker talker, AuthProvider authProvider, Dio dio) async {
     if (!_isInitialized) {
+      _talker = talker;
       _dio = dio;
       _dio.interceptors.add(
         TalkerDioLogger(
@@ -71,9 +73,8 @@ class ApiService {
       return response.data;
     } on DioException catch (e) {
       if (e.response != null) {
-        //print(e.response!.data);
       } else {
-        print(e.message);
+        _talker.error(e.message);
       }
       return [];
     }
@@ -95,9 +96,8 @@ class ApiService {
       return response.data;
     } on DioException catch (e) {
       if (e.response != null) {
-        //print(e.response!.data);
       } else {
-        print(e.message);
+        _talker.error(e.message);
       }
       return [];
     }

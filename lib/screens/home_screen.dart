@@ -202,7 +202,10 @@ class HomeScreenState extends State<HomeScreen> {
         onPressed: () {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => SearchScreen()),
+            MaterialPageRoute(
+                builder: (context) => SearchScreen(
+                      talker: widget.talker,
+                    )),
           );
         },
         label: const Text("Search"),
@@ -278,7 +281,11 @@ class HomeScreenState extends State<HomeScreen> {
                             child: Padding(
                               padding: const EdgeInsets.all(8.0),
                               child: DashboardCard(
-                                  item: item, color: color!, index: index),
+                                item: item,
+                                color: color!,
+                                index: index,
+                                talker: widget.talker,
+                              ),
                             ),
                           ),
                         );

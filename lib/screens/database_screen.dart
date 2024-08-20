@@ -9,7 +9,7 @@ import '../core/database.dart';
 class DatabaseScreen extends StatefulWidget {
   final Map<String, dynamic> account;
 
-  DatabaseScreen({super.key, required this.account});
+  const DatabaseScreen({super.key, required this.account});
 
   @override
   State<DatabaseScreen> createState() => _DatabaseScreenState();
@@ -60,8 +60,8 @@ class _DatabaseScreenState extends State<DatabaseScreen> {
   }
 
   Future<Map<String, dynamic>> _fetchSchemaAndData() async {
-    final _currentSeason = _seasonService.getCurrentSeason();
-    if (_currentSeason == null) {
+    final currentSeason = _seasonService.getCurrentSeason();
+    if (currentSeason == null) {
       throw Exception("No season selected");
     }
 
@@ -70,14 +70,14 @@ class _DatabaseScreenState extends State<DatabaseScreen> {
     Database db = await _database.openDatabase(widget.account["accountId"]);
 
     final columnsQuery =
-        await db.rawQuery("PRAGMA table_info('$_currentSeason')");
+        await db.rawQuery("PRAGMA table_info('$currentSeason')");
     final columnNames =
         columnsQuery.map((column) => column['name'] as String).toList();
 
     final sortClause =
         "ORDER BY ${columns2[_sortedColumn]} ${_isAscending ? 'ASC' : 'DESC'}";
 
-    final data = await db.rawQuery("SELECT * FROM $_currentSeason $sortClause");
+    final data = await db.rawQuery("SELECT * FROM $currentSeason $sortClause");
 
     return {
       'columns': columnNames,
@@ -146,7 +146,7 @@ class _DatabaseScreenState extends State<DatabaseScreen> {
                                 ),
                               );
                             }).toList(),
-                            rows: [],
+                            rows: const [],
                           ),
                         );
                       } else if (snapshot.hasError) {

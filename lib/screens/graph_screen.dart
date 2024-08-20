@@ -8,14 +8,16 @@ import 'package:fortnite_ranked_tracker/core/rank_service.dart';
 import 'package:fortnite_ranked_tracker/core/season_service.dart';
 import 'package:fortnite_ranked_tracker/core/utils.dart';
 import 'package:syncfusion_flutter_sliders/sliders.dart';
+import 'package:talker_flutter/talker_flutter.dart';
 
 import '../components/season_selector.dart';
 import 'dart:math';
 
 class GraphScreen extends StatefulWidget {
   final Map<String, dynamic> account;
+  final Talker talker;
 
-  const GraphScreen({super.key, required this.account});
+  const GraphScreen({super.key, required this.account, required this.talker});
   @override
   State<GraphScreen> createState() => _GraphScreenState();
 }
@@ -235,7 +237,7 @@ class _GraphScreenState extends State<GraphScreen> {
             onSeasonSelected: _refreshData,
             resetSliders: _resetMovement,
           ),
-          SizedBox(
+          const SizedBox(
             height: 30,
           ),
           Expanded(
@@ -245,9 +247,9 @@ class _GraphScreenState extends State<GraphScreen> {
                     future: _dataFuture,
                     builder: (BuildContext context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {
-                        return CircularProgressIndicator();
+                        return const CircularProgressIndicator();
                       } else if (snapshot.hasError) {
-                        print(snapshot.error);
+                        widget.talker.error(snapshot.error);
                         return Container();
                       } else if (snapshot.hasData) {
                         return AspectRatio(
@@ -330,7 +332,8 @@ class _GraphScreenState extends State<GraphScreen> {
                                                 _currentOffsetY.toDouble(),
                                             lineBarsData: [
                                               LineChartBarData(
-                                                dotData: FlDotData(show: false),
+                                                dotData: const FlDotData(
+                                                    show: false),
                                                 spots: snapshot.data![1],
                                               ),
                                             ],
@@ -405,7 +408,8 @@ class _GraphScreenState extends State<GraphScreen> {
                                               getDrawingHorizontalLine:
                                                   (value) {
                                                 if (value.round() % 100 != 0) {
-                                                  return FlLine(strokeWidth: 0);
+                                                  return const FlLine(
+                                                      strokeWidth: 0);
                                                 }
                                                 if ((value / 100).round() *
                                                         100 ==
@@ -428,7 +432,7 @@ class _GraphScreenState extends State<GraphScreen> {
                                             minY: _currentOffsetY,
                                             maxY: _currentOffsetY + _maxRangeY,
                                             // Enable zooming and panning
-                                            clipData: FlClipData.all(),
+                                            clipData: const FlClipData.all(),
                                           ),
                                         ),
                                       ),

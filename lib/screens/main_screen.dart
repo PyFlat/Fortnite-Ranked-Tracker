@@ -25,10 +25,10 @@ class MainScreen extends StatefulWidget {
       required this.dio});
 
   @override
-  _MainScreenState createState() => _MainScreenState();
+  MainScreenState createState() => MainScreenState();
 }
 
-class _MainScreenState extends State<MainScreen> {
+class MainScreenState extends State<MainScreen> {
   final DataBase _database = DataBase();
   final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
   int _selectedIndex = 0;
@@ -48,7 +48,7 @@ class _MainScreenState extends State<MainScreen> {
 
   Future<void> _initializeRankService() async {
     await ApiService().init(widget.talker, widget.authProvider, widget.dio);
-    await RankService().init(widget.authProvider);
+    await RankService().init(widget.talker, widget.authProvider);
   }
 
   void _onItemTapped(int index) {
@@ -196,19 +196,19 @@ class _MainScreenState extends State<MainScreen> {
                       onTap: () => _onItemTapped(0),
                     ),
                     AccountListTile(
-                      name: 'Database',
-                      icon: const Icon(Icons.storage_rounded,
-                          color: Colors.blueGrey),
-                      accountsFuture: _getAccounts(),
-                      scaffoldKey: scaffoldKey,
-                    ),
+                        name: 'Database',
+                        icon: const Icon(Icons.storage_rounded,
+                            color: Colors.blueGrey),
+                        accountsFuture: _getAccounts(),
+                        scaffoldKey: scaffoldKey,
+                        talker: widget.talker),
                     AccountListTile(
-                      name: 'Graph',
-                      icon: const Icon(Icons.trending_up_rounded,
-                          color: Colors.blueGrey),
-                      accountsFuture: _getAccounts(),
-                      scaffoldKey: scaffoldKey,
-                    ),
+                        name: 'Graph',
+                        icon: const Icon(Icons.trending_up_rounded,
+                            color: Colors.blueGrey),
+                        accountsFuture: _getAccounts(),
+                        scaffoldKey: scaffoldKey,
+                        talker: widget.talker),
                   ],
                 ),
               ),
@@ -228,8 +228,10 @@ class _MainScreenState extends State<MainScreen> {
                 leading: const Icon(Icons.settings, color: Colors.blueGrey),
                 title: const Text('Settings', style: TextStyle(fontSize: 16)),
                 onTap: () => {
-                  Navigator.push(context,
-                      MaterialPageRoute(builder: (context) => SettingsScreen()))
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => const SettingsScreen()))
                 },
               ),
             ],
@@ -246,14 +248,15 @@ class AccountListTile extends StatelessWidget {
   final Future<List<Map<String, dynamic>>> accountsFuture;
   final SearchController searchController = SearchController();
   final GlobalKey<ScaffoldState> scaffoldKey;
+  final Talker talker;
 
-  AccountListTile({
-    super.key,
-    required this.name,
-    required this.icon,
-    required this.accountsFuture,
-    required this.scaffoldKey,
-  });
+  AccountListTile(
+      {super.key,
+      required this.name,
+      required this.icon,
+      required this.accountsFuture,
+      required this.scaffoldKey,
+      required this.talker});
 
   List<Map<String, dynamic>> _filterAccounts(
       String query, List<Map<String, dynamic>> accounts) {
@@ -274,7 +277,7 @@ class AccountListTile extends StatelessWidget {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return ListTile(
             leading: icon,
-            title: Text(name, style: TextStyle(fontSize: 16)),
+            title: Text(name, style: const TextStyle(fontSize: 16)),
             onTap: () {},
           );
         }
@@ -294,7 +297,7 @@ class AccountListTile extends StatelessWidget {
           builder: (BuildContext context, SearchController controller) {
             return ListTile(
               leading: icon,
-              title: Text(name, style: TextStyle(fontSize: 16)),
+              title: Text(name, style: const TextStyle(fontSize: 16)),
               onTap: () {
                 controller.openView();
               },
@@ -321,7 +324,8 @@ class AccountListTile extends StatelessWidget {
                               MaterialPageRoute(builder: (context) {
                                 return name == "Database"
                                     ? DatabaseScreen(account: account)
-                                    : GraphScreen(account: account);
+                                    : GraphScreen(
+                                        account: account, talker: talker);
                               }),
                             );
                           },

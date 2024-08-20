@@ -10,19 +10,18 @@ class IndividualPageHeader extends StatefulWidget {
   final VoidCallback? resetSliders;
 
   const IndividualPageHeader(
-      {Key? key,
+      {super.key,
       required SeasonService seasonService,
       required this.accountId,
       required this.onSeasonSelected,
       this.resetSliders})
-      : _seasonService = seasonService,
-        super(key: key);
+      : _seasonService = seasonService;
 
   @override
-  _IndividualPageHeaderState createState() => _IndividualPageHeaderState();
+  IndividualPageHeaderState createState() => IndividualPageHeaderState();
 }
 
-class _IndividualPageHeaderState extends State<IndividualPageHeader> {
+class IndividualPageHeaderState extends State<IndividualPageHeader> {
   void _refreshData() {
     widget.onSeasonSelected();
   }
@@ -49,7 +48,7 @@ class _IndividualPageHeaderState extends State<IndividualPageHeader> {
               fontSize: 16,
             ),
           ),
-          SizedBox(
+          const SizedBox(
             height: 12,
           ),
           Row(
@@ -59,20 +58,20 @@ class _IndividualPageHeaderState extends State<IndividualPageHeader> {
                 accountId: widget.accountId,
                 onSeasonSelected: _refreshData,
               ),
-              SizedBox(
+              const SizedBox(
                 width: 24,
               ),
               FilledButton.icon(
-                icon: Icon(Icons.refresh),
+                icon: const Icon(Icons.refresh),
                 onPressed: _refreshData,
                 label: const Text("Refresh"),
               ),
-              SizedBox(
+              const SizedBox(
                 width: 24,
               ),
               if (widget.resetSliders != null)
                 FilledButton.icon(
-                  icon: Icon(Icons.settings_backup_restore_rounded),
+                  icon: const Icon(Icons.settings_backup_restore_rounded),
                   onPressed: () {
                     widget.resetSliders!();
                   },

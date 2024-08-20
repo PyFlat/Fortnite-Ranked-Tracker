@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:intl/intl.dart';
+import 'package:talker_flutter/talker_flutter.dart';
 
 import '../constants/constants.dart';
 import '../constants/endpoints.dart';
@@ -30,6 +31,7 @@ class RankService {
   Stream<void> get rankUpdates => _rankUpdateController.stream;
 
   late AuthProvider authProvider;
+  late Talker talker;
 
   RankService._();
 
@@ -41,7 +43,7 @@ class RankService {
 
   List<String> get activeTracks => _instance._activeTracks;
 
-  Future<void> init(AuthProvider authProvider) async {
+  Future<void> init(Talker talker, AuthProvider authProvider) async {
     if (!_isInitialized) {
       this.authProvider = authProvider;
 
@@ -205,7 +207,7 @@ class RankService {
     int totalProgress = progress + (Constants.ranks.indexOf(rank) * 100);
 
     List<Map<String, dynamic>> overallCountResult = await db.rawQuery(
-        'SELECT COUNT(*) as count FROM ${_currentSeason}_${rankingType}');
+        'SELECT COUNT(*) as count FROM ${_currentSeason}_$rankingType');
     int overallCount = overallCountResult.first['count'];
 
     if (overallCount == 0) {
@@ -219,7 +221,7 @@ class RankService {
     }
 
     List<Map<String, dynamic>> dailyMatchIdResult = await db.rawQuery(
-        '''SELECT MAX(daily_match_id) as max_id FROM ${_currentSeason}_${rankingType}
+        '''SELECT MAX(daily_match_id) as max_id FROM ${_currentSeason}_$rankingType
         WHERE strftime('%Y-%m-%d', datetime) = DATE('now', 'localtime')''');
     int? dailyMatchId = dailyMatchIdResult.first['max_id'];
 
@@ -231,7 +233,7 @@ class RankService {
     DateTime now = DateTime.now();
     String formattedDate = DateFormat('yyyy-MM-dd HH:mm:ss').format(now);
 
-    await db.insert('${_currentSeason}_${rankingType}', {
+    await db.insert('${_currentSeason}_$rankingType', {
       'datetime': formattedDate,
       'rank': rank,
       'progress': progress,
@@ -243,7 +245,7 @@ class RankService {
   Future<bool> checkForDoubleData(
       Database db, String update, String rankingType) async {
     List<Map<String, dynamic>> result = await db.rawQuery(
-        'SELECT datetime FROM ${_currentSeason}_${rankingType} ORDER BY id DESC LIMIT 1');
+        'SELECT datetime FROM ${_currentSeason}_$rankingType ORDER BY id DESC LIMIT 1');
 
     if (result.isEmpty) {
       return false;
@@ -270,7 +272,7 @@ class RankService {
       result = await db.rawQuery(
           'SELECT daily_match_id, datetime, rank, progress, total_progress FROM ${_currentSeason}_$rankType ORDER BY id DESC LIMIT 2');
     } catch (error) {
-      print("Error occured: $error");
+      talker.error("Error occured: $error");
     }
     return result;
   }
@@ -282,7 +284,7 @@ class RankService {
     try {
       result = await db.rawQuery('SELECT * FROM $seasonName');
     } catch (error) {
-      print("Error occured: $error");
+      talker.error("Error occured: $error");
     }
     return result;
   }
@@ -326,7 +328,7 @@ class RankService {
               pathParams: {"trackguid": tracks[i]});
           storeRankData(result);
         } catch (e) {
-          print('Failed to post data: $e');
+          talker.error('Failed to post data: $e');
         }
       }
     }

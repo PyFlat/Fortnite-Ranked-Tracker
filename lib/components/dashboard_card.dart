@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:talker_flutter/talker_flutter.dart';
 import '../core/utils.dart';
 import 'rank_card.dart';
 
@@ -6,12 +7,14 @@ class DashboardCard extends StatelessWidget {
   final Map<String, dynamic> item;
   final Color color;
   final int index;
+  final Talker talker;
 
   const DashboardCard(
       {super.key,
       required this.item,
       required this.color,
-      required this.index});
+      required this.index,
+      required this.talker});
 
   @override
   Widget build(BuildContext context) {
@@ -71,6 +74,7 @@ class DashboardCard extends StatelessWidget {
       rocketRacingRankImagePath: getImageAssetPath(rocketRacingValues),
       rocketRacingRank: getStringValue(rocketRacingValues, 'Rank'),
       rocketRacingActive: rocketRacingValues != null,
+      talker: talker,
     );
   }
 }

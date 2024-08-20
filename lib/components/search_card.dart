@@ -3,20 +3,25 @@ import 'package:fortnite_ranked_tracker/components/rank_card.dart';
 import 'package:fortnite_ranked_tracker/constants/constants.dart';
 import 'package:fortnite_ranked_tracker/core/database.dart';
 import 'package:fortnite_ranked_tracker/core/utils.dart';
+import 'package:talker_flutter/talker_flutter.dart';
 
 import '../core/rank_service.dart';
 
 class SearchCard extends StatefulWidget {
-  final accountId;
-  final displayName;
+  final String accountId;
+  final String displayName;
+  final Talker talker;
   const SearchCard(
-      {super.key, required this.accountId, required this.displayName});
+      {super.key,
+      required this.accountId,
+      required this.displayName,
+      required this.talker});
 
   @override
-  _SearchCardState createState() => _SearchCardState();
+  SearchCardState createState() => SearchCardState();
 }
 
-class _SearchCardState extends State<SearchCard> {
+class SearchCardState extends State<SearchCard> {
   Future<List<dynamic>> _fetchSelectedItem() async {
     List<dynamic> result =
         await RankService().getSingleProgress(widget.accountId);
@@ -83,7 +88,7 @@ class _SearchCardState extends State<SearchCard> {
             width: 350,
             height: 350,
             child: RankCard(
-              displayName: widget.displayName ?? "",
+              displayName: widget.displayName,
               accountId: widget.accountId,
               showMenu: false,
               showSwitches: true,
@@ -111,10 +116,11 @@ class _SearchCardState extends State<SearchCard> {
               rocketRacingRankImagePath: getImageAssetPath(rrData),
               rocketRacingRank: getStringValue(rrData, "Rank"),
               rocketRacingTracking: active[2],
+              talker: widget.talker,
             ),
-          ); //MyCard(item: snapshot.data!);
+          );
         } else {
-          return Text('No data available');
+          return const Text('No data available');
         }
       },
     );

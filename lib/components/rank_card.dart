@@ -5,6 +5,7 @@ import 'package:fortnite_ranked_tracker/core/rank_service.dart';
 import 'package:fortnite_ranked_tracker/screens/database_screen.dart';
 import 'package:fortnite_ranked_tracker/screens/graph_screen.dart';
 import 'package:percent_indicator/circular_percent_indicator.dart';
+import 'package:talker_flutter/talker_flutter.dart';
 import '../screens/search_screen.dart';
 
 class RankCard extends StatefulWidget {
@@ -48,43 +49,45 @@ class RankCard extends StatefulWidget {
 
   final int? initialIndex;
 
-  const RankCard({
-    this.color = Colors.black26,
-    this.initialIndex = 0,
-    super.key,
-    required this.displayName,
-    this.accountId,
-    this.accountAvatar,
-    required this.showMenu,
-    required this.showSwitches,
-    this.battleRoyaleProgressText,
-    this.battleRoyaleProgress,
-    this.battleRoyaleLastProgress,
-    this.battleRoyaleLastChanged,
-    this.battleRoyaleDailyMatches,
-    this.battleRoyaleRankImagePath,
-    this.battleRoyaleRank,
-    required this.battleRoyaleActive,
-    this.battleRoyaleTracking,
-    this.zeroBuildProgressText,
-    this.zeroBuildProgress,
-    this.zeroBuildLastProgress,
-    this.zeroBuildLastChanged,
-    this.zeroBuildDailyMatches,
-    this.zeroBuildRankImagePath,
-    this.zeroBuildRank,
-    required this.zeroBuildActive,
-    this.zeroBuildTracking,
-    this.rocketRacingProgressText,
-    this.rocketRacingProgress,
-    this.rocketRacingLastProgress,
-    this.rocketRacingLastChanged,
-    this.rocketRacingDailyMatches,
-    this.rocketRacingRankImagePath,
-    this.rocketRacingRank,
-    required this.rocketRacingActive,
-    this.rocketRacingTracking,
-  });
+  final Talker talker;
+
+  const RankCard(
+      {this.color = Colors.black26,
+      this.initialIndex = 0,
+      super.key,
+      required this.displayName,
+      this.accountId,
+      this.accountAvatar,
+      required this.showMenu,
+      required this.showSwitches,
+      this.battleRoyaleProgressText,
+      this.battleRoyaleProgress,
+      this.battleRoyaleLastProgress,
+      this.battleRoyaleLastChanged,
+      this.battleRoyaleDailyMatches,
+      this.battleRoyaleRankImagePath,
+      this.battleRoyaleRank,
+      required this.battleRoyaleActive,
+      this.battleRoyaleTracking,
+      this.zeroBuildProgressText,
+      this.zeroBuildProgress,
+      this.zeroBuildLastProgress,
+      this.zeroBuildLastChanged,
+      this.zeroBuildDailyMatches,
+      this.zeroBuildRankImagePath,
+      this.zeroBuildRank,
+      required this.zeroBuildActive,
+      this.zeroBuildTracking,
+      this.rocketRacingProgressText,
+      this.rocketRacingProgress,
+      this.rocketRacingLastProgress,
+      this.rocketRacingLastChanged,
+      this.rocketRacingDailyMatches,
+      this.rocketRacingRankImagePath,
+      this.rocketRacingRank,
+      required this.rocketRacingActive,
+      this.rocketRacingTracking,
+      required this.talker});
 
   @override
   RankCardState createState() => RankCardState();
@@ -102,13 +105,6 @@ class RankCardState extends State<RankCard>
     _battleRoyaleTracking = widget.battleRoyaleTracking ?? false;
     _zeroBuildTracking = widget.zeroBuildTracking ?? false;
     _rocketRacingTracking = widget.rocketRacingTracking ?? false;
-  }
-
-  void _copyText(String textToCopy) {
-    Clipboard.setData(ClipboardData(text: textToCopy));
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Text copied to clipboard')),
-    );
   }
 
   Future<void> _updatePlayerTracking(bool value, int key) async {
@@ -261,6 +257,7 @@ class RankCardState extends State<RankCard>
                 builder: (context) => SearchScreen(
                       accountId: widget.accountId,
                       displayName: widget.displayName,
+                      talker: widget.talker,
                     )),
           );
         } else if (value == "open_database") {
@@ -275,10 +272,13 @@ class RankCardState extends State<RankCard>
           Navigator.push(
               context,
               MaterialPageRoute(
-                  builder: (context) => GraphScreen(account: {
-                        "displayName": widget.displayName,
-                        "accountId": widget.accountId
-                      })));
+                  builder: (context) => GraphScreen(
+                        account: {
+                          "displayName": widget.displayName,
+                          "accountId": widget.accountId
+                        },
+                        talker: widget.talker,
+                      )));
         }
       },
       itemBuilder: (BuildContext context) {
@@ -416,7 +416,8 @@ class RankCardState extends State<RankCard>
                 ),
                 center: Text(
                   progressText ?? "",
-                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+                  style: const TextStyle(
+                      fontWeight: FontWeight.w600, fontSize: 16),
                 ),
               ),
             Column(
@@ -479,7 +480,8 @@ class CustomDialog extends StatefulWidget {
   final String accountName;
   final String accountId;
 
-  CustomDialog({required this.accountName, required this.accountId});
+  const CustomDialog(
+      {super.key, required this.accountName, required this.accountId});
 
   @override
   State<CustomDialog> createState() => _CustomDialogState();
