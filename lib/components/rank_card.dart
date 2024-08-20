@@ -399,26 +399,24 @@ class RankCardState extends State<RankCard>
                 ),
                 footer: Padding(
                   padding: const EdgeInsets.only(top: 8.0),
-                  child: Visibility(
-                    visible: dailyMatches != null,
-                    child: Text("Daily Matches: $dailyMatches"),
-                  ),
+                  child: (lastProgress != null)
+                      ? Text(
+                          "Last Progress: $lastProgress",
+                        )
+                      : const SizedBox.shrink(),
                 ),
-                center: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(progressText ?? ""),
-                    if (lastProgress != null)
-                      Text(
-                        lastProgress,
-                        style: const TextStyle(color: Colors.grey),
-                      ),
-                  ],
+                center: Text(
+                  progressText ?? "",
+                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
                 ),
               ),
             Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
+                if (dailyMatches != null) Text("Daily Matches: $dailyMatches"),
+                const SizedBox(
+                  height: 15,
+                ),
                 if (rankImagePath != null)
                   Image.asset(
                     rankImagePath,
