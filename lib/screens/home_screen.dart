@@ -20,7 +20,8 @@ class HomeScreen extends StatefulWidget {
   HomeScreenState createState() => HomeScreenState();
 }
 
-class HomeScreenState extends State<HomeScreen> {
+class HomeScreenState extends State<HomeScreen>
+    with SingleTickerProviderStateMixin {
   final DataBase _database = DataBase();
   final RankService _rankService = RankService();
   List<Map<String, dynamic>> _previousData = [];
@@ -28,6 +29,15 @@ class HomeScreenState extends State<HomeScreen> {
   final List<double> _currentScales = [];
   final List _rankedModes = ["Battle Royale", "Zero Build", "Rocket Racing"];
   bool _firstIteration = true;
+  bool _draggingEnabled = false;
+  int _dragged = -1;
+  int _target = -1;
+  late AnimationController _controller;
+  late Animation<double> _shakeAnimation;
+
+  var data = [];
+
+  List<String> _cardPositions = [];
 
   @override
   void initState() {
@@ -39,6 +49,23 @@ class HomeScreenState extends State<HomeScreen> {
         });
       }
     });
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 100),
+      vsync: this,
+    );
+
+    _shakeAnimation = Tween<double>(begin: -0.025, end: 0.025).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: Curves.easeInOut,
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
   }
 
   String calculatePercentageDifference(int currentProgress,
@@ -195,6 +222,22 @@ class HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  List<dynamic> _sortCards(List<dynamic> data) {
+    if (data.isEmpty) {
+      return data;
+    }
+    if (_cardPositions.isEmpty) {
+      _cardPositions = data.map((map) => map['AccountId'] as String).toList();
+    } else {
+      data.sort((a, b) {
+        int indexA = _cardPositions.indexOf(a["AccountId"]);
+        int indexB = _cardPositions.indexOf(b["AccountId"]);
+        return indexA.compareTo(indexB);
+      });
+    }
+    return data;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -216,7 +259,9 @@ class HomeScreenState extends State<HomeScreen> {
         child: FutureBuilder<List<Map<String, dynamic>>>(
           future: _getData(),
           builder: (context, snapshot) {
-            var data = snapshot.data ?? [];
+            data = snapshot.data ?? [];
+
+            data = _sortCards(data);
 
             List<Widget> cards = [];
 
@@ -262,38 +307,76 @@ class HomeScreenState extends State<HomeScreen> {
               _currentCardColors[i] = cardColor;
               _currentScales[i] = cardScale;
 
-              cards.add(
-                TweenAnimationBuilder<Color?>(
-                  key: ValueKey(item.toString()),
-                  tween: ColorTween(
-                      begin: Colors.transparent, end: _currentCardColors[i]),
-                  duration: const Duration(milliseconds: 400),
-                  builder: (context, color, child) {
-                    return TweenAnimationBuilder<double>(
-                      tween: Tween(begin: 1.0, end: _currentScales[i]),
-                      duration: const Duration(milliseconds: 100),
-                      builder: (context, scale, child) {
-                        return Transform.scale(
-                          scale: scale,
-                          child: SizedBox(
-                            width: 350.0,
-                            height: 350.0,
-                            child: Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: DashboardCard(
-                                item: item,
-                                color: color!,
-                                index: index,
-                                talker: widget.talker,
-                              ),
-                            ),
-                          ),
-                        );
-                      },
+              cards.add(GestureDetector(
+                onDoubleTap: () {
+                  if (_shakeAnimation.isAnimating) {
+                    _controller.reset();
+                    setState(() {
+                      _draggingEnabled = false;
+                    });
+                  } else {
+                    _controller.repeat(reverse: true);
+                    setState(() {
+                      _draggingEnabled = true;
+                    });
+                  }
+                },
+                child: AnimatedBuilder(
+                  animation: _shakeAnimation,
+                  builder: (context, child) {
+                    if (_shakeAnimation.isAnimating) {
+                      return Transform.rotate(
+                        angle: _shakeAnimation.value,
+                        child: child,
+                      );
+                    }
+                    return Transform.rotate(
+                      angle: 0,
+                      child: child,
                     );
                   },
+                  child: DragTarget<int>(
+                    onAcceptWithDetails: (details) {
+                      setState(() {
+                        var temp = _cardPositions[details.data];
+                        _cardPositions[details.data] = _cardPositions[i];
+                        _cardPositions[i] = temp;
+                      });
+                    },
+                    onWillAcceptWithDetails: (details) {
+                      setState(() {
+                        _target = i;
+                      });
+                      return true;
+                    },
+                    builder: (context, candidateData, rejectedData) {
+                      return Draggable<int>(
+                          ignoringFeedbackSemantics: false,
+                          data: i,
+                          maxSimultaneousDrags: _draggingEnabled ? 1 : 0,
+                          onDragStarted: () {
+                            setState(() {
+                              _dragged = i;
+                            });
+                          },
+                          onDragEnd: (details) {
+                            setState(() {
+                              _dragged = -1;
+                            });
+                          },
+                          feedback:
+                              _buildSimpleCard(item, index, Colors.white54),
+                          child: candidateData.isEmpty
+                              ? _dragged == i
+                                  ? _buildSimpleCard(
+                                      data[_target], index, cardColor)
+                                  : _buildAnimatedCard(item, i, index)
+                              : _buildSimpleCard(
+                                  data[_dragged], index, cardColor));
+                    },
+                  ),
                 ),
-              );
+              ));
             }
 
             _previousData = List.from(data);
@@ -323,6 +406,42 @@ class HomeScreenState extends State<HomeScreen> {
               ),
             );
           },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAnimatedCard(dynamic item, int i, int index) {
+    return TweenAnimationBuilder<Color?>(
+      key: ValueKey(item.toString()),
+      tween: ColorTween(begin: Colors.transparent, end: _currentCardColors[i]),
+      duration: const Duration(milliseconds: 400),
+      builder: (context, color, child) {
+        return TweenAnimationBuilder<double>(
+          tween: Tween(begin: 1.0, end: _currentScales[i]),
+          duration: const Duration(milliseconds: 100),
+          builder: (context, scale, child) {
+            return Transform.scale(
+              scale: scale,
+              child: _buildSimpleCard(item, index, color!),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildSimpleCard(dynamic item, int index, Color color) {
+    return SizedBox(
+      width: 350,
+      height: 350,
+      child: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: DashboardCard(
+          item: item,
+          color: color,
+          index: index,
+          talker: widget.talker,
         ),
       ),
     );
