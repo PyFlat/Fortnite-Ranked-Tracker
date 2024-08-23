@@ -222,7 +222,7 @@ class HomeScreenState extends State<HomeScreen>
     }
   }
 
-  List<dynamic> _sortCards(List<dynamic> data, {bool fetch = false}) {
+  List<dynamic> _sortCards(List<dynamic> data) {
     if (data.isEmpty) {
       return data;
     }
@@ -232,7 +232,7 @@ class HomeScreenState extends State<HomeScreen>
       temp[map["Position"]] = map['AccountId'];
     }
 
-    if (_cardPositions.isEmpty || fetch) {
+    if (_cardPositions.isEmpty || _cardPositions.length < data.length) {
       _cardPositions = temp;
     }
     data = _sortCardList(data);
