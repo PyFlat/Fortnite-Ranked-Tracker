@@ -222,20 +222,36 @@ class HomeScreenState extends State<HomeScreen>
     }
   }
 
-  List<dynamic> _sortCards(List<dynamic> data) {
+  List<dynamic> _sortCards(List<dynamic> data, {bool fetch = false}) {
     if (data.isEmpty) {
       return data;
     }
-    if (_cardPositions.isEmpty) {
-      _cardPositions = data.map((map) => map['AccountId'] as String).toList();
-    } else {
-      data.sort((a, b) {
-        int indexA = _cardPositions.indexOf(a["AccountId"]);
-        int indexB = _cardPositions.indexOf(b["AccountId"]);
-        return indexA.compareTo(indexB);
-      });
+
+    List<String> temp = List<String>.filled(data.length, "", growable: true);
+    for (Map map in data) {
+      temp[map["Position"]] = map['AccountId'];
     }
+
+    if (_cardPositions.isEmpty || fetch) {
+      _cardPositions = temp;
+    }
+    data = _sortCardList(data);
+
     return data;
+  }
+
+  List<dynamic> _sortCardList(List<dynamic> listToSort) {
+    listToSort.sort((a, b) {
+      int indexA = _cardPositions.indexOf(a["AccountId"]);
+      int indexB = _cardPositions.indexOf(b["AccountId"]);
+      return indexA.compareTo(indexB);
+    });
+    return listToSort;
+  }
+
+  void _onIconClicked(String accountId, bool visibility) async {
+    await _database.setAccountVisibility(accountId, !visibility);
+    setState(() {});
   }
 
   @override
@@ -267,6 +283,7 @@ class HomeScreenState extends State<HomeScreen>
 
             for (int i = 0; i < data.length; i++) {
               var item = data[i];
+
               int dataChanged = -1;
               if (_previousData.isNotEmpty) {
                 if (i >= _previousData.length) {
@@ -307,8 +324,12 @@ class HomeScreenState extends State<HomeScreen>
               _currentCardColors[i] = cardColor;
               _currentScales[i] = cardScale;
 
+              if (item["Visible"] == 0 && !_draggingEnabled) {
+                continue;
+              }
+
               cards.add(GestureDetector(
-                onDoubleTap: () {
+                onLongPress: () {
                   if (_shakeAnimation.isAnimating) {
                     _controller.reset();
                     setState(() {
@@ -336,12 +357,13 @@ class HomeScreenState extends State<HomeScreen>
                     );
                   },
                   child: DragTarget<int>(
-                    onAcceptWithDetails: (details) {
+                    onAcceptWithDetails: (details) async {
                       setState(() {
                         var temp = _cardPositions[details.data];
                         _cardPositions[details.data] = _cardPositions[i];
                         _cardPositions[i] = temp;
                       });
+                      await _database.swapCardPositions(details.data, i);
                     },
                     onWillAcceptWithDetails: (details) {
                       setState(() {
@@ -439,6 +461,12 @@ class HomeScreenState extends State<HomeScreen>
         padding: const EdgeInsets.all(8.0),
         child: DashboardCard(
           item: item,
+          iconVisible: _draggingEnabled ? true : false,
+          iconState: item["Visible"] == 0 ? false : true,
+          onIconClicked: () {
+            _onIconClicked(
+                item["AccountId"], item["Visible"] == 0 ? false : true);
+          },
           color: color,
           index: index,
           talker: widget.talker,

@@ -269,6 +269,11 @@ class RankService {
     Database db = await connectToDB(accountId);
     List<Map<String, dynamic>> result = [];
     try {
+      var tableExists = await db.rawQuery(
+          "SELECT name FROM sqlite_master WHERE type='table' AND name='${_currentSeason}_$rankType'");
+      if (tableExists.isEmpty) {
+        return result;
+      }
       result = await db.rawQuery(
           'SELECT daily_match_id, datetime, rank, progress, total_progress FROM ${_currentSeason}_$rankType ORDER BY id DESC LIMIT 2');
     } catch (error) {
@@ -290,20 +295,17 @@ class RankService {
   }
 
   Future<void> checkDisplayNames() async {
-    for (int i = 0; i < 3; i++) {
-      final accountDataList = await _database.getAccountDataByType(
-          i, "accountId, displayName", true);
+    final accountDataList = await _database.getAllAccounts();
 
-      final updateFutures = accountDataList.map((oldData) async {
-        final newData = await _fetchByAccountId(oldData["accountId"]);
-        if (oldData["displayName"] != newData["displayName"]) {
-          await _database.updatePlayerName(
-              i, newData["accountId"]!, newData["displayName"]!);
-        }
-      }).toList();
+    final updateFutures = accountDataList.map((oldData) async {
+      final newData = await _fetchByAccountId(oldData["accountId"]);
+      if (oldData["displayName"] != newData["displayName"]) {
+        await _database.updatePlayerName(
+            newData["accountId"]!, newData["displayName"]!);
+      }
+    }).toList();
 
-      await Future.wait(updateFutures);
-    }
+    await Future.wait(updateFutures);
   }
 
   Future<void> startRankBulkTrack() async {

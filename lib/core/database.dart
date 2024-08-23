@@ -8,13 +8,10 @@ class DataBase {
   late Directory _directory;
   List<String> keys = ["battleRoyale", "zeroBuild", "rocketRacing"];
 
-  // Private constructor
   DataBase._();
 
-  // Singleton instance
   static final DataBase _instance = DataBase._();
 
-  // Factory method to access the singleton instance
   factory DataBase() => _instance;
 
   Future<void> init() async {
@@ -33,7 +30,7 @@ class DataBase {
     await Directory(directoryPath).create(recursive: true);
 
     _db = await databaseFactory.openDatabase(dbPath);
-    await _createTables(_db);
+    await _initSystemDB(_db);
   }
 
   Future<Database> openDatabase(String accountId) async {
@@ -42,41 +39,53 @@ class DataBase {
     return await databaseFactory.openDatabase(dbPath);
   }
 
-  Future<void> _createTables(Database db) async {
-    List<String> types = ["battleRoyale", "zeroBuild", "rocketRacing"];
+  Future<void> _initSystemDB(Database db) async {
     Batch batch = db.batch();
 
-    for (String type in types) {
-      batch.execute('''
-        CREATE TABLE IF NOT EXISTS $type (
+    batch.execute('''
+        CREATE TABLE IF NOT EXISTS profile0 (
           accountId TEXT PRIMARY KEY,
           displayName TEXT,
-          active INTEGER
+          battleRoyale INTEGER DEFAULT 0,
+          zeroBuild INTEGER DEFAULT 0,
+          rocketRacing INTEGER DEFAULT 0,
+          position INTEGER,
+          visible INTEGER DEFAULT 1
         )
       ''');
-    }
 
     await batch.commit();
   }
 
   Future<void> updatePlayerTracking(
-      bool tracking, int key, String accountId, String displayName) async {
-    await init(); // Ensure database is initialized
-    String tableName = keys[key];
+      bool tracking, int key, String accountId, String displayName,
+      {String tableName = "profile0"}) async {
+    await init();
+
     Map<String, dynamic> params = {
       'accountId': accountId,
       'displayName': displayName,
-      'active': tracking ? 1 : 0,
+      keys[key]: tracking ? 1 : 0,
     };
 
     List<Map<String, dynamic>> existingRecords = await _db.query(
       tableName,
-      columns: ['accountId'],
+      columns: ['accountId', 'battleRoyale', 'zeroBuild', 'rocketRacing'],
       where: 'accountId = ?',
       whereArgs: [params['accountId']],
     );
 
     if (existingRecords.isNotEmpty) {
+      int activeSum = 0;
+      for (String keyType in keys) {
+        if (keyType == keys[key]) {
+          activeSum += tracking ? 1 : 0;
+          continue;
+        }
+        activeSum += existingRecords.first[keyType] as int;
+      }
+      params.addAll({"visible": activeSum == 0 ? 0 : 1});
+
       await _db.update(
         tableName,
         params,
@@ -84,144 +93,130 @@ class DataBase {
         whereArgs: [params['accountId']],
       );
     } else {
+      List maxPosQuery =
+          await _db.rawQuery("SELECT MAX(position) as pos FROM $tableName");
+      int? maxPos = maxPosQuery.first['pos'];
+
+      int pos = 0;
+      if (maxPos != null) {
+        pos = maxPos += 1;
+      }
+      params.addEntries({"position": pos}.entries);
       await _db.insert(tableName, params);
     }
   }
 
-  Future<bool> getPlayerTracking(int key, String accountId) async {
-    await init(); // Ensure database is initialized
-    String tableName = keys[key];
+  Future<List<bool>> getPlayerTracking(String accountId,
+      {String tableName = "profile0"}) async {
+    await init();
 
-    List<Map<String, dynamic>> result = await _db.query(
+    final List<Map<String, dynamic>> queryResult = await _db.query(
       tableName,
-      columns: ['accountId', 'active'],
+      columns: ['battleRoyale', 'zeroBuild', 'rocketRacing'],
       where: 'accountId = ?',
       whereArgs: [accountId],
     );
 
-    return result.isNotEmpty ? result[0]['active'] == 1 : false;
-  }
-
-  Future<void> removePlayer(String accountId) async {
-    await init(); // Ensure database is initialized
-    for (int i = 0; i < 3; i++) {
-      String tableName = keys[i];
-
-      await _db.delete(
-        tableName,
-        where: 'accountId = ?',
-        whereArgs: [accountId],
-      );
+    if (queryResult.isEmpty) {
+      return [false, false, false];
     }
+
+    final Map<String, dynamic> playerData = queryResult.first;
+    return [
+      playerData['battleRoyale'] == 1,
+      playerData['zeroBuild'] == 1,
+      playerData['rocketRacing'] == 1,
+    ];
   }
 
-  Future<List<Map<String, dynamic>>> getAccountDataActive() async {
-    List<Map<String, dynamic>> brAccounts =
-        await getAccountDataByType(0, "accountId, displayName", true);
-    List<Map<String, dynamic>> zbAccounts =
-        await getAccountDataByType(1, "accountId, displayName", true);
-    List<Map<String, dynamic>> rrAccounts =
-        await getAccountDataByType(2, "accountId, displayName", true);
+  Future<void> swapCardPositions(int position1, int position2,
+      {String tableName = "profile0"}) async {
+    await init();
 
-    // Collect all unique account IDs
-    Set<String> allAccountIds = {
-      ...brAccounts.map((account) => account["accountId"]),
-      ...zbAccounts.map((account) => account["accountId"]),
-      ...rrAccounts.map((account) => account["accountId"]),
-    };
+    await _db.rawUpdate(
+        "UPDATE $tableName SET position = CASE WHEN position = $position1 THEN $position2 WHEN position = $position2 THEN $position1 END WHERE position IN ($position1, $position2);");
+  }
+
+  Future<void> setAccountVisibility(String accountId, bool visible,
+      {String tableName = "profile0"}) async {
+    await init();
+    int value = visible ? 1 : 0;
+    await _db.rawUpdate(
+        "UPDATE $tableName SET visible = $value WHERE accountId = '$accountId'");
+  }
+
+  Future<void> removePlayer(String accountId,
+      {String tableName = "profile0"}) async {
+    await init();
+
+    await _db.delete(
+      tableName,
+      where: 'accountId = ?',
+      whereArgs: [accountId],
+    );
+  }
+
+  Future<List<Map<String, dynamic>>> getAccountDataActive(
+      {String tableName = "profile0"}) async {
+    await init();
+    List accounts = await _db.query(tableName, columns: ["*"]);
 
     List<Map<String, dynamic>> result = [];
 
-    for (var accountId in allAccountIds) {
+    for (var account in accounts) {
       var accountData = <String, dynamic>{
-        "AccountId": accountId,
-        "DisplayName": "",
-        "Battle Royale": {},
-        "Zero Build": {},
-        "Rocket Racing": {},
+        "AccountId": account["accountId"],
+        "DisplayName": account["displayName"],
+        "Position": account["position"],
+        "Visible": account["visible"]
       };
 
-      void updateAccountData(Map<String, dynamic>? account) {
-        if (account != null && account.isNotEmpty) {
-          accountData["DisplayName"] = account["displayName"];
-        }
+      if (account["battleRoyale"] == 1) {
+        accountData["Battle Royale"] = {};
       }
-
-      var brAccount = brAccounts.firstWhere(
-        (account) => account["accountId"] == accountId,
-        orElse: () => <String, dynamic>{},
-      );
-      if (brAccount.isEmpty) {
-        accountData.remove("Battle Royale");
-      } else {
-        updateAccountData(brAccount);
+      if (account["zeroBuild"] == 1) {
+        accountData["Zero Build"] = {};
       }
-
-      var zbAccount = zbAccounts.firstWhere(
-        (account) => account["accountId"] == accountId,
-        orElse: () => <String, dynamic>{},
-      );
-      if (zbAccount.isEmpty) {
-        accountData.remove("Zero Build");
-      } else {
-        updateAccountData(zbAccount);
-      }
-
-      var rrAccount = rrAccounts.firstWhere(
-        (account) => account["accountId"] == accountId,
-        orElse: () => <String, dynamic>{},
-      );
-      if (rrAccount.isEmpty) {
-        accountData.remove("Rocket Racing");
-      } else {
-        updateAccountData(rrAccount);
+      if (account["rocketRacing"] == 1) {
+        accountData["Rocket Racing"] = {};
       }
 
       result.add(accountData);
     }
+
     return result;
   }
 
   Future<List<Map<String, dynamic>>> getAccountDataByType(
-      int key, String columns, bool active) async {
+      int key, String columns, bool active,
+      {String tableName = "profile0"}) async {
     await init();
-    String tableName = keys[key];
 
     int activeValue = active ? 1 : 0;
 
     List<Map<String, dynamic>> result = await _db.query(
       tableName,
       columns: [columns],
-      where: 'active = ?',
+      where: '${keys[key]} = ?',
       whereArgs: [activeValue],
     );
 
     return result;
   }
 
-  Future<List<Map<String, dynamic>>> getAllAccountData() async {
+  Future<List<Map<String, dynamic>>> getAllAccounts(
+      {String tableName = "profile0"}) async {
     await init();
-    List<Map<String, dynamic>> result = [];
-
-    for (int i = 0; i < 3; i++) {
-      String tableName = keys[i];
-
-      List<Map<String, dynamic>> items =
-          await _db.query(tableName, columns: ['displayName', 'accountId']);
-
-      for (Map<String, dynamic> item in items) {
-        if (!result.any((map) => map["accountId"] == item["accountId"])) {
-          result.add(item);
-        }
-      }
-    }
+    List<Map<String, dynamic>> result =
+        await _db.query(tableName, columns: ['displayName', 'accountId']);
+    ;
 
     return result;
   }
 
   Future<List<Map<String, dynamic>>> getFilteredAccountData() async {
     await init();
-    List<Map<String, dynamic>> rawAccountData = await getAllAccountData();
+    List<Map<String, dynamic>> rawAccountData = await getAllAccounts();
 
     List<String> existingAccounts =
         await Directory(join(_directory.path, 'databases'))
@@ -266,10 +261,9 @@ class DataBase {
     return tables.reversed.toList();
   }
 
-  Future<void> updatePlayerName(
-      int key, String accountId, String displayName) async {
-    await init(); // Ensure database is initialized
-    String tableName = keys[key];
+  Future<void> updatePlayerName(String accountId, String displayName,
+      {String tableName = "profile0"}) async {
+    await init();
 
     await _db.update(
       tableName,

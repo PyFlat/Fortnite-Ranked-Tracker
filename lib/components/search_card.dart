@@ -26,9 +26,12 @@ class SearchCardState extends State<SearchCard> {
     List<dynamic> result =
         await RankService().getSingleProgress(widget.accountId);
 
-    final brActive = await DataBase().getPlayerTracking(0, widget.accountId);
-    final zbActive = await DataBase().getPlayerTracking(1, widget.accountId);
-    final rrActive = await DataBase().getPlayerTracking(2, widget.accountId);
+    List<bool> activeRankingTypes =
+        await DataBase().getPlayerTracking(widget.accountId);
+
+    final bool brActive = activeRankingTypes[0];
+    final bool zbActive = activeRankingTypes[1];
+    final bool rrActive = activeRankingTypes[2];
 
     List<dynamic> formattedResult = [
       null,

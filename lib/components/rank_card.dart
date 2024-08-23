@@ -11,6 +11,9 @@ import '../screens/search_screen.dart';
 class RankCard extends StatefulWidget {
   final String displayName;
   final String? accountId;
+  final bool showIcon;
+  final bool iconState;
+  final VoidCallback? onIconClicked;
   final bool showMenu;
   final bool showSwitches;
   final String? accountAvatar;
@@ -58,6 +61,9 @@ class RankCard extends StatefulWidget {
       required this.displayName,
       this.accountId,
       this.accountAvatar,
+      this.showIcon = false,
+      this.iconState = false,
+      this.onIconClicked,
       required this.showMenu,
       required this.showSwitches,
       this.battleRoyaleProgressText,
@@ -149,6 +155,12 @@ class RankCardState extends State<RankCard>
                       ),
                     ),
                   ),
+                  if (widget.showIcon)
+                    IconButton(
+                        onPressed: widget.onIconClicked!,
+                        icon: Icon(widget.iconState
+                            ? Icons.visibility_rounded
+                            : Icons.visibility_off_rounded)),
                   if (widget.showMenu) _buildMenu()
                 ],
               ),
