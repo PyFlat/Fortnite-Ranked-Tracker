@@ -161,7 +161,8 @@ class RankCardState extends State<RankCard>
                         icon: Icon(widget.iconState
                             ? Icons.visibility_rounded
                             : Icons.visibility_off_rounded)),
-                  if (widget.showMenu) _buildMenu()
+                  if (widget.showMenu) _buildMenu(),
+                  if (!widget.showMenu) _buildShowIcon()
                 ],
               ),
             ),
@@ -253,6 +254,16 @@ class RankCardState extends State<RankCard>
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildShowIcon() {
+    return IconButton(
+      onPressed: () {
+        showCustomDialog(context, widget.displayName, widget.accountId!);
+      },
+      icon: const Icon(Icons.visibility),
+      tooltip: "Show Account Details",
     );
   }
 

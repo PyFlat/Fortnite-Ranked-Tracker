@@ -436,7 +436,11 @@ class HomeScreenState extends State<HomeScreen>
   Widget _buildAnimatedCard(dynamic item, int i, int index) {
     return TweenAnimationBuilder<Color?>(
       key: ValueKey(item.toString()),
-      tween: ColorTween(begin: Colors.transparent, end: _currentCardColors[i]),
+      tween: ColorTween(
+          begin: Colors.black26,
+          end: item["Visible"] == 1
+              ? _currentCardColors[i]
+              : Colors.red.withOpacity(0.1)),
       duration: const Duration(milliseconds: 400),
       builder: (context, color, child) {
         return TweenAnimationBuilder<double>(
