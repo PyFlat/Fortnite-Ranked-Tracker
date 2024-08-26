@@ -214,12 +214,12 @@ class MainScreenState extends State<MainScreen> {
                 leading: const Icon(Icons.my_library_books_rounded,
                     color: Colors.blueGrey),
                 title: const Text('Logs', style: TextStyle(fontSize: 16)),
-                onTap: () => {
+                onTap: () {
                   Navigator.push(
                       context,
                       MaterialPageRoute(
                           builder: (context) =>
-                              TalkerScreen(talker: widget.talker)))
+                              TalkerScreen(talker: widget.talker)));
                 },
               ),
               ListTile(
@@ -304,45 +304,61 @@ class AccountListTile extends StatelessWidget {
           suggestionsBuilder: (context, controller) {
             final suggestions =
                 _filterAccounts(controller.value.text, accounts ?? []);
-            return suggestions.isEmpty
-                ? [
-                    const ListTile(
-                        title: Text(
-                      'No results found',
-                      textAlign: TextAlign.center,
-                    ))
-                  ]
-                : suggestions.map((account) {
-                    return IntrinsicWidth(
-                      child: Column(children: [
-                        ListTile(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (context) {
-                                return name == "Database"
-                                    ? DatabaseScreen(account: account)
-                                    : GraphScreen(
-                                        account: account, talker: talker);
-                              }),
-                            );
-                          },
-                          leading: CircleAvatar(
-                            backgroundImage:
-                                NetworkImage(account["accountAvatar"]),
-                          ),
-                          trailing: IconButton(
-                            icon: const Icon(Icons.more_vert_rounded),
-                            onPressed: () {},
-                          ),
-                          title: Text(account['displayName'] ?? ''),
-                          subtitle: Text(
-                              "Tracked seasons: ${account["trackedSeasons"]}"),
-                        ),
-                        const Divider(height: 2),
-                      ]),
-                    );
-                  }).toList();
+            return [
+              if (suggestions.isEmpty)
+                const ListTile(
+                  title: Text(
+                    'No results found',
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              if (name != "Database")
+                Column(children: [
+                  ListTile(
+                    onTap: () {
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) =>
+                                  GraphScreen(talker: talker)));
+                    },
+                    leading: CircleAvatar(
+                      backgroundImage: NetworkImage(ApiService().addPathParams(
+                          Endpoints.skinIcon,
+                          {"skinId": Constants.defaultSkinId})),
+                    ),
+                    title: const Text("[All Users]"),
+                    subtitle: Text(
+                        "All tracked seasons: ${suggestions.map((element) => element["trackedSeasons"]).toList().reduce((a, b) => a + b)}"),
+                  ),
+                  const Divider(height: 2),
+                ]),
+              ...suggestions.map((account) {
+                return IntrinsicWidth(
+                  child: Column(children: [
+                    ListTile(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) {
+                            return name == "Database"
+                                ? DatabaseScreen(account: account)
+                                : GraphScreen(account: account, talker: talker);
+                          }),
+                        );
+                      },
+                      leading: CircleAvatar(
+                        backgroundImage: NetworkImage(account["accountAvatar"]),
+                      ),
+                      title: Text(account['displayName'] ?? ''),
+                      subtitle:
+                          Text("Tracked seasons: ${account["trackedSeasons"]}"),
+                    ),
+                    const Divider(height: 2),
+                  ]),
+                );
+              }),
+            ];
           },
         );
       },

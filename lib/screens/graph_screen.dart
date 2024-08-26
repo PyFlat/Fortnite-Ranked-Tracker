@@ -10,14 +10,15 @@ import 'package:fortnite_ranked_tracker/core/utils.dart';
 import 'package:syncfusion_flutter_sliders/sliders.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 
+import '../components/graph_bottom_sheet.dart';
 import '../components/season_selector.dart';
 import 'dart:math';
 
 class GraphScreen extends StatefulWidget {
-  final Map<String, dynamic> account;
+  final Map<String, dynamic>? account;
   final Talker talker;
 
-  const GraphScreen({super.key, required this.account, required this.talker});
+  const GraphScreen({super.key, this.account, required this.talker});
   @override
   State<GraphScreen> createState() => _GraphScreenState();
 }
@@ -56,9 +57,19 @@ class _GraphScreenState extends State<GraphScreen> {
 
   final GlobalKey _key = GlobalKey();
 
+  List<Map<String, dynamic>> items = [];
+
   @override
   void initState() {
     super.initState();
+    if (widget.account != null) {
+      items.add({
+        "visible": true,
+        "displayName": widget.account!["displayName"],
+        "accountId": widget.account!["accountId"]
+      });
+    }
+
     _resetMovement();
   }
 
@@ -79,7 +90,7 @@ class _GraphScreenState extends State<GraphScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (_seasonService.getCurrentSeason() == null) {
+    if (_seasonService.getCurrentSeason() == null && widget.account != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _openSeasonBottomSheet();
       });
@@ -89,7 +100,7 @@ class _GraphScreenState extends State<GraphScreen> {
   void _openSeasonBottomSheet() {
     SeasonSelector(
       seasonService: _seasonService,
-      accountId: widget.account["accountId"],
+      accountId: widget.account!["accountId"],
       onSeasonSelected: _refreshData,
     ).openSeasonBottomSheet(context);
   }
@@ -97,6 +108,7 @@ class _GraphScreenState extends State<GraphScreen> {
   void _refreshData() {
     if (_seasonService.getCurrentSeason() != null) {
       setState(() {
+        items[0]["season"] = _seasonService.getCurrentSeason();
         _dataFuture = makeData();
       });
     }
@@ -223,24 +235,62 @@ class _GraphScreenState extends State<GraphScreen> {
     }
   }
 
+  void showModalBottomSheetWithItems(BuildContext context) async {
+    List<Map<String, dynamic>>? result =
+        await showModalBottomSheet<List<Map<String, dynamic>>?>(
+      context: context,
+      builder: (BuildContext context) {
+        return ModalBottomSheetContent(items: [...items]);
+      },
+    );
+
+    if (result != null) {
+      if (result.isEmpty) {
+        _seasonService.setCurrentSeason(null);
+        items = [];
+        setState(() {});
+      } else {
+        _seasonService.setCurrentSeason(result[0]["season"]);
+        if (items.isNotEmpty) {
+          items[0]["accountId"] = result[0]["accountId"];
+          items[0]["displayName"] = result[0]["displayName"];
+        } else {
+          items.add(result.first);
+        }
+        _refreshData();
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Graph of ${widget.account["displayName"]}"),
+        title: Text(items.length == 1
+            ? "Graph of ${items[0]["displayName"]}"
+            : "GraphScreen"),
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          showModalBottomSheetWithItems(context);
+        },
+        label: const Text("Edit"),
+        icon: const Icon(Icons.edit_rounded),
       ),
       body: Column(
         children: [
           IndividualPageHeader(
             seasonService: _seasonService,
-            accountId: widget.account["accountId"],
             onSeasonSelected: _refreshData,
             resetSliders: _resetMovement,
           ),
           const SizedBox(height: 30),
           Expanded(
             child: _seasonService.getCurrentSeason() == null
-                ? const Center(child: Text("Please select a season"))
+                ? const Center(
+                    child: Text("Please select a table to show",
+                        style: TextStyle(
+                            fontSize: 24, fontWeight: FontWeight.w600)))
                 : FutureBuilder(
                     future: _dataFuture,
                     builder: (BuildContext context, snapshot) {
@@ -465,8 +515,9 @@ class _GraphScreenState extends State<GraphScreen> {
     if (_seasonService.getCurrentSeason() == null) {
       return [];
     }
+
     final data = await RankService().getRankedDataBySeason(
-        widget.account["accountId"], _seasonService.getCurrentSeason()!);
+        items[0]["accountId"], _seasonService.getCurrentSeason()!);
 
     List<FlSpot> spots = [];
     for (int i = 0; i < data.length; i++) {

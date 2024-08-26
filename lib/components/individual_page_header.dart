@@ -5,14 +5,14 @@ import 'season_selector.dart';
 
 class IndividualPageHeader extends StatefulWidget {
   final SeasonService _seasonService;
-  final String accountId;
+  final String? accountId;
   final VoidCallback onSeasonSelected;
   final VoidCallback? resetSliders;
 
   const IndividualPageHeader(
       {super.key,
       required SeasonService seasonService,
-      required this.accountId,
+      this.accountId,
       required this.onSeasonSelected,
       this.resetSliders})
       : _seasonService = seasonService;
@@ -42,25 +42,28 @@ class IndividualPageHeaderState extends State<IndividualPageHeader> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            displayText,
-            style: const TextStyle(
-              fontSize: 16,
+          if (widget.resetSliders == null)
+            Text(
+              displayText,
+              style: const TextStyle(
+                fontSize: 16,
+              ),
             ),
-          ),
           const SizedBox(
             height: 12,
           ),
           Row(
             children: [
-              SeasonSelector(
-                seasonService: widget._seasonService,
-                accountId: widget.accountId,
-                onSeasonSelected: _refreshData,
-              ),
-              const SizedBox(
-                width: 24,
-              ),
+              if (widget.resetSliders == null)
+                SeasonSelector(
+                  seasonService: widget._seasonService,
+                  accountId: widget.accountId!,
+                  onSeasonSelected: _refreshData,
+                ),
+              if (widget.resetSliders == null)
+                const SizedBox(
+                  width: 24,
+                ),
               FilledButton.icon(
                 icon: const Icon(Icons.refresh),
                 onPressed: _refreshData,

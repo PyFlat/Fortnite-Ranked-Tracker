@@ -13,7 +13,7 @@ class SeasonService {
     return _currentSeason;
   }
 
-  void setCurrentSeason(String season) {
+  void setCurrentSeason(String? season) {
     _currentSeason = season;
   }
 
