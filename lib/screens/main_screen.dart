@@ -142,12 +142,10 @@ class MainScreenState extends State<MainScreen> {
                       child: Row(
                         children: [
                           FutureBuilder<String>(
-                            future: RankService()
-                                .getAccountAvatar(), // Call the async function here
+                            future: RankService().getAccountAvatar(),
                             builder: (context, snapshot) {
                               if (snapshot.connectionState ==
                                   ConnectionState.waiting) {
-                                // Show a loading indicator while waiting
                                 return const CircleAvatar(
                                     radius: 40,
                                     child: CircularProgressIndicator());

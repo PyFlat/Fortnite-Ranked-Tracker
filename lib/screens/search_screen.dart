@@ -25,6 +25,7 @@ class _SearchScreenState extends State<SearchScreen> {
   late Iterable<Widget> _lastOptions = <Widget>[];
   final SearchController _searchController = SearchController();
   bool searchRunning = false;
+  bool firstSearchDone = false;
   String searchTerm = "";
 
   Future<List<Map<String, String>>?> _search(String query) async {
@@ -71,8 +72,12 @@ class _SearchScreenState extends State<SearchScreen> {
                       if (searchRunning) {
                         return;
                       }
+                      if (!firstSearchDone) {
+                        firstSearchDone = true;
+                      }
                       searchTerm = value;
                       searchRunning = true;
+
                       _refreshSuggestions();
                       final List<Map<String, String>>? results =
                           (await _search(value))?.toList();
@@ -109,6 +114,20 @@ class _SearchScreenState extends State<SearchScreen> {
                           const Center(
                             child: LinearProgressIndicator(),
                           )
+                        ];
+                      }
+                      if (_lastOptions.isEmpty && firstSearchDone) {
+                        return [
+                          const SizedBox(
+                            height: 20,
+                          ),
+                          const Center(
+                            child: Text(
+                              "No user found",
+                              style: TextStyle(
+                                  fontSize: 18, fontWeight: FontWeight.w600),
+                            ),
+                          ),
                         ];
                       }
                       return _lastOptions;

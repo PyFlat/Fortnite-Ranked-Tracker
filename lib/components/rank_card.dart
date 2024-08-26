@@ -302,65 +302,81 @@ class RankCardState extends State<RankCard>
                         },
                         talker: widget.talker,
                       )));
+        } else if (value == "delete_user") {
+          _showConfirmationDialog(context);
         }
       },
       itemBuilder: (BuildContext context) {
         return [
-          const PopupMenuItem<String>(
-            value: "open_user",
-            child: Row(
-              children: [
-                Padding(
-                    padding: EdgeInsets.only(right: 8.0),
-                    child: Icon(Icons.open_in_new)),
-                Text(
-                  'Open User',
-                ),
-              ],
-            ),
-          ),
+          buildMenuItem("Open User", const Icon(Icons.open_in_new)),
           const PopupMenuDivider(),
-          const PopupMenuItem<String>(
-            value: "show_account_details",
-            child: Row(
-              children: [
-                Padding(
-                    padding: EdgeInsets.only(right: 8.0),
-                    child: Icon(Icons.remove_red_eye_rounded)),
-                Text(
-                  'Show Account Details',
-                ),
-              ],
-            ),
-          ),
+          buildMenuItem(
+              "Show Account Details", const Icon(Icons.remove_red_eye_rounded)),
           const PopupMenuDivider(),
-          const PopupMenuItem<String>(
-            value: "open_database",
-            child: Row(
-              children: [
-                Padding(
-                    padding: EdgeInsets.only(right: 8.0),
-                    child: Icon(Icons.storage_rounded)),
-                Text(
-                  'Open Database',
-                ),
-              ],
-            ),
-          ),
-          const PopupMenuItem<String>(
-            value: "open_graph",
-            child: Row(
-              children: [
-                Padding(
-                    padding: EdgeInsets.only(right: 8.0),
-                    child: Icon(Icons.trending_up_rounded)),
-                Text(
-                  'Open Graph',
-                ),
-              ],
-            ),
-          ),
+          buildMenuItem("Open Database", const Icon(Icons.storage_rounded)),
+          buildMenuItem("Open Graph", const Icon(Icons.trending_up_rounded)),
+          const PopupMenuDivider(),
+          buildMenuItem("Delete User",
+              Icon(Icons.delete_forever_rounded, color: Colors.red.shade400),
+              textStyle: TextStyle(color: Colors.red.shade400)),
         ];
+      },
+    );
+  }
+
+  PopupMenuItem<String> buildMenuItem(String text, Icon icon,
+      {TextStyle? textStyle}) {
+    return PopupMenuItem<String>(
+      value: text.toLowerCase().replaceAll(" ", "_"),
+      child: Row(
+        children: [
+          Padding(padding: const EdgeInsets.only(right: 8.0), child: icon),
+          Text(
+            text,
+            style: textStyle,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _showConfirmationDialog(BuildContext context) async {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Row(
+            children: <Widget>[
+              Icon(Icons.warning_rounded,
+                  color: Colors.red.shade400, size: 32.0),
+              const SizedBox(width: 10),
+              const Text(
+                'Warning',
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700),
+              ),
+            ],
+          ),
+          content: const Text(
+            'Are you certain you want to delete all user data?\nThis action cannot be undone.',
+            textAlign: TextAlign.center,
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: const Text('Proceed'),
+              onPressed: () async {
+                await DataBase().removeAccounts([widget.accountId!]);
+                if (!context.mounted) return;
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
       },
     );
   }

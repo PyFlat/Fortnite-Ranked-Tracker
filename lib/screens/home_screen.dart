@@ -227,12 +227,13 @@ class HomeScreenState extends State<HomeScreen>
       return data;
     }
 
-    List<String> temp = List<String>.filled(data.length, "", growable: true);
+    List<String> temp = [];
+    data.sort((a, b) => a['Position']!.compareTo(b['Position']!));
     for (Map map in data) {
-      temp[map["Position"]] = map['AccountId'];
+      temp.add(map['AccountId']);
     }
 
-    if (_cardPositions.isEmpty || _cardPositions.length < data.length) {
+    if (_cardPositions.isEmpty || _cardPositions.length != data.length) {
       _cardPositions = temp;
     }
     data = _sortCardList(data);
@@ -371,6 +372,11 @@ class HomeScreenState extends State<HomeScreen>
                       });
                       return true;
                     },
+                    onLeave: (data) {
+                      setState(() {
+                        _target = _dragged;
+                      });
+                    },
                     builder: (context, candidateData, rejectedData) {
                       return Draggable<int>(
                           ignoringFeedbackSemantics: false,
@@ -388,13 +394,8 @@ class HomeScreenState extends State<HomeScreen>
                           },
                           feedback:
                               _buildSimpleCard(item, index, Colors.white54),
-                          child: candidateData.isEmpty
-                              ? _dragged == i
-                                  ? _buildSimpleCard(
-                                      data[_target], index, cardColor)
-                                  : _buildAnimatedCard(item, i, index)
-                              : _buildSimpleCard(
-                                  data[_dragged], index, cardColor));
+                          child: buildCard(
+                              candidateData, i, index, cardColor, item));
                     },
                   ),
                 ),
@@ -433,14 +434,30 @@ class HomeScreenState extends State<HomeScreen>
     );
   }
 
+  Widget buildCard(
+      List candidateData, int i, int index, Color cardColor, Map item) {
+    Color disabledColor = Colors.red.withOpacity(0.1);
+    if (candidateData.isEmpty) {
+      if (_dragged == i) {
+        return _buildSimpleCard(data[_target], index,
+            data[_target]["Visible"] == 1 ? cardColor : disabledColor);
+      } else {
+        if (item["Visible"] == 1) {
+          return _buildAnimatedCard(item, i, index);
+        } else {
+          return _buildSimpleCard(item, index, disabledColor);
+        }
+      }
+    } else {
+      return _buildSimpleCard(data[_dragged], index,
+          data[_dragged]["Visible"] == 1 ? cardColor : disabledColor);
+    }
+  }
+
   Widget _buildAnimatedCard(dynamic item, int i, int index) {
     return TweenAnimationBuilder<Color?>(
       key: ValueKey(item.toString()),
-      tween: ColorTween(
-          begin: Colors.black26,
-          end: item["Visible"] == 1
-              ? _currentCardColors[i]
-              : Colors.red.withOpacity(0.1)),
+      tween: ColorTween(begin: Colors.black26, end: _currentCardColors[i]),
       duration: const Duration(milliseconds: 400),
       builder: (context, color, child) {
         return TweenAnimationBuilder<double>(

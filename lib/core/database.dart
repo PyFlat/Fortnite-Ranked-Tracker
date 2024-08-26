@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:fortnite_ranked_tracker/core/rank_service.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
@@ -187,6 +188,67 @@ class DataBase {
     return result;
   }
 
+  Future<List<Map<String, dynamic>>> getInactiveAccounts(
+      {String tableName = "profile0"}) async {
+    await init();
+
+    List<Map<String, dynamic>> result = [];
+    List accounts = await _db.query(tableName, columns: ["*"]);
+
+    for (var account in accounts) {
+      var accountData = <String, dynamic>{
+        "AccountId": account["accountId"],
+        "DisplayName": account["displayName"],
+      };
+      if (account["rocketRacing"] +
+              account["battleRoyale"] +
+              account["zeroBuild"] ==
+          0) {
+        result.add(accountData);
+      }
+    }
+    return result;
+  }
+
+  Future<void> removeAccounts(List<String> accountIds,
+      {String tableName = "profile0"}) async {
+    await init();
+
+    _db.delete(tableName, where: "accountId = ?", whereArgs: accountIds);
+    for (String accountId in accountIds) {
+      Database db = await openDatabase(accountId);
+      await db.close(); // Closes the databse so no OS-Access-Execption occurs
+      String path = join(_directory.path, "databases", "$accountId.db");
+      await File(path).delete();
+    }
+    fixCardPositions();
+    RankService().emitDataRefresh();
+  }
+
+  Future<void> fixCardPositions({String tableName = "profile0"}) async {
+    await init();
+
+    List<Map<String, dynamic>> accounts =
+        await _db.query(tableName, columns: ["*"]);
+
+    List<Map<String, dynamic>> mutableAccounts =
+        accounts.map((map) => Map<String, dynamic>.from(map)).toList();
+
+    mutableAccounts.sort((a, b) => a['position']!.compareTo(b['position']!));
+
+    int currentPosition = 0;
+
+    for (var map in mutableAccounts) {
+      map['position'] = currentPosition;
+      currentPosition++;
+    }
+
+    for (var map in mutableAccounts) {
+      await _db.update(tableName, {'position': map['position']},
+          where: 'accountId = ?', whereArgs: [map['accountId']]);
+    }
+  }
+
   Future<List<Map<String, dynamic>>> getAccountDataByType(
       int key, String columns, bool active,
       {String tableName = "profile0"}) async {
@@ -209,7 +271,6 @@ class DataBase {
     await init();
     List<Map<String, dynamic>> result =
         await _db.query(tableName, columns: ['displayName', 'accountId']);
-    ;
 
     return result;
   }

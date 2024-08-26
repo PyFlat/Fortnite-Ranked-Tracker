@@ -60,6 +60,10 @@ class RankService {
     }
   }
 
+  void emitDataRefresh() {
+    _rankUpdateController.add(null);
+  }
+
   String getBasicAuthHeader() {
     return "Bearer ${authProvider.accessToken}";
   }
