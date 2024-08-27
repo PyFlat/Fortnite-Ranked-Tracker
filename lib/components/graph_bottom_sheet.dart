@@ -7,11 +7,16 @@ import '../constants/constants.dart';
 import '../constants/endpoints.dart';
 import '../core/api_service.dart';
 import '../core/rank_service.dart';
+import 'dart:async';
+
+import 'dart:math' as math;
 
 class ModalBottomSheetContent extends StatefulWidget {
   final List<Map<String, dynamic>> items;
+  final bool openSeasonSelection;
 
-  const ModalBottomSheetContent({super.key, required this.items});
+  const ModalBottomSheetContent(
+      {super.key, required this.items, this.openSeasonSelection = false});
 
   @override
   ModalBottomSheetContentState createState() => ModalBottomSheetContentState();
@@ -22,11 +27,20 @@ class ModalBottomSheetContentState extends State<ModalBottomSheetContent> {
   bool trailingVisible = false;
   final SearchController _searchController = SearchController();
   String searchQuery = "";
+  final GlobalKey editButtonKey = GlobalKey();
 
   @override
   void initState() {
     super.initState();
     items = widget.items;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (widget.openSeasonSelection) {
+        final editButton = editButtonKey.currentWidget as IconButton?;
+        if (editButton != null && editButton.onPressed != null) {
+          editButton.onPressed!();
+        }
+      }
+    });
   }
 
   @override
@@ -147,7 +161,7 @@ class ModalBottomSheetContentState extends State<ModalBottomSheetContent> {
                             !filteredItems[index]["visible"];
                       });
                     },
-                    color: Colors.green,
+                    color: filteredItems[index]["color"],
                     hoverColor: Colors.transparent,
                     highlightColor: Colors.transparent,
                   ),
@@ -165,6 +179,7 @@ class ModalBottomSheetContentState extends State<ModalBottomSheetContent> {
                           },
                           icon: const Icon(Icons.arrow_downward_rounded)),
                       IconButton(
+                          key: index == 0 ? editButtonKey : null,
                           onPressed: () async {
                             int originalIndex =
                                 items.indexOf(filteredItems[index]);
@@ -300,9 +315,26 @@ class ModalBottomSheetContentState extends State<ModalBottomSheetContent> {
             String? selectedSeasonId = data['selectedSeasonId'];
             String searchQuery = '';
             SearchController searchController = SearchController();
+            ScrollController scrollController = ScrollController();
 
             return StatefulBuilder(
               builder: (context, setState) {
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (selectedAccountId != null) {
+                    int index = dataList.indexWhere(
+                        (item) => item["accountId"] == selectedAccountId);
+                    if (index != -1) {
+                      double itemHeight = 60.0;
+                      double targetOffset = index * itemHeight;
+                      if (targetOffset >
+                          scrollController.position.maxScrollExtent) {
+                        targetOffset =
+                            scrollController.position.maxScrollExtent;
+                      }
+                      scrollController.jumpTo(targetOffset);
+                    }
+                  }
+                });
                 return Container(
                   height: MediaQuery.of(context).size.height * 0.9,
                   padding: const EdgeInsets.all(16.0),
@@ -319,6 +351,7 @@ class ModalBottomSheetContentState extends State<ModalBottomSheetContent> {
                       const SizedBox(height: 20),
                       Expanded(
                         child: SingleChildScrollView(
+                          controller: scrollController,
                           child: ExpansionPanelList(
                             elevation: 4,
                             expandedHeaderPadding: const EdgeInsets.all(0),
@@ -420,7 +453,12 @@ class ModalBottomSheetContentState extends State<ModalBottomSheetContent> {
                                       "displayName":
                                           accountDetails[selectedAccountId]!,
                                       "accountId": selectedAccountId,
-                                      "season": selectedSeasonId
+                                      "season": selectedSeasonId,
+                                      "color": Color(
+                                              (math.Random().nextDouble() *
+                                                      0xFFFFFF)
+                                                  .toInt())
+                                          .withOpacity(1.0),
                                     });
                                   }
                                 : null,

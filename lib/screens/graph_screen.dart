@@ -5,14 +5,12 @@ import 'package:fortnite_ranked_tracker/components/individual_page_header.dart';
 
 import 'package:fortnite_ranked_tracker/constants/constants.dart';
 import 'package:fortnite_ranked_tracker/core/rank_service.dart';
-import 'package:fortnite_ranked_tracker/core/season_service.dart';
 import 'package:fortnite_ranked_tracker/core/utils.dart';
 import 'package:syncfusion_flutter_sliders/sliders.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 
 import '../components/graph_bottom_sheet.dart';
-import '../components/season_selector.dart';
-import 'dart:math';
+import 'dart:math' as math;
 
 class GraphScreen extends StatefulWidget {
   final Map<String, dynamic>? account;
@@ -24,8 +22,6 @@ class GraphScreen extends StatefulWidget {
 }
 
 class _GraphScreenState extends State<GraphScreen> {
-  final SeasonService _seasonService = SeasonService();
-
   bool _clicked = false;
 
   double lastClickedX = 0;
@@ -90,28 +86,19 @@ class _GraphScreenState extends State<GraphScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (_seasonService.getCurrentSeason() == null && widget.account != null) {
+    if (items.length == 1 &&
+        items.first["season"] == null &&
+        widget.account != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        _openSeasonBottomSheet();
+        showModalBottomSheetWithItems(context, openSeasonSelection: true);
       });
     }
-  }
-
-  void _openSeasonBottomSheet() {
-    SeasonSelector(
-      seasonService: _seasonService,
-      accountId: widget.account!["accountId"],
-      onSeasonSelected: _refreshData,
-    ).openSeasonBottomSheet(context);
   }
 
   void _refreshData() {
-    if (_seasonService.getCurrentSeason() != null) {
-      setState(() {
-        items[0]["season"] = _seasonService.getCurrentSeason();
-        _dataFuture = makeData();
-      });
-    }
+    setState(() {
+      _dataFuture = makeData();
+    });
   }
 
   void zoom(double newValue) {
@@ -119,9 +106,9 @@ class _GraphScreenState extends State<GraphScreen> {
       _sliderVerticalStateZoom = newValue;
       double v = 0;
       if (newValue < 0) {
-        v = pow(2, newValue).toDouble();
+        v = math.pow(2, newValue).toDouble();
       } else {
-        v = pow(10, newValue).toDouble();
+        v = math.pow(10, newValue).toDouble();
       }
       _maxRangeX = 30 * v;
       _maxRangeY = 300 * v;
@@ -235,30 +222,22 @@ class _GraphScreenState extends State<GraphScreen> {
     }
   }
 
-  void showModalBottomSheetWithItems(BuildContext context) async {
+  void showModalBottomSheetWithItems(BuildContext context,
+      {bool openSeasonSelection = false}) async {
     List<Map<String, dynamic>>? result =
         await showModalBottomSheet<List<Map<String, dynamic>>?>(
       context: context,
       builder: (BuildContext context) {
-        return ModalBottomSheetContent(items: [...items]);
+        return ModalBottomSheetContent(
+          items: [...items],
+          openSeasonSelection: openSeasonSelection,
+        );
       },
     );
 
     if (result != null) {
-      if (result.isEmpty) {
-        _seasonService.setCurrentSeason(null);
-        items = [];
-        setState(() {});
-      } else {
-        _seasonService.setCurrentSeason(result[0]["season"]);
-        if (items.isNotEmpty) {
-          items[0]["accountId"] = result[0]["accountId"];
-          items[0]["displayName"] = result[0]["displayName"];
-        } else {
-          items.add(result.first);
-        }
-        _refreshData();
-      }
+      items = [...result];
+      _refreshData();
     }
   }
 
@@ -266,8 +245,8 @@ class _GraphScreenState extends State<GraphScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(items.length == 1
-            ? "Graph of ${items[0]["displayName"]}"
+        title: Text(items.isNotEmpty
+            ? "Graph of ${items.map((element) => element["displayName"]).toSet().join(", ")}"
             : "GraphScreen"),
       ),
       floatingActionButton: FloatingActionButton.extended(
@@ -280,15 +259,15 @@ class _GraphScreenState extends State<GraphScreen> {
       body: Column(
         children: [
           IndividualPageHeader(
-            seasonService: _seasonService,
             onSeasonSelected: _refreshData,
             resetSliders: _resetMovement,
           ),
           const SizedBox(height: 30),
           Expanded(
-            child: _seasonService.getCurrentSeason() == null
+            child: !items.any(
+                    (item) => item['season'] != null && item['visible'] == true)
                 ? const Center(
-                    child: Text("Please select a table to show",
+                    child: Text("Please select a season + user",
                         style: TextStyle(
                             fontSize: 24, fontWeight: FontWeight.w600)))
                 : FutureBuilder(
@@ -403,18 +382,29 @@ class _GraphScreenState extends State<GraphScreen> {
             lineTouchData: LineTouchData(
               touchSpotThreshold: 20,
               touchTooltipData: LineTouchTooltipData(
+                fitInsideHorizontally: true,
+                fitInsideVertically: true,
                 maxContentWidth: 200,
                 getTooltipItems: (touchedSpots) {
                   return touchedSpots.map((touchedSpot) {
                     final int index = touchedSpot.spotIndex;
-                    final Map<String, dynamic> pointData = data[0][index];
-                    return LineTooltipItem(
-                      'Match: ${pointData["id"]}\n'
-                      'Rank: ${pointData["rank"]} ${pointData["rank"] == "Unreal" ? "#${pointData["progress"]}" : "${pointData["progress"]}%"}\n'
-                      'Datetime ${pointData["datetime"]}\n'
-                      'Daily Match: ${pointData["daily_match_id"]}',
-                      const TextStyle(color: Colors.black),
-                    );
+                    final int test = touchedSpot.barIndex;
+
+                    if (data.isNotEmpty &&
+                        index >= 0 &&
+                        index < ((data[test]["data"] as List).length)) {
+                      final itemData = data[test]["data"][index];
+
+                      return LineTooltipItem(
+                        'Match: ${itemData["id"]}\n'
+                        'Rank: ${itemData["rank"]} ${itemData["rank"] == "Unreal" ? "#${itemData["progress"]}" : "${itemData["progress"]}%"}\n'
+                        'Datetime: ${itemData["datetime"]}\n'
+                        'Daily Match: ${itemData["daily_match_id"]}',
+                        const TextStyle(color: Colors.black, fontSize: 14),
+                      );
+                    } else {
+                      return const LineTooltipItem("", TextStyle());
+                    }
                   }).toList();
                 },
               ),
@@ -422,10 +412,11 @@ class _GraphScreenState extends State<GraphScreen> {
             baselineX: _currentOffsetX.toDouble(),
             baselineY: _currentOffsetY.toDouble(),
             lineBarsData: [
-              LineChartBarData(
-                dotData: const FlDotData(show: false),
-                spots: data[1],
-              ),
+              for (Map chart in data)
+                LineChartBarData(
+                    dotData: const FlDotData(show: false),
+                    spots: chart["spots"],
+                    color: chart["color"]),
             ],
             titlesData: _buildTitlesData(),
             borderData: FlBorderData(
@@ -512,28 +503,32 @@ class _GraphScreenState extends State<GraphScreen> {
   }
 
   Future<List<dynamic>> makeData() async {
-    if (_seasonService.getCurrentSeason() == null) {
-      return [];
-    }
-
-    final data = await RankService().getRankedDataBySeason(
-        items[0]["accountId"], _seasonService.getCurrentSeason()!);
-
-    List<FlSpot> spots = [];
-    for (int i = 0; i < data.length; i++) {
-      num yValue = data[i]["total_progress"];
-      if (yValue >= 1700) {
-        yValue = 1700 + (convertProgressForUnreal(yValue.toDouble()) * 300);
+    List<Map<String, dynamic>> result = [];
+    for (Map item in items) {
+      if (item["season"] == null || item["visible"] == false) {
+        continue;
       }
-      spots.add(FlSpot(i.toDouble(), yValue.toDouble()));
-    }
-    if (_currentOffsetY == 0) {
-      _currentOffsetY = (data[0]["total_progress"] as int).toDouble() - 10;
-      _sliderVerticalStateMovment = _currentOffsetY / 2000;
+      final data = await RankService()
+          .getRankedDataBySeason(item["accountId"], item["season"]);
+
+      List<FlSpot> spots = [];
+      for (int i = 0; i < data.length; i++) {
+        num yValue = data[i]["total_progress"];
+        if (yValue >= 1700) {
+          yValue = 1700 + (convertProgressForUnreal(yValue.toDouble()) * 300);
+        }
+        spots.add(FlSpot(i.toDouble(), yValue.toDouble()));
+      }
+      if (_currentOffsetY == 0) {
+        _currentOffsetY = (data[0]["total_progress"] as int).toDouble() - 10;
+        _sliderVerticalStateMovment = _currentOffsetY / 2000;
+      }
+      if (data.length > _dataLength) {
+        _dataLength = data.length;
+      }
+      result.add({"data": data, "spots": spots, "color": item["color"]});
     }
 
-    _dataLength = data.length;
-
-    return [data, spots];
+    return result.reversed.toList();
   }
 }

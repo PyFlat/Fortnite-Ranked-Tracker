@@ -4,18 +4,17 @@ import '../core/season_service.dart';
 import 'season_selector.dart';
 
 class IndividualPageHeader extends StatefulWidget {
-  final SeasonService _seasonService;
+  final SeasonService? seasonService;
   final String? accountId;
   final VoidCallback onSeasonSelected;
   final VoidCallback? resetSliders;
 
   const IndividualPageHeader(
       {super.key,
-      required SeasonService seasonService,
+      this.seasonService,
       this.accountId,
       required this.onSeasonSelected,
-      this.resetSliders})
-      : _seasonService = seasonService;
+      this.resetSliders});
 
   @override
   IndividualPageHeaderState createState() => IndividualPageHeaderState();
@@ -28,10 +27,13 @@ class IndividualPageHeaderState extends State<IndividualPageHeader> {
 
   @override
   Widget build(BuildContext context) {
-    final seasonInfo = widget._seasonService.getCurrentSeason() != null
-        ? widget._seasonService
-            .formatSeason(widget._seasonService.getCurrentSeason()!)
-        : null;
+    var seasonInfo;
+    if (widget.seasonService != null) {
+      seasonInfo = widget.seasonService!.getCurrentSeason() != null
+          ? widget.seasonService!
+              .formatSeason(widget.seasonService!.getCurrentSeason()!)
+          : null;
+    }
 
     final displayText = seasonInfo != null
         ? "${seasonInfo["season"]!} - ${seasonInfo["mode"]!}"
@@ -56,7 +58,7 @@ class IndividualPageHeaderState extends State<IndividualPageHeader> {
             children: [
               if (widget.resetSliders == null)
                 SeasonSelector(
-                  seasonService: widget._seasonService,
+                  seasonService: widget.seasonService!,
                   accountId: widget.accountId!,
                   onSeasonSelected: _refreshData,
                 ),
