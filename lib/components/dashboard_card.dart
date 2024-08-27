@@ -27,6 +27,7 @@ class DashboardCard extends StatelessWidget {
     final displayName = item['DisplayName'] as String;
     final accountId = item["AccountId"] as String;
     final accountAvatar = item["AccountAvatar"];
+    final nickName = item["NickName"];
 
     final battleRoyaleValues = getGameModeValues(item, 'Battle Royale');
     final zeroBuildValues = getGameModeValues(item, 'Zero Build');
@@ -35,6 +36,7 @@ class DashboardCard extends StatelessWidget {
     return RankCard(
       displayName: displayName,
       accountId: accountId,
+      nickName: nickName,
       showIcon: iconVisible,
       iconState: iconState,
       onIconClicked: onIconClicked,

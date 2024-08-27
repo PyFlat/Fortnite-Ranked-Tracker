@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:fortnite_ranked_tracker/components/search_card.dart';
 import 'package:fortnite_ranked_tracker/core/database.dart';
 import 'package:fortnite_ranked_tracker/core/rank_service.dart';
 import 'package:fortnite_ranked_tracker/screens/database_screen.dart';
@@ -11,6 +12,8 @@ import '../screens/search_screen.dart';
 class RankCard extends StatefulWidget {
   final String displayName;
   final String? accountId;
+  final String? nickName;
+  final GlobalKey? searchCardKey;
   final bool showIcon;
   final bool iconState;
   final VoidCallback? onIconClicked;
@@ -60,6 +63,8 @@ class RankCard extends StatefulWidget {
       super.key,
       required this.displayName,
       this.accountId,
+      this.nickName,
+      this.searchCardKey,
       this.accountAvatar,
       this.showIcon = false,
       this.iconState = false,
@@ -146,13 +151,30 @@ class RankCardState extends State<RankCard>
                     width: 24,
                   ),
                   Expanded(
-                    child: Text(
-                      widget.displayName,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 20,
-                      ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          widget.nickName == null
+                              ? widget.displayName
+                              : widget.nickName!,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 20,
+                          ),
+                        ),
+                        if (widget.nickName != null)
+                          Text(
+                            widget.displayName,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              color: Colors.grey,
+                            ),
+                          ),
+                      ],
                     ),
                   ),
                   if (widget.showIcon)
@@ -260,7 +282,9 @@ class RankCardState extends State<RankCard>
   Widget _buildShowIcon() {
     return IconButton(
       onPressed: () {
-        showCustomDialog(context, widget.displayName, widget.accountId!);
+        showCustomDialog(
+            context, widget.displayName, widget.accountId!, widget.nickName,
+            searchCardKey: widget.searchCardKey);
       },
       icon: const Icon(Icons.visibility),
       tooltip: "Show Account Details",
@@ -272,7 +296,8 @@ class RankCardState extends State<RankCard>
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       onSelected: (String value) {
         if (value == "show_account_details") {
-          showCustomDialog(context, widget.displayName, widget.accountId!);
+          showCustomDialog(
+              context, widget.displayName, widget.accountId!, widget.nickName);
         } else if (value == "open_user") {
           Navigator.push(
             context,
@@ -518,9 +543,15 @@ class RankCardState extends State<RankCard>
 class CustomDialog extends StatefulWidget {
   final String accountName;
   final String accountId;
+  final String? nickName;
+  final GlobalKey? searchCardKey;
 
   const CustomDialog(
-      {super.key, required this.accountName, required this.accountId});
+      {super.key,
+      required this.accountName,
+      required this.accountId,
+      this.nickName,
+      this.searchCardKey});
 
   @override
   State<CustomDialog> createState() => _CustomDialogState();
@@ -529,14 +560,30 @@ class CustomDialog extends StatefulWidget {
 class _CustomDialogState extends State<CustomDialog> {
   late TextEditingController _nameController;
   late TextEditingController _idController;
+  late TextEditingController _nickNameController;
   bool _showCheckmarkName = false;
   bool _showCheckmarkId = false;
+
+  bool _editNickName = false;
 
   @override
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: widget.accountName);
     _idController = TextEditingController(text: widget.accountId);
+    _nickNameController = TextEditingController(text: widget.nickName);
+
+    if (widget.nickName != null) {
+      _editNickName = true;
+    } else {
+      _checkPlayerExisting();
+    }
+  }
+
+  Future<void> _checkPlayerExisting() async {
+    print("HI");
+    _editNickName = await DataBase().getPlayerIsExisiting(widget.accountId);
+    setState(() {});
   }
 
   void _copyToClipboard(String text, String type) {
@@ -545,19 +592,35 @@ class _CustomDialogState extends State<CustomDialog> {
       if (type == 'name') {
         _showCheckmarkName = true;
         Future.delayed(const Duration(seconds: 1), () {
-          setState(() {
-            _showCheckmarkName = false;
-          });
+          if (mounted) {
+            setState(() {
+              _showCheckmarkName = false;
+            });
+          }
         });
       } else if (type == 'id') {
         _showCheckmarkId = true;
         Future.delayed(const Duration(seconds: 1), () {
-          setState(() {
-            _showCheckmarkId = false;
-          });
+          if (mounted) {
+            setState(() {
+              _showCheckmarkId = false;
+            });
+          }
         });
       }
     });
+  }
+
+  void _updateNickName() async {
+    DataBase database = DataBase();
+    await database.updatePlayerNickName(
+        widget.accountId, _nickNameController.text);
+
+    RankService().emitDataRefresh();
+    if (widget.searchCardKey != null &&
+        widget.searchCardKey!.currentState != null) {
+      (widget.searchCardKey!.currentState! as SearchCardState).refresh();
+    }
   }
 
   OutlineInputBorder _getInputBorder() {
@@ -586,7 +649,6 @@ class _CustomDialogState extends State<CustomDialog> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Display Name Text Field
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -621,7 +683,6 @@ class _CustomDialogState extends State<CustomDialog> {
             ],
           ),
           const SizedBox(height: 16.0),
-          // Account Id Text Field
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -655,6 +716,35 @@ class _CustomDialogState extends State<CustomDialog> {
               ),
             ],
           ),
+          const SizedBox(height: 16.0),
+          if (_editNickName)
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Column(
+                    children: [
+                      TextField(
+                        readOnly: false,
+                        controller: _nickNameController,
+                        enableInteractiveSelection: true,
+                        textAlign: TextAlign.center,
+                        textAlignVertical: TextAlignVertical.top,
+                        onChanged: (value) {
+                          _updateNickName();
+                        },
+                        decoration: InputDecoration(
+                          labelText: "Nickname",
+                          enabledBorder: _getInputBorder(),
+                          border: _getInputBorder(),
+                          focusedBorder: _getInputBorder(),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
         ],
       ),
       actions: [
@@ -669,14 +759,17 @@ class _CustomDialogState extends State<CustomDialog> {
   }
 }
 
-void showCustomDialog(
-    BuildContext context, String accountName, String accountId) {
+void showCustomDialog(BuildContext context, String accountName,
+    String accountId, String? nickName,
+    {GlobalKey? searchCardKey}) {
   showDialog(
     context: context,
     builder: (BuildContext context) {
       return CustomDialog(
         accountName: accountName,
         accountId: accountId,
+        nickName: nickName,
+        searchCardKey: searchCardKey,
       );
     },
   );

@@ -22,12 +22,20 @@ class SearchCard extends StatefulWidget {
 }
 
 class SearchCardState extends State<SearchCard> {
+  String? nickName;
+
+  void refresh() {
+    setState(() {});
+  }
+
   Future<List<dynamic>> _fetchSelectedItem() async {
     List<dynamic> result =
         await RankService().getSingleProgress(widget.accountId);
 
     List<bool> activeRankingTypes =
         await DataBase().getPlayerTracking(widget.accountId);
+
+    nickName = await DataBase().getPlayerNickName(widget.accountId);
 
     final bool brActive = activeRankingTypes[0];
     final bool zbActive = activeRankingTypes[1];
@@ -93,6 +101,8 @@ class SearchCardState extends State<SearchCard> {
             child: RankCard(
               displayName: widget.displayName,
               accountId: widget.accountId,
+              nickName: nickName,
+              searchCardKey: widget.key as GlobalKey,
               showMenu: false,
               showSwitches: true,
               battleRoyaleActive: true,

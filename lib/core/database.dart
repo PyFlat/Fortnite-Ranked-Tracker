@@ -47,6 +47,7 @@ class DataBase {
         CREATE TABLE IF NOT EXISTS profile0 (
           accountId TEXT PRIMARY KEY,
           displayName TEXT,
+          nickName TEXT,
           battleRoyale INTEGER DEFAULT 0,
           zeroBuild INTEGER DEFAULT 0,
           rocketRacing INTEGER DEFAULT 0,
@@ -168,6 +169,7 @@ class DataBase {
       var accountData = <String, dynamic>{
         "AccountId": account["accountId"],
         "DisplayName": account["displayName"],
+        "NickName": account["nickName"],
         "Position": account["position"],
         "Visible": account["visible"]
       };
@@ -332,6 +334,43 @@ class DataBase {
       where: 'accountId = ?',
       whereArgs: [accountId],
     );
+  }
+
+  Future<void> updatePlayerNickName(String accountId, String nickName,
+      {String tableName = "profile0"}) async {
+    await init();
+
+    await _db.update(
+      tableName,
+      {'nickName': nickName.isEmpty ? null : nickName},
+      where: 'accountId = ?',
+      whereArgs: [accountId],
+    );
+  }
+
+  Future<String?> getPlayerNickName(String accountId,
+      {String tableName = "profile0"}) async {
+    await init();
+
+    final result = await _db.query(
+      tableName,
+      columns: ["nickName"],
+      where: 'accountId = ?',
+      whereArgs: [accountId],
+    );
+    if (result.isEmpty) {
+      return null;
+    }
+    return result.first["nickName"] as String?;
+  }
+
+  Future<bool> getPlayerIsExisiting(String accountId,
+      {String tableName = "profile0"}) async {
+    await init();
+    final result = await _db
+        .query(tableName, where: 'accountId = ?', whereArgs: [accountId]);
+
+    return result.isNotEmpty ? true : false;
   }
 
   Future<int> getTrackedTableCount(String accountId, {int limit = 0}) async {

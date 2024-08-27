@@ -27,6 +27,7 @@ class _SearchScreenState extends State<SearchScreen> {
   bool searchRunning = false;
   bool firstSearchDone = false;
   String searchTerm = "";
+  final GlobalKey searchCardKey = GlobalKey();
 
   Future<List<Map<String, String>>?> _search(String query) async {
     final List<Map<String, String>> results = await RankService().search(query);
@@ -140,6 +141,7 @@ class _SearchScreenState extends State<SearchScreen> {
               Expanded(
                   child: Center(
                       child: SearchCard(
+                key: searchCardKey,
                 accountId: _selectedAccountId!,
                 displayName: _selectedDisplayName!,
                 talker: widget.talker,
