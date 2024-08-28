@@ -74,11 +74,7 @@ class MainScreenState extends State<MainScreen> {
 
     List<Future<void>> futures = data.map((account) async {
       Map<String, dynamic> mutableAccount = Map.from(account);
-      String? avatarURL = avatarImages[account["accountId"]];
-      mutableAccount["accountAvatar"] = avatarURL != null
-          ? avatarImages[account["accountId"]]
-          : ApiService().addPathParams(
-              Endpoints.skinIcon, {"skinId": Constants.defaultSkinId});
+      mutableAccount["accountAvatar"] = avatarImages[account["accountId"]];
 
       mutableAccount["trackedSeasons"] = await _database
           .getTrackedTableCount(mutableAccount["accountId"], limit: 1);

@@ -76,18 +76,25 @@ class RankService {
     return accountAvatar;
   }
 
-  Future<Map<String, String>> getAccountAvatarById(String accountId) async {
+  Future<Map<String, String>> getAccountAvatarById(
+      String accountIdString) async {
     Map<String, String> accountAvatarMap = {};
+    List<String> accountIds = accountIdString.split(",");
 
     List response = await ApiService().getData(
         Endpoints.accountAvatar, getBasicAuthHeader(),
-        queryParams: {"accountIds": accountId});
+        queryParams: {"accountIds": accountIdString});
 
-    // Process the response and populate the map
     for (Map accountAvatar in response) {
       String avatarId = (accountAvatar["avatarId"] as String).split(":")[1];
       accountAvatarMap[accountAvatar["accountId"]] =
           ApiService().addPathParams(Endpoints.skinIcon, {"skinId": avatarId});
+    }
+    for (String accountId in accountIds) {
+      if (!accountAvatarMap.containsKey(accountId)) {
+        accountAvatarMap[accountId] = ApiService().addPathParams(
+            Endpoints.skinIcon, {"skinId": Constants.defaultSkinId});
+      }
     }
     return accountAvatarMap;
   }

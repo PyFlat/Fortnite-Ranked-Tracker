@@ -23,6 +23,7 @@ class SearchCard extends StatefulWidget {
 
 class SearchCardState extends State<SearchCard> {
   String? nickName;
+  String? accountAvatar;
 
   void refresh() {
     setState(() {});
@@ -34,6 +35,9 @@ class SearchCardState extends State<SearchCard> {
 
     List<bool> activeRankingTypes =
         await DataBase().getPlayerTracking(widget.accountId);
+
+    accountAvatar = (await RankService()
+        .getAccountAvatarById(widget.accountId))[widget.accountId];
 
     nickName = await DataBase().getPlayerNickName(widget.accountId);
 
@@ -101,6 +105,7 @@ class SearchCardState extends State<SearchCard> {
             child: RankCard(
               displayName: widget.displayName,
               accountId: widget.accountId,
+              accountAvatar: accountAvatar,
               nickName: nickName,
               searchCardKey: widget.key as GlobalKey,
               showMenu: false,

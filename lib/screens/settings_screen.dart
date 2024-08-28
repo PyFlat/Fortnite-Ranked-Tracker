@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_settings_ui/flutter_settings_ui.dart';
 import 'package:fortnite_ranked_tracker/core/database.dart';
-import '../constants/constants.dart';
-import '../constants/endpoints.dart';
-import '../core/api_service.dart';
 import '../core/rank_service.dart';
 
 class SettingsScreen extends StatelessWidget {
@@ -168,15 +165,13 @@ class SelectAccountsDialogState extends State<SelectAccountsDialog> {
                       itemBuilder: (context, index) {
                         final account = filteredAccounts[index];
                         final isSelected = _selectedAccounts.contains(account);
-                        final avatarURL = avatarURLs[account["AccountId"]];
+                        String avatarURL = avatarURLs[account["AccountId"]]!;
 
                         return Padding(
                           padding: const EdgeInsets.only(bottom: 8),
                           child: ListTile(
                             leading: CircleAvatar(
-                              backgroundImage: NetworkImage(avatarURL ??
-                                  ApiService().addPathParams(Endpoints.skinIcon,
-                                      {"skinId": Constants.defaultSkinId})),
+                              backgroundImage: NetworkImage(avatarURL),
                             ),
                             title: Text(
                               account["DisplayName"],

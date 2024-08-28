@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_single_instance/flutter_single_instance.dart';
@@ -86,12 +87,29 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> with TrayListener, WindowListener {
   late Timer timer;
   late Dio dio;
+  late StreamSubscription<List<ConnectivityResult>> _connectivityStream;
+  bool _isOffline = false;
 
   @override
   void initState() {
     dio = Dio();
     trayManager.addListener(this);
     windowManager.addListener(this);
+    _connectivityStream = Connectivity()
+        .onConnectivityChanged
+        .listen((List<ConnectivityResult> result) {
+      if (!result.contains(ConnectivityResult.ethernet) &&
+          !result.contains(ConnectivityResult.wifi) &&
+          !result.contains(ConnectivityResult.mobile)) {
+        setState(() {
+          _isOffline = true;
+        });
+      } else {
+        setState(() {
+          _isOffline = false;
+        });
+      }
+    });
     timer = Timer.periodic(const Duration(seconds: 1), (timer) async {
       final result = await getShowInstance();
       if (result) {
@@ -108,6 +126,7 @@ class _MyAppState extends State<MyApp> with TrayListener, WindowListener {
     timer.cancel();
     trayManager.removeListener(this);
     windowManager.removeListener(this);
+    _connectivityStream.cancel();
     super.dispose();
   }
 
@@ -164,7 +183,65 @@ class _MyAppState extends State<MyApp> with TrayListener, WindowListener {
         debugShowCheckedModeBanner: false,
         title: 'Fortnite Ranked Tracker',
         home: SafeArea(
-            child: AuthenticationHandler(talker: widget.talker, dio: dio)),
+            child: _isOffline
+                ? const NoConnectionScreen()
+                : AuthenticationHandler(talker: widget.talker, dio: dio)),
+      ),
+    );
+  }
+}
+
+class NoConnectionScreen extends StatelessWidget {
+  const NoConnectionScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Scaffold(
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.wifi_off,
+                size: 100,
+                color: Colors.redAccent,
+              ),
+              const SizedBox(height: 20),
+              Text(
+                'No Internet Connection',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.redAccent,
+                ),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                'Please check your network settings.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.white70,
+                ),
+              ),
+              const SizedBox(height: 40),
+              CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.redAccent),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                'Trying to reconnect...',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.white70,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

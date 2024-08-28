@@ -87,7 +87,8 @@ class _AuthScreenState extends State<AuthScreen> {
       "grant_type": "device_auth",
       "account_id": accountId,
       "device_id": jsonObject["deviceId"],
-      "secret": jsonObject["secret"]
+      "secret": jsonObject["secret"],
+      "token_type": "eg1"
     };
     final directory = await getApplicationSupportDirectory();
     String filePath = '${directory.path}/deviceAuthGrant.json';
