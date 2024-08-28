@@ -1,10 +1,10 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_single_instance/flutter_single_instance.dart';
+import 'package:internet_connection_checker/internet_connection_checker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:talker_flutter/talker_flutter.dart';
@@ -87,7 +87,8 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> with TrayListener, WindowListener {
   late Timer timer;
   late Dio dio;
-  late StreamSubscription<List<ConnectivityResult>> _connectivityStream;
+  final connectionChecker = InternetConnectionChecker();
+  late StreamSubscription<InternetConnectionStatus> subscription;
   bool _isOffline = false;
 
   @override
@@ -95,18 +96,14 @@ class _MyAppState extends State<MyApp> with TrayListener, WindowListener {
     dio = Dio();
     trayManager.addListener(this);
     windowManager.addListener(this);
-    _connectivityStream = Connectivity()
-        .onConnectivityChanged
-        .listen((List<ConnectivityResult> result) {
-      if (!result.contains(ConnectivityResult.ethernet) &&
-          !result.contains(ConnectivityResult.wifi) &&
-          !result.contains(ConnectivityResult.mobile)) {
+    connectionChecker.onStatusChange.listen((InternetConnectionStatus status) {
+      if (status == InternetConnectionStatus.connected) {
         setState(() {
-          _isOffline = true;
+          _isOffline = false;
         });
       } else {
         setState(() {
-          _isOffline = false;
+          _isOffline = true;
         });
       }
     });
@@ -126,7 +123,7 @@ class _MyAppState extends State<MyApp> with TrayListener, WindowListener {
     timer.cancel();
     trayManager.removeListener(this);
     windowManager.removeListener(this);
-    _connectivityStream.cancel();
+    subscription.cancel();
     super.dispose();
   }
 
