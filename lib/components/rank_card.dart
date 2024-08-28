@@ -581,7 +581,6 @@ class _CustomDialogState extends State<CustomDialog> {
   }
 
   Future<void> _checkPlayerExisting() async {
-    print("HI");
     _editNickName = await DataBase().getPlayerIsExisiting(widget.accountId);
     setState(() {});
   }

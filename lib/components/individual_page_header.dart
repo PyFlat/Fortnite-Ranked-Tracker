@@ -27,7 +27,7 @@ class IndividualPageHeaderState extends State<IndividualPageHeader> {
 
   @override
   Widget build(BuildContext context) {
-    var seasonInfo;
+    Map<String, String>? seasonInfo;
     if (widget.seasonService != null) {
       seasonInfo = widget.seasonService!.getCurrentSeason() != null
           ? widget.seasonService!

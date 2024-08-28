@@ -196,7 +196,7 @@ class NoConnectionScreen extends StatelessWidget {
     return const Scaffold(
       body: Center(
         child: Padding(
-          padding: const EdgeInsets.all(20.0),
+          padding: EdgeInsets.all(20.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
@@ -206,7 +206,7 @@ class NoConnectionScreen extends StatelessWidget {
                 size: 100,
                 color: Colors.redAccent,
               ),
-              const SizedBox(height: 20),
+              SizedBox(height: 20),
               Text(
                 'No Internet Connection',
                 style: TextStyle(
@@ -215,7 +215,7 @@ class NoConnectionScreen extends StatelessWidget {
                   color: Colors.redAccent,
                 ),
               ),
-              const SizedBox(height: 20),
+              SizedBox(height: 20),
               Text(
                 'Please check your network settings.',
                 textAlign: TextAlign.center,
@@ -224,11 +224,11 @@ class NoConnectionScreen extends StatelessWidget {
                   color: Colors.white70,
                 ),
               ),
-              const SizedBox(height: 40),
+              SizedBox(height: 40),
               CircularProgressIndicator(
                 valueColor: AlwaysStoppedAnimation<Color>(Colors.redAccent),
               ),
-              const SizedBox(height: 20),
+              SizedBox(height: 20),
               Text(
                 'Trying to reconnect...',
                 style: TextStyle(
