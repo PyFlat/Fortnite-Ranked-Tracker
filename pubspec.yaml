@@ -60,6 +60,7 @@ dependencies:
   syncfusion_flutter_sliders: ^26.2.9
   http: ^1.2.2
   internet_connection_checker: ^2.0.0
+  flutter_background_service: ^5.0.9
 
 dev_dependencies:
   flutter_test:

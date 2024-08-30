@@ -1,8 +1,10 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:ui';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:flutter_single_instance/flutter_single_instance.dart';
 import 'package:internet_connection_checker/internet_connection_checker.dart';
 import 'package:path_provider/path_provider.dart';
@@ -21,6 +23,9 @@ void main() async {
   await runZonedGuarded(
     () async {
       WidgetsFlutterBinding.ensureInitialized();
+      if (Platform.isAndroid || Platform.isIOS) {
+        await initializeService();
+      }
 
       if (Platform.isLinux || Platform.isWindows || Platform.isMacOS) {
         if (!(await FlutterSingleInstance.platform.isFirstInstance())) {
@@ -50,6 +55,45 @@ void main() async {
       talker.handle(error, stack, 'Uncaught app exception');
     },
   );
+}
+
+Future<void> initializeService() async {
+  final service = FlutterBackgroundService();
+
+  await service.configure(
+    androidConfiguration: AndroidConfiguration(
+      onStart: onStart,
+      autoStart: true,
+      isForegroundMode: false,
+    ),
+    iosConfiguration: IosConfiguration(
+      autoStart: true,
+      onForeground: onStart,
+    ),
+  );
+}
+
+@pragma('vm:entry-point')
+void onStart(ServiceInstance service) async {
+  DartPluginRegistrant.ensureInitialized();
+
+  if (service is AndroidServiceInstance) {
+    service.on('setAsForeground').listen((event) {
+      service.setAsForegroundService();
+    });
+
+    service.on('setAsBackground').listen((event) {
+      service.setAsBackgroundService();
+    });
+  }
+
+  service.on('stopService').listen((event) {
+    service.stopSelf();
+  });
+
+  Timer.periodic(const Duration(seconds: 1), (timer) async {
+    debugPrint('App successfully running in background: ${DateTime.now()}');
+  });
 }
 
 Future<String> getFilePath() async {
@@ -84,7 +128,8 @@ class MyApp extends StatefulWidget {
   State<MyApp> createState() => _MyAppState();
 }
 
-class _MyAppState extends State<MyApp> with TrayListener, WindowListener {
+class _MyAppState extends State<MyApp>
+    with TrayListener, WindowListener, WidgetsBindingObserver {
   late Timer timer;
   late Dio dio;
   final connectionChecker = InternetConnectionChecker();
@@ -94,8 +139,13 @@ class _MyAppState extends State<MyApp> with TrayListener, WindowListener {
   @override
   void initState() {
     dio = Dio();
+    if (Platform.isAndroid || Platform.isIOS) {
+      FlutterBackgroundService().invoke("setAsForeground");
+    }
+
     trayManager.addListener(this);
     windowManager.addListener(this);
+    WidgetsBinding.instance.addObserver(this);
     connectionChecker.onStatusChange.listen((InternetConnectionStatus status) {
       if (status == InternetConnectionStatus.connected) {
         setState(() {
@@ -123,8 +173,18 @@ class _MyAppState extends State<MyApp> with TrayListener, WindowListener {
     timer.cancel();
     trayManager.removeListener(this);
     windowManager.removeListener(this);
+    WidgetsBinding.instance.removeObserver(this);
     subscription.cancel();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+
+    if (state == AppLifecycleState.detached) {
+      FlutterBackgroundService().invoke("stopService");
+    }
   }
 
   @override
