@@ -34,15 +34,16 @@ class HomeScreenState extends State<HomeScreen>
 
   var data = [];
 
-  List<String> _cardPositions = [];
+  late Future<List<Map<String, dynamic>>> _future;
 
   @override
   void initState() {
     super.initState();
+    _future = _getData();
     _rankService.rankUpdates.listen((_) {
       if (mounted) {
         setState(() {
-          _getData();
+          _future = _getData();
         });
       }
     });
@@ -215,37 +216,19 @@ class HomeScreenState extends State<HomeScreen>
     }
   }
 
-  List<dynamic> _sortCards(List<dynamic> data) {
-    if (data.isEmpty) {
-      return data;
-    }
-
-    List<String> temp = [];
-    data.sort((a, b) => a['Position']!.compareTo(b['Position']!));
-    for (Map map in data) {
-      temp.add(map['AccountId']);
-    }
-
-    if (_cardPositions.isEmpty || _cardPositions.length != data.length) {
-      _cardPositions = temp;
-    }
-    data = _sortCardList(data);
-
-    return data;
-  }
-
-  List<dynamic> _sortCardList(List<dynamic> listToSort) {
-    listToSort.sort((a, b) {
-      int indexA = _cardPositions.indexOf(a["AccountId"]);
-      int indexB = _cardPositions.indexOf(b["AccountId"]);
-      return indexA.compareTo(indexB);
-    });
-    return listToSort;
+  void _sortCardList() {
+    data.sort((a, b) => a["Position"].compareTo(b["Position"]));
   }
 
   void _onIconClicked(String accountId, bool visibility) async {
-    await _database.setAccountVisibility(accountId, !visibility);
+    Map<String, dynamic> x = data
+        .where((element) => element["AccountId"] == accountId)
+        .toList()
+        .first;
+    x["Visible"] = visibility ? 0 : 1;
     setState(() {});
+
+    await _database.setAccountVisibility(accountId, !visibility);
   }
 
   @override
@@ -267,11 +250,11 @@ class HomeScreenState extends State<HomeScreen>
       body: Padding(
         padding: const EdgeInsets.all(8.0),
         child: FutureBuilder<List<Map<String, dynamic>>>(
-          future: _getData(),
+          future: _future,
           builder: (context, snapshot) {
             data = snapshot.data ?? [];
 
-            data = _sortCards(data);
+            _sortCardList();
 
             List<Widget> cards = [];
 
@@ -353,11 +336,25 @@ class HomeScreenState extends State<HomeScreen>
                   child: DragTarget<int>(
                     onAcceptWithDetails: (details) async {
                       setState(() {
-                        var temp = _cardPositions[details.data];
-                        _cardPositions[details.data] = _cardPositions[i];
-                        _cardPositions[i] = temp;
+                        var temp = data.firstWhere(
+                          (element) => element["Position"] == details.data,
+                          orElse: () => null,
+                        );
+
+                        var temp2 = data.firstWhere(
+                          (element) => element["Position"] == i,
+                          orElse: () => null,
+                        );
+
+                        if (temp != null && temp2 != null) {
+                          temp2["Position"] = details.data;
+                          temp["Position"] = i;
+                        }
+
+                        _sortCardList();
                       });
                       await _database.swapCardPositions(details.data, i);
+                      RankService().emitDataRefresh();
                     },
                     onWillAcceptWithDetails: (details) {
                       setState(() {
