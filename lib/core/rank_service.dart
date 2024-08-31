@@ -349,10 +349,6 @@ class RankService {
     _rankUpdateController.add(null);
   }
 
-  void refreshMainPage() {
-    _rankUpdateController.add(null);
-  }
-
   Future<List<dynamic>> getSingleProgress(String accountId) async {
     dynamic result = await ApiService().getData(
         Endpoints.singleProgress, getBasicAuthHeader(),

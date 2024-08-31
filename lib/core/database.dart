@@ -147,6 +147,22 @@ class DataBase {
         "UPDATE $tableName SET visible = $value WHERE accountId = '$accountId'");
   }
 
+  Future<void> updateDataEdited(List<Map<String, dynamic>> data,
+      {String tableName = "profile0"}) async {
+    await init();
+    for (Map item in data) {
+      await _db.update(
+        tableName,
+        {
+          'visible': item['Visible'],
+          'position': item['Position'],
+        },
+        where: 'accountID = ?',
+        whereArgs: [item['AccountId']],
+      );
+    }
+  }
+
   Future<void> removePlayer(String accountId,
       {String tableName = "profile0"}) async {
     await init();

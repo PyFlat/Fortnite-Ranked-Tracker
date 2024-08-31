@@ -1,3 +1,4 @@
+import 'package:fortnite_ranked_tracker/components/home_page_edit_sheet.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 
 import '../core/rank_service.dart';
@@ -26,13 +27,8 @@ class HomeScreenState extends State<HomeScreen>
   final List<double> _currentScales = [];
   final List _rankedModes = ["Battle Royale", "Zero Build", "Rocket Racing"];
   bool _firstIteration = true;
-  bool _draggingEnabled = false;
-  int _dragged = -1;
-  int _target = -1;
-  late AnimationController _controller;
-  late Animation<double> _shakeAnimation;
 
-  var data = [];
+  List<Map<String, dynamic>> data = [];
 
   late Future<List<Map<String, dynamic>>> _future;
 
@@ -47,23 +43,6 @@ class HomeScreenState extends State<HomeScreen>
         });
       }
     });
-    _controller = AnimationController(
-      duration: const Duration(milliseconds: 100),
-      vsync: this,
-    );
-
-    _shakeAnimation = Tween<double>(begin: -0.025, end: 0.025).animate(
-      CurvedAnimation(
-        parent: _controller,
-        curve: Curves.easeInOut,
-      ),
-    );
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
   }
 
   String calculatePercentageDifference(int currentProgress,
@@ -117,7 +96,8 @@ class HomeScreenState extends State<HomeScreen>
                 "LastChanged": null,
                 "Rank": "Unranked",
                 "RankProgression": null,
-                "RankProgressionText": null
+                "RankProgressionText": null,
+                "TotalProgress": null
               };
               continue;
             }
@@ -164,7 +144,8 @@ class HomeScreenState extends State<HomeScreen>
               "LastChanged": formatDateTime(rankData["datetime"]),
               "Rank": rankData["rank"],
               "RankProgression": progress,
-              "RankProgressionText": progressText
+              "RankProgressionText": progressText,
+              "TotalProgress": rankData["total_progress"]
             };
           } catch (e) {
             widget.talker.error(
@@ -231,21 +212,60 @@ class HomeScreenState extends State<HomeScreen>
     await _database.setAccountVisibility(accountId, !visibility);
   }
 
+  void showModalBottomSheetWithItems(
+    BuildContext context,
+  ) async {
+    List<Map<String, dynamic>> deepCopiedData =
+        data.map((item) => Map<String, dynamic>.from(item)).toList();
+    List<Map<String, dynamic>>? result =
+        await showModalBottomSheet<List<Map<String, dynamic>>?>(
+      context: context,
+      isScrollControlled: true,
+      builder: (BuildContext context) {
+        return SizedBox(
+          height: MediaQuery.of(context).size.height * 0.9,
+          child: HomePageEditSheet(
+            data: deepCopiedData,
+          ),
+        );
+      },
+    );
+    if (result != null) {
+      await DataBase().updateDataEdited(result);
+      RankService().emitDataRefresh();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-                builder: (context) => SearchScreen(
-                      talker: widget.talker,
-                    )),
-          );
-        },
-        label: const Text("Search"),
-        icon: const Icon(Icons.search),
+      floatingActionButton: Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          FloatingActionButton.extended(
+            heroTag: "edit-btn",
+            onPressed: () => showModalBottomSheetWithItems(context),
+            label: const Text("Edit"),
+            icon: const Icon(Icons.edit),
+          ),
+          const SizedBox(
+            width: 15,
+          ),
+          FloatingActionButton.extended(
+            heroTag: "search-btn",
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => SearchScreen(
+                          talker: widget.talker,
+                        )),
+              );
+            },
+            label: const Text("Search"),
+            icon: const Icon(Icons.search),
+          ),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(8.0),
@@ -301,95 +321,11 @@ class HomeScreenState extends State<HomeScreen>
               _currentCardColors[i] = cardColor;
               _currentScales[i] = cardScale;
 
-              if (item["Visible"] == 0 && !_draggingEnabled) {
+              if (item["Visible"] == 0) {
                 continue;
               }
 
-              cards.add(GestureDetector(
-                onLongPress: () {
-                  if (_shakeAnimation.isAnimating) {
-                    _controller.reset();
-                    setState(() {
-                      _draggingEnabled = false;
-                    });
-                  } else {
-                    _controller.repeat(reverse: true);
-                    setState(() {
-                      _draggingEnabled = true;
-                    });
-                  }
-                },
-                child: AnimatedBuilder(
-                  animation: _shakeAnimation,
-                  builder: (context, child) {
-                    if (_shakeAnimation.isAnimating) {
-                      return Transform.rotate(
-                        angle: _shakeAnimation.value,
-                        child: child,
-                      );
-                    }
-                    return Transform.rotate(
-                      angle: 0,
-                      child: child,
-                    );
-                  },
-                  child: DragTarget<int>(
-                    onAcceptWithDetails: (details) async {
-                      setState(() {
-                        var temp = data.firstWhere(
-                          (element) => element["Position"] == details.data,
-                          orElse: () => null,
-                        );
-
-                        var temp2 = data.firstWhere(
-                          (element) => element["Position"] == i,
-                          orElse: () => null,
-                        );
-
-                        if (temp != null && temp2 != null) {
-                          temp2["Position"] = details.data;
-                          temp["Position"] = i;
-                        }
-
-                        _sortCardList();
-                      });
-                      await _database.swapCardPositions(details.data, i);
-                      RankService().emitDataRefresh();
-                    },
-                    onWillAcceptWithDetails: (details) {
-                      setState(() {
-                        _target = i;
-                      });
-                      return true;
-                    },
-                    onLeave: (data) {
-                      setState(() {
-                        _target = _dragged;
-                      });
-                    },
-                    builder: (context, candidateData, rejectedData) {
-                      return Draggable<int>(
-                          ignoringFeedbackSemantics: false,
-                          data: i,
-                          maxSimultaneousDrags: _draggingEnabled ? 1 : 0,
-                          onDragStarted: () {
-                            setState(() {
-                              _dragged = i;
-                            });
-                          },
-                          onDragEnd: (details) {
-                            setState(() {
-                              _dragged = -1;
-                            });
-                          },
-                          feedback:
-                              _buildSimpleCard(item, index, Colors.white54),
-                          child: buildCard(
-                              candidateData, i, index, cardColor, item));
-                    },
-                  ),
-                ),
-              ));
+              cards.add(_buildAnimatedCard(item, i, index));
             }
 
             _previousData = List.from(data);
@@ -426,22 +362,7 @@ class HomeScreenState extends State<HomeScreen>
 
   Widget buildCard(
       List candidateData, int i, int index, Color cardColor, Map item) {
-    Color disabledColor = Colors.red.withOpacity(0.1);
-    if (candidateData.isEmpty) {
-      if (_dragged == i) {
-        return _buildSimpleCard(data[_target], index,
-            data[_target]["Visible"] == 1 ? cardColor : disabledColor);
-      } else {
-        if (item["Visible"] == 1) {
-          return _buildAnimatedCard(item, i, index);
-        } else {
-          return _buildSimpleCard(item, index, disabledColor);
-        }
-      }
-    } else {
-      return _buildSimpleCard(data[_dragged], index,
-          data[_dragged]["Visible"] == 1 ? cardColor : disabledColor);
-    }
+    return _buildAnimatedCard(item, i, index);
   }
 
   Widget _buildAnimatedCard(dynamic item, int i, int index) {
@@ -472,7 +393,6 @@ class HomeScreenState extends State<HomeScreen>
         padding: const EdgeInsets.all(8.0),
         child: DashboardCard(
           item: item,
-          iconVisible: _draggingEnabled ? true : false,
           iconState: item["Visible"] == 0 ? false : true,
           onIconClicked: () {
             _onIconClicked(

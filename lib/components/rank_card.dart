@@ -14,7 +14,6 @@ class RankCard extends StatefulWidget {
   final String? accountId;
   final String? nickName;
   final GlobalKey? searchCardKey;
-  final bool showIcon;
   final bool iconState;
   final VoidCallback? onIconClicked;
   final bool showMenu;
@@ -66,7 +65,6 @@ class RankCard extends StatefulWidget {
       this.nickName,
       this.searchCardKey,
       this.accountAvatar,
-      this.showIcon = false,
       this.iconState = false,
       this.onIconClicked,
       required this.showMenu,
@@ -121,7 +119,7 @@ class RankCardState extends State<RankCard>
   Future<void> _updatePlayerTracking(bool value, int key) async {
     await DataBase().updatePlayerTracking(
         value, key, widget.accountId!, widget.displayName);
-    RankService().refreshMainPage();
+    RankService().emitDataRefresh();
   }
 
   @override
@@ -177,12 +175,6 @@ class RankCardState extends State<RankCard>
                       ],
                     ),
                   ),
-                  if (widget.showIcon)
-                    IconButton(
-                        onPressed: widget.onIconClicked!,
-                        icon: Icon(widget.iconState
-                            ? Icons.visibility_rounded
-                            : Icons.visibility_off_rounded)),
                   if (widget.showMenu) _buildMenu(),
                   if (!widget.showMenu) _buildShowIcon()
                 ],

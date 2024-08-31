@@ -5,7 +5,6 @@ import 'rank_card.dart';
 
 class DashboardCard extends StatelessWidget {
   final Map<String, dynamic> item;
-  final bool iconVisible;
   final bool iconState;
   final VoidCallback onIconClicked;
   final Color color;
@@ -15,7 +14,6 @@ class DashboardCard extends StatelessWidget {
   const DashboardCard(
       {super.key,
       required this.item,
-      required this.iconVisible,
       required this.iconState,
       required this.onIconClicked,
       required this.color,
@@ -37,7 +35,6 @@ class DashboardCard extends StatelessWidget {
       displayName: displayName,
       accountId: accountId,
       nickName: nickName,
-      showIcon: iconVisible,
       iconState: iconState,
       onIconClicked: onIconClicked,
       showMenu: true,
