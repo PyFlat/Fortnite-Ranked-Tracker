@@ -233,7 +233,7 @@ class HomePageEditSheetState extends State<HomePageEditSheet> {
                   ? getTrackedTextBasedOnSort(sortBy, item)
                   : null;
               final displayText =
-                  '${item["DisplayName"]}${trackedText != null ? " ($trackedText)" : ""}';
+                  '${item["NickName"] ?? item["DisplayName"]}${trackedText != null ? " ($trackedText)" : ""}';
 
               return ListTile(
                 key: ValueKey(index),
@@ -248,7 +248,7 @@ class HomePageEditSheetState extends State<HomePageEditSheet> {
                   ),
                 ),
                 subtitle:
-                    Text(item["NickName"] != null ? item["DisplayName"] : null),
+                    item["NickName"] != null ? Text(item["DisplayName"]) : null,
                 trailing: Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   mainAxisSize: MainAxisSize.min,
