@@ -217,8 +217,8 @@ class HomeScreenState extends State<HomeScreen>
   ) async {
     List<Map<String, dynamic>> deepCopiedData =
         data.map((item) => Map<String, dynamic>.from(item)).toList();
-    List<Map<String, dynamic>>? result =
-        await showModalBottomSheet<List<Map<String, dynamic>>?>(
+
+    await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       builder: (BuildContext context) {
@@ -230,10 +230,6 @@ class HomeScreenState extends State<HomeScreen>
         );
       },
     );
-    if (result != null) {
-      await DataBase().updateDataEdited(result);
-      RankService().emitDataRefresh();
-    }
   }
 
   @override

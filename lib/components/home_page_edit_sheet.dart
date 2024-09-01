@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../core/database.dart';
+import '../core/rank_service.dart';
+
 class HomePageEditSheet extends StatefulWidget {
   final List<Map<String, dynamic>> data;
 
@@ -11,10 +14,12 @@ class HomePageEditSheet extends StatefulWidget {
 
 class HomePageEditSheetState extends State<HomePageEditSheet> {
   late List<Map<String, dynamic>> data;
+  final List<List<Map<String, dynamic>>> _history = [];
   bool trailingVisible = false;
   String searchQuery = "";
   final GlobalKey editButtonKey = GlobalKey();
   int sortBy = -1;
+  bool loading = false;
 
   @override
   void initState() {
@@ -24,6 +29,7 @@ class HomePageEditSheetState extends State<HomePageEditSheet> {
 
   void _onReorder(int oldIndex, int newIndex) {
     setState(() {
+      _history.add(List<Map<String, dynamic>>.from(data));
       if (newIndex > oldIndex) {
         newIndex -= 1;
       }
@@ -38,6 +44,15 @@ class HomePageEditSheetState extends State<HomePageEditSheet> {
     for (int i = 0; i < data.length; i++) {
       data[i]['Position'] = i;
     }
+  }
+
+  void _undoLastAction() {
+    setState(() {
+      if (_history.isNotEmpty) {
+        data = _history.removeLast();
+        _rebuildPositions();
+      }
+    });
   }
 
   List<PopupMenuEntry<String>> _buildPopupMenuItems() {
@@ -62,6 +77,7 @@ class HomePageEditSheetState extends State<HomePageEditSheet> {
     if (key == null) return;
 
     setState(() {
+      _history.add(List<Map<String, dynamic>>.from(data));
       sortBy = -1;
       switch (key) {
         case 'Name Alphabet':
@@ -164,115 +180,142 @@ class HomePageEditSheetState extends State<HomePageEditSheet> {
       String displayName = item["DisplayName"] ?? "";
       return displayName.toLowerCase().contains(searchQuery.toLowerCase());
     }).toList();
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: <Widget>[
-        Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: [
-              const SizedBox(
-                width: 10,
-              ),
-              const Expanded(
-                child: Text(
-                  'Manage Cards',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
+
+    if (loading) {
+      return const Center(child: CircularProgressIndicator());
+    } else {
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                const SizedBox(
+                  width: 10,
+                ),
+                const Expanded(
+                  child: Text(
+                    'Manage Cards',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                child: PopupMenuButton<String>(
-                  icon: const Icon(Icons.sort_rounded),
-                  onSelected: (String newValue) {
-                    _handleSort(newValue);
-                  },
-                  itemBuilder: (BuildContext context) {
-                    return _buildPopupMenuItems();
-                  },
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: IconButton(
-                  onPressed: () async {
-                    Navigator.of(context).pop(data);
-                  },
+                IconButton(
+                  onPressed: _undoLastAction,
+                  tooltip: "Revert last change",
                   icon: const Icon(
-                    Icons.check_rounded,
+                    Icons.undo_rounded,
                     size: 30,
-                    color: Colors.green,
                   ),
                 ),
-              ),
-            ],
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                  child: PopupMenuButton<String>(
+                    icon: const Icon(Icons.sort_rounded),
+                    onSelected: (String newValue) {
+                      _handleSort(newValue);
+                    },
+                    itemBuilder: (BuildContext context) {
+                      return _buildPopupMenuItems();
+                    },
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: IconButton(
+                    onPressed: () async {
+                      setState(() {
+                        loading = true;
+                      });
+                      await DataBase().updateDataEdited(data);
+                      RankService().emitDataRefresh();
+                      await Future.delayed(const Duration(milliseconds: 500));
+                      setState(() {
+                        loading = false;
+                      });
+                      if (context.mounted) {
+                        Navigator.pop(context);
+                      }
+                    },
+                    tooltip: "Confirm",
+                    icon: const Icon(
+                      Icons.check_rounded,
+                      size: 30,
+                      color: Colors.green,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
-        Expanded(
-          child: ReorderableListView(
-            onReorder: _onReorder,
-            buildDefaultDragHandles: false,
-            children: List.generate(filteredItems.length, (index) {
-              final item = filteredItems[index];
+          Expanded(
+            child: ReorderableListView(
+              onReorder: _onReorder,
+              buildDefaultDragHandles: false,
+              children: List.generate(filteredItems.length, (index) {
+                final item = filteredItems[index];
 
-              Icon visibilityIcon() {
-                return Icon(
-                  item["Visible"] == 1
-                      ? Icons.visibility_rounded
-                      : Icons.visibility_off_rounded,
-                  color: item["Visible"] == 1 ? null : Colors.redAccent,
+                Icon visibilityIcon() {
+                  return Icon(
+                    item["Visible"] == 1
+                        ? Icons.visibility_rounded
+                        : Icons.visibility_off_rounded,
+                    color: item["Visible"] == 1 ? null : Colors.redAccent,
+                  );
+                }
+
+                final trackedText = (sortBy >= 0)
+                    ? getTrackedTextBasedOnSort(sortBy, item)
+                    : null;
+                final displayText =
+                    '${item["NickName"] ?? item["DisplayName"]}${trackedText != null ? " ($trackedText)" : ""}';
+
+                return ListTile(
+                  key: ValueKey(index),
+                  leading: CircleAvatar(
+                    backgroundImage: NetworkImage(item["AccountAvatar"]),
+                  ),
+                  title: Text(
+                    displayText,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                  subtitle: item["NickName"] != null
+                      ? Text(item["DisplayName"])
+                      : null,
+                  trailing: Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        icon: visibilityIcon(),
+                        tooltip: "Toggle visibility",
+                        onPressed: () {
+                          setState(() {
+                            item["Visible"] = item["Visible"] == 1 ? 0 : 1;
+                          });
+                        },
+                      ),
+                      const SizedBox(width: 8),
+                      ReorderableDragStartListener(
+                        index: index,
+                        child: const Icon(Icons.drag_handle_rounded),
+                      ),
+                    ],
+                  ),
                 );
-              }
-
-              final trackedText = (sortBy >= 0)
-                  ? getTrackedTextBasedOnSort(sortBy, item)
-                  : null;
-              final displayText =
-                  '${item["NickName"] ?? item["DisplayName"]}${trackedText != null ? " ($trackedText)" : ""}';
-
-              return ListTile(
-                key: ValueKey(index),
-                leading: CircleAvatar(
-                  backgroundImage: NetworkImage(item["AccountAvatar"]),
-                ),
-                title: Text(
-                  displayText,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
-                ),
-                subtitle:
-                    item["NickName"] != null ? Text(item["DisplayName"]) : null,
-                trailing: Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconButton(
-                      icon: visibilityIcon(),
-                      onPressed: () {
-                        setState(() {
-                          item["Visible"] = item["Visible"] == 1 ? 0 : 1;
-                        });
-                      },
-                    ),
-                    const SizedBox(width: 8),
-                    ReorderableDragStartListener(
-                      index: index,
-                      child: const Icon(Icons.drag_handle_rounded),
-                    ),
-                  ],
-                ),
-              );
-            }),
+              }),
+            ),
           ),
-        ),
-      ],
-    );
+        ],
+      );
+    }
   }
 }
