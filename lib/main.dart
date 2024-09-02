@@ -168,6 +168,7 @@ class _MyAppState extends State<MyApp>
       final result = await getShowInstance();
       if (result) {
         windowManager.show();
+        windowManager.focus();
         await setShowInstance(false);
       }
     });
@@ -225,6 +226,7 @@ class _MyAppState extends State<MyApp>
   @override
   void onTrayIconMouseDown() {
     windowManager.show();
+    windowManager.focus();
   }
 
   @override
