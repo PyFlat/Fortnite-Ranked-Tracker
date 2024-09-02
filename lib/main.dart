@@ -9,6 +9,7 @@ import 'package:flutter_single_instance/flutter_single_instance.dart';
 import 'package:internet_connection_checker/internet_connection_checker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 import 'package:tray_manager/tray_manager.dart';
 import 'package:window_manager/window_manager.dart';
@@ -23,6 +24,7 @@ void main() async {
   await runZonedGuarded(
     () async {
       WidgetsFlutterBinding.ensureInitialized();
+      SharedPreferences prefs = await SharedPreferences.getInstance();
       if (Platform.isAndroid || Platform.isIOS) {
         await initializeService();
       }
@@ -32,11 +34,13 @@ void main() async {
           await setShowInstance(true);
           exit(0);
         }
+
         await windowManager.ensureInitialized();
-        windowManager.setPreventClose(true);
+        if (prefs.getBool("minimizeAsTray") ?? true) {
+          windowManager.setPreventClose(true);
+        }
 
         WindowOptions windowOptions = const WindowOptions(
-          center: true,
           backgroundColor: Colors.transparent,
           skipTaskbar: false,
           titleBarStyle: TitleBarStyle.normal,
@@ -45,7 +49,10 @@ void main() async {
           windowManager.setIcon("assets/tray-icon.ico");
         }
         windowManager.waitUntilReadyToShow(windowOptions, () async {
-          await windowManager.show();
+          bool showWindow = prefs.getBool("showAtStartup") ?? true;
+          if (showWindow) {
+            await windowManager.show();
+          }
           await windowManager.focus();
         });
       }

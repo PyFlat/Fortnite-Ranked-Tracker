@@ -222,10 +222,8 @@ class MainScreenState extends State<MainScreen> {
                 leading: const Icon(Icons.settings, color: Colors.blueGrey),
                 title: const Text('Settings', style: TextStyle(fontSize: 16)),
                 onTap: () => {
-                  Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => const SettingsScreen()))
+                  Navigator.push(context,
+                      MaterialPageRoute(builder: (context) => SettingsScreen()))
                 },
               ),
             ],

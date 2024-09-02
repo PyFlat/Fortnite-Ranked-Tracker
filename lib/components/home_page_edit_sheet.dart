@@ -235,10 +235,10 @@ class HomePageEditSheetState extends State<HomePageEditSheet> {
                       await DataBase().updateDataEdited(data);
                       RankService().emitDataRefresh();
                       await Future.delayed(const Duration(milliseconds: 500));
-                      setState(() {
-                        loading = false;
-                      });
                       if (context.mounted) {
+                        setState(() {
+                          loading = false;
+                        });
                         Navigator.pop(context);
                       }
                     },

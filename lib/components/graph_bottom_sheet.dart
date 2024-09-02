@@ -11,18 +11,18 @@ import 'dart:async';
 
 import 'dart:math' as math;
 
-class ModalBottomSheetContent extends StatefulWidget {
+class GraphBottomSheetContent extends StatefulWidget {
   final List<Map<String, dynamic>> items;
   final bool openSeasonSelection;
 
-  const ModalBottomSheetContent(
+  const GraphBottomSheetContent(
       {super.key, required this.items, this.openSeasonSelection = false});
 
   @override
-  ModalBottomSheetContentState createState() => ModalBottomSheetContentState();
+  GraphBottomSheetContentState createState() => GraphBottomSheetContentState();
 }
 
-class ModalBottomSheetContentState extends State<ModalBottomSheetContent> {
+class GraphBottomSheetContentState extends State<GraphBottomSheetContent> {
   late List<Map<String, dynamic>> items;
   bool trailingVisible = false;
   final SearchController _searchController = SearchController();

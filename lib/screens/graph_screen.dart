@@ -228,7 +228,7 @@ class _GraphScreenState extends State<GraphScreen> {
         await showModalBottomSheet<List<Map<String, dynamic>>?>(
       context: context,
       builder: (BuildContext context) {
-        return ModalBottomSheetContent(
+        return GraphBottomSheetContent(
           items: [...items],
           openSeasonSelection: openSeasonSelection,
         );
