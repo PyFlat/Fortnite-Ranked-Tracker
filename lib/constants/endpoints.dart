@@ -37,4 +37,7 @@ class Endpoints {
 
   static const String skinIcon =
       "https://fortnite-api.com/images/cosmetics/br/{skinId}/smallicon.png";
+
+  static const String serverStatus =
+      "http://lightswitch-public-service-prod.ol.epicgames.com/lightswitch/api/service/fortnite/status";
 }

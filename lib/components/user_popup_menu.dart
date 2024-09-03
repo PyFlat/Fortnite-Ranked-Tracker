@@ -12,13 +12,15 @@ class UserPopupMenu extends StatelessWidget {
   final String accountId;
   final String? nickName;
   final Talker talker;
+  final Function(String accountId, String newNickName)? nickNameChanged;
   const UserPopupMenu(
       {super.key,
       required this.context,
       required this.displayName,
       required this.accountId,
       required this.nickName,
-      required this.talker});
+      required this.talker,
+      this.nickNameChanged});
 
   final BuildContext context;
 
@@ -29,7 +31,8 @@ class UserPopupMenu extends StatelessWidget {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       onSelected: (String value) {
         if (value == "show_account_details") {
-          showCustomDialog(context, displayName, accountId, nickName);
+          showAccountDetailsDialog(context, displayName, accountId, nickName,
+              nickNameChanged: nickNameChanged);
         } else if (value == "open_user") {
           Navigator.push(
             context,

@@ -145,6 +145,14 @@ class HomePageEditSheetState extends State<HomePageEditSheet> {
     });
   }
 
+  void _nickNameChanged(String accountId, String newNickName) {
+    Map<String, dynamic> account =
+        widget.data.firstWhere((item) => item["AccountId"] == accountId);
+    setState(() {
+      account["NickName"] = newNickName.isNotEmpty ? newNickName : null;
+    });
+  }
+
   dynamic _getValue(Map<String, dynamic> item, String field) {
     final parts = field.split('.');
     dynamic value = item;
@@ -336,7 +344,8 @@ class HomePageEditSheetState extends State<HomePageEditSheet> {
                           displayName: item["DisplayName"],
                           accountId: item["AccountId"],
                           nickName: item["NickName"],
-                          talker: Talker()),
+                          talker: Talker(),
+                          nickNameChanged: _nickNameChanged),
                       const SizedBox(width: 8),
                       ReorderableDragStartListener(
                         index: index,

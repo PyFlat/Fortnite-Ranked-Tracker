@@ -212,7 +212,7 @@ class HomeScreenState extends State<HomeScreen>
     await _database.setAccountVisibility(accountId, !visibility);
   }
 
-  void showModalBottomSheetWithItems(
+  void showHomePageEditSheet(
     BuildContext context,
   ) async {
     List<Map<String, dynamic>> deepCopiedData =
@@ -240,7 +240,7 @@ class HomeScreenState extends State<HomeScreen>
         children: [
           FloatingActionButton.extended(
             heroTag: "edit-btn",
-            onPressed: () => showModalBottomSheetWithItems(context),
+            onPressed: () => showHomePageEditSheet(context),
             label: const Text("Edit"),
             icon: const Icon(Icons.edit),
           ),
@@ -327,14 +327,44 @@ class HomeScreenState extends State<HomeScreen>
             _previousData = List.from(data);
 
             if (!_firstIteration && cards.isEmpty) {
-              return const Center(
-                child: Text(
-                  "No data available. Search for a user and start tracking to populate the dashboard.",
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 18.0,
-                    fontWeight: FontWeight.bold,
-                  ),
+              bool hasData = data.isNotEmpty;
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      hasData ? Icons.visibility_off : Icons.dashboard_outlined,
+                      size: 100,
+                      color: Colors.grey,
+                    ),
+                    const SizedBox(height: 20),
+                    Text(
+                      hasData
+                          ? 'All cards are currently hidden'
+                          : 'Welcome to your Dashboard',
+                      style: const TextStyle(
+                          fontSize: 20, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      hasData
+                          ? 'Toggle visibility to see your data.'
+                          : 'Here’s how you can get started...',
+                      style: const TextStyle(fontSize: 16, color: Colors.grey),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 20),
+                    ElevatedButton(
+                      onPressed: () {
+                        if (hasData) {
+                          showHomePageEditSheet(context);
+                        } else {
+                          //TODO: Link tutorial video and/or Discord Server for help
+                        }
+                      },
+                      child: Text(hasData ? 'Edit Cards' : 'Learn More'),
+                    ),
+                  ],
                 ),
               );
             }

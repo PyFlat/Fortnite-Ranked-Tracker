@@ -278,7 +278,7 @@ class RankCardState extends State<RankCard>
   Widget _buildShowIcon() {
     return IconButton(
       onPressed: () {
-        showCustomDialog(
+        showAccountDetailsDialog(
             context, widget.displayName, widget.accountId!, widget.nickName,
             searchCardKey: widget.searchCardKey);
       },

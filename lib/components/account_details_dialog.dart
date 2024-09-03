@@ -10,13 +10,14 @@ class AccountDetailsDialog extends StatefulWidget {
   final String accountId;
   final String? nickName;
   final GlobalKey? searchCardKey;
-
+  final Function(String accountId, String newNickName)? nickNameChanged;
   const AccountDetailsDialog(
       {super.key,
       required this.accountName,
       required this.accountId,
       this.nickName,
-      this.searchCardKey});
+      this.searchCardKey,
+      this.nickNameChanged});
 
   @override
   State<AccountDetailsDialog> createState() => _AccountDetailsDialogState();
@@ -76,6 +77,9 @@ class _AccountDetailsDialogState extends State<AccountDetailsDialog> {
   }
 
   void _updateNickName() async {
+    if (widget.nickNameChanged != null) {
+      widget.nickNameChanged!(widget.accountId, _nickNameController.text);
+    }
     DataBase database = DataBase();
     await database.updatePlayerNickName(
         widget.accountId, _nickNameController.text);
@@ -223,18 +227,19 @@ class _AccountDetailsDialogState extends State<AccountDetailsDialog> {
   }
 }
 
-void showCustomDialog(BuildContext context, String accountName,
+void showAccountDetailsDialog(BuildContext context, String accountName,
     String accountId, String? nickName,
-    {GlobalKey? searchCardKey}) {
+    {GlobalKey? searchCardKey,
+    Function(String accountId, String newNickName)? nickNameChanged}) {
   showDialog(
     context: context,
     builder: (BuildContext context) {
       return AccountDetailsDialog(
-        accountName: accountName,
-        accountId: accountId,
-        nickName: nickName,
-        searchCardKey: searchCardKey,
-      );
+          accountName: accountName,
+          accountId: accountId,
+          nickName: nickName,
+          searchCardKey: searchCardKey,
+          nickNameChanged: nickNameChanged);
     },
   );
 }

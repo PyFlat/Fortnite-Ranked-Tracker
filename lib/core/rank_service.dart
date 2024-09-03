@@ -25,6 +25,7 @@ class RankService {
   Timer _refreshNameTimer = Timer(Duration.zero, () {});
   String accountAvatar = "";
   String accountDisplayName = "";
+  bool lastServerStatus = true;
 
   final _rankUpdateController = StreamController<void>.broadcast();
 
@@ -77,6 +78,19 @@ class RankService {
     return accountAvatar;
   }
 
+  Stream<bool> getServerStatusStream() async* {
+    yield lastServerStatus;
+    while (true) {
+      Map<String, dynamic> response = await ApiService()
+          .getData(Endpoints.serverStatus, getBasicAuthHeader());
+      bool status = response["status"] == "UP" ? true : false;
+      lastServerStatus = status;
+      yield status;
+
+      await Future.delayed(const Duration(seconds: 10));
+    }
+  }
+
   Future<Map<String, String>> getAccountAvatarById(
       String accountIdString) async {
     Map<String, String> accountAvatarMap = {};
@@ -111,16 +125,6 @@ class RankService {
   Future<String> _fetchCurrentSeason() async {
     return "chapter_5_season_4";
     //TODO The old endpoint is now deprecated and until we find a new one to get the current season the season is just hardcoded
-
-    // Map response = await ApiService().getData(Endpoints.battlePassData, "");
-    // String slug = response["slug"];
-    // RegExp regExp = RegExp(r"(\D)(\d)");
-
-    // String replacedSlug = slug.replaceAllMapped(regExp, (Match match) {
-    //   return "${match.group(1)}_${match.group(2)}";
-    // });
-
-    // return replacedSlug.replaceAll("-", "_");
   }
 
   Future<List<String>> _fetchSeasonTracks() async {

@@ -165,14 +165,50 @@ class MainScreenState extends State<MainScreen> {
                           ),
                           const SizedBox(width: 16),
                           Expanded(
-                            child: Text(
-                              widget.authProvider.displayName,
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 20,
-                                fontWeight: FontWeight.w600,
-                              ),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  widget.authProvider.displayName,
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                StreamBuilder(
+                                  stream: RankService().getServerStatusStream(),
+                                  builder: (context, snapshot) {
+                                    if (snapshot.hasData) {
+                                      return Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          Icon(
+                                            Icons.circle,
+                                            color: snapshot.data!
+                                                ? Colors.green
+                                                : Colors.red,
+                                          ),
+                                          const SizedBox(
+                                            width: 8,
+                                          ),
+                                          Text(
+                                            "Fortnite is ${snapshot.data! ? "online" : "offline"}.",
+                                            textAlign: TextAlign.center,
+                                            style: const TextStyle(
+                                              color: Colors.grey,
+                                              fontSize: 16,
+                                            ),
+                                          ),
+                                        ],
+                                      );
+                                    }
+                                    return const SizedBox.shrink();
+                                  },
+                                )
+                              ],
                             ),
                           ),
                         ],
@@ -223,8 +259,10 @@ class MainScreenState extends State<MainScreen> {
                 leading: const Icon(Icons.settings, color: Colors.blueGrey),
                 title: const Text('Settings', style: TextStyle(fontSize: 16)),
                 onTap: () => {
-                  Navigator.push(context,
-                      MaterialPageRoute(builder: (context) => SettingsScreen()))
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => const SettingsScreen()))
                 },
               ),
             ],
