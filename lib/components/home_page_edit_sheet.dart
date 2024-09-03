@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:fortnite_ranked_tracker/components/user_popup_menu.dart';
+import 'package:talker_flutter/talker_flutter.dart';
 
 import '../core/database.dart';
 import '../core/rank_service.dart';
@@ -51,6 +53,15 @@ class HomePageEditSheetState extends State<HomePageEditSheet> {
       if (_history.isNotEmpty) {
         data = _history.removeLast();
         _rebuildPositions();
+      }
+    });
+  }
+
+  void _toggleVisibilityAll() {
+    setState(() {
+      bool allVisible = data.every((item) => item["Visible"] == 1);
+      for (var item in data) {
+        item["Visible"] = allVisible ? 0 : 1;
       }
     });
   }
@@ -174,6 +185,15 @@ class HomePageEditSheetState extends State<HomePageEditSheet> {
     }
   }
 
+  Icon _getToggleVisibilityAllIcon() {
+    bool allVisible = data.every((item) => item["Visible"] == 1);
+    return Icon(
+      allVisible ? Icons.visibility_off_rounded : Icons.visibility_rounded,
+      size: 30,
+      color: allVisible ? Colors.redAccent : null,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     List<Map<String, dynamic>> filteredItems = data.where((item) {
@@ -204,6 +224,11 @@ class HomePageEditSheetState extends State<HomePageEditSheet> {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
+                ),
+                IconButton(
+                  onPressed: _toggleVisibilityAll,
+                  tooltip: "Toggle visibility for all",
+                  icon: _getToggleVisibilityAllIcon(),
                 ),
                 IconButton(
                   onPressed: _undoLastAction,
@@ -303,6 +328,15 @@ class HomePageEditSheetState extends State<HomePageEditSheet> {
                           });
                         },
                       ),
+                      const SizedBox(
+                        width: 8,
+                      ),
+                      UserPopupMenu(
+                          context: context,
+                          displayName: item["DisplayName"],
+                          accountId: item["AccountId"],
+                          nickName: item["NickName"],
+                          talker: Talker()),
                       const SizedBox(width: 8),
                       ReorderableDragStartListener(
                         index: index,

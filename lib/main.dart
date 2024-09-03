@@ -6,7 +6,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:flutter_single_instance/flutter_single_instance.dart';
-import 'package:internet_connection_checker/internet_connection_checker.dart';
+import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -139,8 +139,8 @@ class _MyAppState extends State<MyApp>
     with TrayListener, WindowListener, WidgetsBindingObserver {
   late Timer timer;
   late Dio dio;
-  final connectionChecker = InternetConnectionChecker();
-  late StreamSubscription<InternetConnectionStatus> subscription;
+  final connectionChecker = InternetConnection();
+  late StreamSubscription<InternetConnection> subscription;
   bool _isOffline = false;
 
   @override
@@ -153,8 +153,8 @@ class _MyAppState extends State<MyApp>
     trayManager.addListener(this);
     windowManager.addListener(this);
     WidgetsBinding.instance.addObserver(this);
-    connectionChecker.onStatusChange.listen((InternetConnectionStatus status) {
-      if (status == InternetConnectionStatus.connected) {
+    connectionChecker.onStatusChange.listen((InternetStatus status) {
+      if (status == InternetStatus.connected) {
         setState(() {
           _isOffline = false;
         });
@@ -251,7 +251,11 @@ class _MyAppState extends State<MyApp>
         home: SafeArea(
             child: _isOffline
                 ? const NoConnectionScreen()
-                : AuthenticationHandler(talker: widget.talker, dio: dio)),
+                : AuthenticationHandler(
+                    talker: widget.talker,
+                    dio: dio,
+                    connectionChecker: connectionChecker,
+                  )),
       ),
     );
   }
@@ -315,10 +319,14 @@ class NoConnectionScreen extends StatelessWidget {
 
 class AuthenticationHandler extends StatelessWidget {
   const AuthenticationHandler(
-      {super.key, required this.talker, required this.dio});
+      {super.key,
+      required this.talker,
+      required this.dio,
+      required this.connectionChecker});
 
   final Talker talker;
   final Dio dio;
+  final InternetConnection connectionChecker;
 
   @override
   Widget build(BuildContext context) {

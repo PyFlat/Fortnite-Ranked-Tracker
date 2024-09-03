@@ -47,6 +47,7 @@ class AuthProvider with ChangeNotifier {
     } catch (error) {
       if (error is PathNotFoundException) {
         _accessToken = "";
+      } else if (error is SocketException) {
       } else {
         _talker.error('Authentication failed: $error');
       }
@@ -69,7 +70,6 @@ class AuthProvider with ChangeNotifier {
       },
       body: authData,
     );
-
     if (response.statusCode == 200) {
       final responseData = jsonDecode(utf8.decode(response.bodyBytes));
       _accessToken = responseData['access_token'];
@@ -108,7 +108,9 @@ class AuthProvider with ChangeNotifier {
     _refreshTimer?.cancel();
     _refreshTimer = Timer.periodic(const Duration(minutes: 20), (callback) {
       refreshToken().catchError((error) {
-        _talker.error('Failed to refresh token: $error');
+        if (error is! SocketException) {
+          _talker.error('Failed to refresh token: $error');
+        }
       });
     });
   }

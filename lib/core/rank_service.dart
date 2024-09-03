@@ -46,7 +46,7 @@ class RankService {
   Future<void> init(Talker talker, AuthProvider authProvider) async {
     if (!_isInitialized) {
       this.authProvider = authProvider;
-      talker = talker;
+      this.talker = talker;
 
       _currentSeason = await _fetchCurrentSeason();
       _activeTracks = await _fetchSeasonTracks();

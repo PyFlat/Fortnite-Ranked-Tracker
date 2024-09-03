@@ -18,11 +18,12 @@ class MainScreen extends StatefulWidget {
   final Talker talker;
   final Dio dio;
 
-  const MainScreen(
-      {super.key,
-      required this.authProvider,
-      required this.talker,
-      required this.dio});
+  const MainScreen({
+    super.key,
+    required this.authProvider,
+    required this.talker,
+    required this.dio,
+  });
 
   @override
   MainScreenState createState() => MainScreenState();

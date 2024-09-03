@@ -30,8 +30,13 @@ class ApiService {
                   return responseObject.data["numericErrorCode"] != 18007;
                 } else if (responseObject.statusCode == 401) {
                   authProvider.initializeAuth(force: true);
+                  return responseObject.data["numericErrorCode"] != 1031;
                 }
                 return responseObject.statusCode != 429;
+              } else {
+                if (response.type == DioExceptionType.connectionError) {
+                  return false;
+                }
               }
               return true;
             },
@@ -74,7 +79,9 @@ class ApiService {
     } on DioException catch (e) {
       if (e.response != null) {
       } else {
-        _talker.error(e.message);
+        if (e.type != DioExceptionType.connectionError) {
+          _talker.error(e.message);
+        }
       }
       return [];
     }
@@ -97,7 +104,9 @@ class ApiService {
     } on DioException catch (e) {
       if (e.response != null) {
       } else {
-        _talker.error(e.message);
+        if (e.type != DioExceptionType.connectionError) {
+          _talker.error(e.message);
+        }
       }
       return [];
     }

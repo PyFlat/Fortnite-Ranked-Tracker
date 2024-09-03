@@ -18,6 +18,7 @@ class AuthScreen extends StatefulWidget {
   final AuthProvider authProvider;
   final Talker talker;
   final Dio dio;
+
   const AuthScreen(
       {super.key,
       required this.authProvider,
