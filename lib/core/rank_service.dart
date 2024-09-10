@@ -70,12 +70,15 @@ class RankService {
     return "Bearer ${authProvider.accessToken}";
   }
 
-  Future<String> getAccountAvatar() async {
-    if (accountAvatar.isEmpty) {
+  Stream<String> getAccountAvatar() async* {
+    yield accountAvatar;
+    while (true) {
       accountAvatar = (await getAccountAvatarById(
           authProvider.accountId))[authProvider.accountId]!;
+      yield accountAvatar;
+
+      await Future.delayed(const Duration(seconds: 10));
     }
-    return accountAvatar;
   }
 
   Stream<bool> getServerStatusStream() async* {

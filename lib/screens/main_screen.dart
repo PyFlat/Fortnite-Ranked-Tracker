@@ -138,8 +138,8 @@ class MainScreenState extends State<MainScreen> {
                       ),
                       child: Row(
                         children: [
-                          FutureBuilder<String>(
-                            future: RankService().getAccountAvatar(),
+                          StreamBuilder(
+                            stream: RankService().getAccountAvatar(),
                             builder: (context, snapshot) {
                               if (snapshot.connectionState ==
                                   ConnectionState.waiting) {
@@ -147,17 +147,14 @@ class MainScreenState extends State<MainScreen> {
                                     radius: 40,
                                     child: CircularProgressIndicator());
                               } else if (snapshot.hasError) {
-                                // Handle errors
                                 return const Icon(Icons.error,
                                     color: Colors.red);
                               } else if (snapshot.hasData) {
-                                // Display the image once the URL is fetched
                                 return CircleAvatar(
                                   radius: 40,
                                   backgroundImage: NetworkImage(snapshot.data!),
                                 );
                               } else {
-                                // Handle the case where there's no data
                                 return const Icon(Icons.image,
                                     color: Colors.grey);
                               }
