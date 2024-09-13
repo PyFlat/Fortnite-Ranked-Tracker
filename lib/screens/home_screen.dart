@@ -105,15 +105,12 @@ class HomeScreenState extends State<HomeScreen>
             var rankData = result[0];
 
             int dataProgress = rankData["progress"];
-            String lastProgress = "-";
 
-            if (result.length > 1) {
-              lastProgress = calculatePercentageDifference(
-                  rankData["total_progress"],
-                  result[1]["total_progress"],
-                  rankData["rank"],
-                  result[1]["rank"]);
-            }
+            String lastProgress = calculatePercentageDifference(
+                rankData["total_progress"],
+                result.length > 1 ? result[1]["total_progress"] : 0,
+                rankData["rank"],
+                result.length > 1 ? result[1]["rank"] : "Unranked");
 
             double progress = rankData["rank"] != "Unreal"
                 ? dataProgress / 100
@@ -171,6 +168,11 @@ class HomeScreenState extends State<HomeScreen>
               newData[rankMode]["DailyMatches"] == 0 ||
               newData[rankMode]["LastProgress"] == "-" ||
               newData[rankMode]["LastProgress"] == null) {
+            if (oldData[rankMode]["LastProgress"] == null &&
+                newData[rankMode]["Rank"] != "Unranked") {
+              dataChanged = index;
+              continue;
+            }
             dataChanged = -1;
           } else {
             dataChanged = index;
@@ -199,17 +201,6 @@ class HomeScreenState extends State<HomeScreen>
 
   void _sortCardList() {
     data.sort((a, b) => a["Position"].compareTo(b["Position"]));
-  }
-
-  void _onIconClicked(String accountId, bool visibility) async {
-    Map<String, dynamic> x = data
-        .where((element) => element["AccountId"] == accountId)
-        .toList()
-        .first;
-    x["Visible"] = visibility ? 0 : 1;
-    setState(() {});
-
-    await _database.setAccountVisibility(accountId, !visibility);
   }
 
   void showHomePageEditSheet(
@@ -419,11 +410,6 @@ class HomeScreenState extends State<HomeScreen>
         padding: const EdgeInsets.all(8.0),
         child: DashboardCard(
           item: item,
-          iconState: item["Visible"] == 0 ? false : true,
-          onIconClicked: () {
-            _onIconClicked(
-                item["AccountId"], item["Visible"] == 0 ? false : true);
-          },
           color: color,
           index: index,
           talker: widget.talker,

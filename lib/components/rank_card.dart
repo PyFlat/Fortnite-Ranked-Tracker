@@ -11,8 +11,6 @@ class RankCard extends StatefulWidget {
   final String? accountId;
   final String? nickName;
   final GlobalKey? searchCardKey;
-  final bool iconState;
-  final VoidCallback? onIconClicked;
   final bool showMenu;
   final bool showSwitches;
   final String? accountAvatar;
@@ -62,8 +60,6 @@ class RankCard extends StatefulWidget {
       this.nickName,
       this.searchCardKey,
       this.accountAvatar,
-      this.iconState = false,
-      this.onIconClicked,
       required this.showMenu,
       required this.showSwitches,
       this.battleRoyaleProgressText,
@@ -105,12 +101,20 @@ class RankCardState extends State<RankCard>
   late bool _zeroBuildTracking;
   late bool _rocketRacingTracking;
 
+  int _currentIndex = 0;
+  final List<String> _tabNames = [
+    "Battle Royale",
+    "Zero Build",
+    "Rocket Racing",
+  ];
+
   @override
   void initState() {
     super.initState();
     _battleRoyaleTracking = widget.battleRoyaleTracking ?? false;
     _zeroBuildTracking = widget.zeroBuildTracking ?? false;
     _rocketRacingTracking = widget.rocketRacingTracking ?? false;
+    _currentIndex = widget.initialIndex ?? 0;
   }
 
   Future<void> _updatePlayerTracking(bool value, int key) async {
@@ -127,152 +131,202 @@ class RankCardState extends State<RankCard>
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(10),
       ),
-      child: DefaultTabController(
-        initialIndex: widget.initialIndex!,
-        length: 3,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(15.0),
-              child: Row(
-                children: [
-                  if (widget.accountAvatar != null)
-                    CircleAvatar(
-                      radius: 25,
-                      backgroundImage: NetworkImage(widget.accountAvatar!),
-                    ),
-                  const SizedBox(
-                    width: 24,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(15.0),
+            child: Row(
+              children: [
+                if (widget.accountAvatar != null)
+                  CircleAvatar(
+                    radius: 25,
+                    backgroundImage: NetworkImage(widget.accountAvatar!),
                   ),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
+                const SizedBox(width: 24),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        widget.nickName == null
+                            ? widget.displayName
+                            : widget.nickName!,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 20,
+                        ),
+                      ),
+                      if (widget.nickName != null)
                         Text(
-                          widget.nickName == null
-                              ? widget.displayName
-                              : widget.nickName!,
+                          widget.displayName,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 20,
+                            fontSize: 16,
+                            color: Colors.grey,
                           ),
                         ),
-                        if (widget.nickName != null)
-                          Text(
-                            widget.displayName,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 16,
-                              color: Colors.grey,
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-                  if (widget.showMenu)
-                    UserPopupMenu(
-                      context: context,
-                      displayName: widget.displayName,
-                      accountId: widget.accountId!,
-                      nickName: widget.nickName,
-                      talker: widget.talker,
-                    ),
-                  if (!widget.showMenu) _buildShowIcon()
-                ],
-              ),
-            ),
-            const TabBar(
-              tabs: [
-                Tab(
-                  child: Text(
-                    "Battle Royale",
-                    textAlign: TextAlign.center,
+                    ],
                   ),
                 ),
-                Tab(
-                  child: Text(
-                    "Zero Build",
-                    textAlign: TextAlign.center,
+                if (widget.showMenu)
+                  UserPopupMenu(
+                    context: context,
+                    displayName: widget.displayName,
+                    accountId: widget.accountId!,
+                    nickName: widget.nickName,
+                    talker: widget.talker,
                   ),
-                ),
-                Tab(
-                  child: Text(
-                    "Rocket Racing",
-                    textAlign: TextAlign.center,
-                  ),
-                ),
+                if (!widget.showMenu) _buildShowIcon(),
               ],
-              indicatorColor: Colors.deepPurple,
-              labelColor: Colors.deepPurple,
-              unselectedLabelColor: Colors.grey,
             ),
-            Expanded(
-              child: TabBarView(
+          ),
+          Padding(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(0.9),
+                borderRadius: BorderRadius.circular(10.0),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.white.withOpacity(0.3),
+                    spreadRadius: 4,
+                    blurRadius: 7.5,
+                  ),
+                ],
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  _buildContent(
-                    widget.battleRoyaleProgressText,
-                    widget.battleRoyaleProgress,
-                    widget.battleRoyaleLastProgress,
-                    widget.battleRoyaleLastChanged,
-                    widget.battleRoyaleDailyMatches,
-                    widget.battleRoyaleRankImagePath,
-                    widget.battleRoyaleRank,
-                    widget.battleRoyaleActive,
-                    _battleRoyaleTracking,
-                    "Battle Royale",
-                    (bool value) async {
-                      setState(() {
-                        _battleRoyaleTracking = value;
-                      });
-                      await _updatePlayerTracking(value, 0);
-                    },
+                  Tooltip(
+                    message: _currentIndex > 0
+                        ? _tabNames[_currentIndex - 1]
+                        : _tabNames[_tabNames.length - 1],
+                    child: IconButton(
+                      onPressed: () {
+                        setState(() {
+                          if (_currentIndex <= 0) {
+                            _currentIndex = _tabNames.length - 1;
+                            return;
+                          }
+                          _currentIndex--;
+                        });
+                      },
+                      icon: const Icon(Icons.chevron_left),
+                      color: Colors.white,
+                    ),
                   ),
-                  _buildContent(
-                    widget.zeroBuildProgressText,
-                    widget.zeroBuildProgress,
-                    widget.zeroBuildLastProgress,
-                    widget.zeroBuildLastChanged,
-                    widget.zeroBuildDailyMatches,
-                    widget.zeroBuildRankImagePath,
-                    widget.zeroBuildRank,
-                    widget.zeroBuildActive,
-                    _zeroBuildTracking,
-                    "Zero Build",
-                    (bool value) async {
-                      setState(() {
-                        _zeroBuildTracking = value;
-                      });
-                      await _updatePlayerTracking(value, 1);
-                    },
+                  Expanded(
+                    child: Text(
+                      _tabNames[_currentIndex],
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 18.0,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
                   ),
-                  _buildContent(
-                    widget.rocketRacingProgressText,
-                    widget.rocketRacingProgress,
-                    widget.rocketRacingLastProgress,
-                    widget.rocketRacingLastChanged,
-                    widget.rocketRacingDailyMatches,
-                    widget.rocketRacingRankImagePath,
-                    widget.rocketRacingRank,
-                    widget.rocketRacingActive,
-                    _rocketRacingTracking,
-                    "Rocket Racing",
-                    (bool value) async {
-                      setState(() {
-                        _rocketRacingTracking = value;
-                      });
-                      await _updatePlayerTracking(value, 2);
-                    },
+                  Tooltip(
+                    message: _currentIndex + 1 < _tabNames.length
+                        ? _tabNames[_currentIndex + 1]
+                        : _tabNames[0],
+                    child: IconButton(
+                      onPressed: () {
+                        setState(() {
+                          if (_currentIndex + 1 >= _tabNames.length) {
+                            _currentIndex = 0;
+                            return;
+                          }
+                          _currentIndex++;
+                        });
+                      },
+                      icon: const Icon(Icons.chevron_right),
+                      color: Colors.white,
+                    ),
                   ),
                 ],
               ),
             ),
-          ],
-        ),
+          ),
+
+          const Divider(
+            color: Colors.white,
+          ), // Divider to separate the header from the content
+          Expanded(
+            // Display the selected content
+            child: _buildContentView(),
+          ),
+        ],
       ),
     );
+  }
+
+  Widget _buildContentView() {
+    switch (_currentIndex) {
+      case 0:
+        return _buildContent(
+          widget.battleRoyaleProgressText,
+          widget.battleRoyaleProgress,
+          widget.battleRoyaleLastProgress,
+          widget.battleRoyaleLastChanged,
+          widget.battleRoyaleDailyMatches,
+          widget.battleRoyaleRankImagePath,
+          widget.battleRoyaleRank,
+          widget.battleRoyaleActive,
+          _battleRoyaleTracking,
+          "Battle Royale",
+          (bool value) async {
+            setState(() {
+              _battleRoyaleTracking = value;
+            });
+            await _updatePlayerTracking(value, 0);
+          },
+        );
+      case 1:
+        return _buildContent(
+          widget.zeroBuildProgressText,
+          widget.zeroBuildProgress,
+          widget.zeroBuildLastProgress,
+          widget.zeroBuildLastChanged,
+          widget.zeroBuildDailyMatches,
+          widget.zeroBuildRankImagePath,
+          widget.zeroBuildRank,
+          widget.zeroBuildActive,
+          _zeroBuildTracking,
+          "Zero Build",
+          (bool value) async {
+            setState(() {
+              _zeroBuildTracking = value;
+            });
+            await _updatePlayerTracking(value, 1);
+          },
+        );
+      case 2:
+        return _buildContent(
+          widget.rocketRacingProgressText,
+          widget.rocketRacingProgress,
+          widget.rocketRacingLastProgress,
+          widget.rocketRacingLastChanged,
+          widget.rocketRacingDailyMatches,
+          widget.rocketRacingRankImagePath,
+          widget.rocketRacingRank,
+          widget.rocketRacingActive,
+          _rocketRacingTracking,
+          "Rocket Racing",
+          (bool value) async {
+            setState(() {
+              _rocketRacingTracking = value;
+            });
+            await _updatePlayerTracking(value, 2);
+          },
+        );
+      default:
+        return const Center(child: Text("Invalid Index"));
+    }
   }
 
   Widget _buildShowIcon() {
