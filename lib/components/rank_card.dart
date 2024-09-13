@@ -210,9 +210,9 @@ class RankCardState extends State<RankCard>
                         setState(() {
                           if (_currentIndex <= 0) {
                             _currentIndex = _tabNames.length - 1;
-                            return;
+                          } else {
+                            _currentIndex--;
                           }
-                          _currentIndex--;
                         });
                       },
                       icon: const Icon(Icons.chevron_left),
@@ -220,14 +220,51 @@ class RankCardState extends State<RankCard>
                     ),
                   ),
                   Expanded(
-                    child: Text(
-                      _tabNames[_currentIndex],
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontSize: 18.0,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                      ),
+                    child: Column(
+                      children: [
+                        Text(
+                          _tabNames[_currentIndex],
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 18.0,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(
+                          height: 4,
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: List.generate(
+                            _tabNames.length,
+                            (index) => AnimatedContainer(
+                              duration: const Duration(milliseconds: 300),
+                              width: _currentIndex == index ? 24.0 : 12.0,
+                              height: 4.0,
+                              margin:
+                                  const EdgeInsets.symmetric(horizontal: 4.0),
+                              decoration: BoxDecoration(
+                                color: _currentIndex == index
+                                    ? Colors.deepPurple
+                                    : Colors.grey,
+                                borderRadius: BorderRadius.circular(2.0),
+                                boxShadow: _currentIndex == index
+                                    ? [
+                                        BoxShadow(
+                                            color: Colors.deepPurple
+                                                .withOpacity(0.5),
+                                            blurRadius: 6.0)
+                                      ]
+                                    : [],
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(
+                          height: 4,
+                        )
+                      ],
                     ),
                   ),
                   Tooltip(
@@ -239,9 +276,9 @@ class RankCardState extends State<RankCard>
                         setState(() {
                           if (_currentIndex + 1 >= _tabNames.length) {
                             _currentIndex = 0;
-                            return;
+                          } else {
+                            _currentIndex++;
                           }
-                          _currentIndex++;
                         });
                       },
                       icon: const Icon(Icons.chevron_right),
@@ -252,12 +289,10 @@ class RankCardState extends State<RankCard>
               ),
             ),
           ),
-
           const Divider(
             color: Colors.white,
-          ), // Divider to separate the header from the content
+          ),
           Expanded(
-            // Display the selected content
             child: _buildContentView(),
           ),
         ],

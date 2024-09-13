@@ -168,7 +168,9 @@ class HomeScreenState extends State<HomeScreen>
               newData[rankMode]["DailyMatches"] == 0 ||
               newData[rankMode]["LastProgress"] == "-" ||
               newData[rankMode]["LastProgress"] == null) {
-            if (oldData[rankMode]["LastProgress"] == null &&
+            if (oldData.containsKey(rankMode) &&
+                oldData[rankMode]["LastProgress"] == null &&
+                newData.containsKey(rankMode) &&
                 newData[rankMode]["Rank"] != "Unranked") {
               dataChanged = index;
               continue;
