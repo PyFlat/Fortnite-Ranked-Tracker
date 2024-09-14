@@ -44,7 +44,7 @@ class _AuthScreenState extends State<AuthScreen> {
       onPageFinished: (url) {
         if (url.startsWith("https://www.epicgames.com/account/personal")) {
           controller.runJavaScript(
-              """fetch("https://www.epicgames.com/id/api/redirect?clientId=3446cd72694c4a4485d81b77adbb2141&responseType=code")
+              """fetch("https://www.epicgames.com/id/api/redirect?clientId=af43dc71dd91452396fcdffbd7a8e8a9&responseType=code")
                   .then(response => response.json())
                   .then(data => { Print.postMessage(data.authorizationCode); });""");
         }
