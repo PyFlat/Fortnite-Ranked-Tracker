@@ -136,6 +136,9 @@ class HomePageEditSheetState extends State<HomePageEditSheet> {
       if (aValue is String && bValue is String) {
         return aValue.compareTo(bValue);
       } else if (aValue is int && bValue is int) {
+        if (aValue > 1700 && bValue > 1700) {
+          return aValue.compareTo(bValue);
+        }
         return bValue.compareTo(aValue);
       } else if (aValue is double && bValue is double) {
         return aValue.compareTo(bValue);
