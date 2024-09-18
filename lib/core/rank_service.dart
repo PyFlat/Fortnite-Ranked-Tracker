@@ -104,9 +104,12 @@ class RankService {
         queryParams: {"accountIds": accountIdString});
 
     for (Map accountAvatar in response) {
-      String avatarId = (accountAvatar["avatarId"] as String).split(":")[1];
-      accountAvatarMap[accountAvatar["accountId"]] =
-          ApiService().addPathParams(Endpoints.skinIcon, {"skinId": avatarId});
+      List<String> avatarId = (accountAvatar["avatarId"] as String).split(":");
+      if (avatarId.isEmpty) {
+        continue;
+      }
+      accountAvatarMap[accountAvatar["accountId"]] = ApiService()
+          .addPathParams(Endpoints.skinIcon, {"skinId": avatarId[1]});
     }
     for (String accountId in accountIds) {
       if (!accountAvatarMap.containsKey(accountId)) {
@@ -119,7 +122,7 @@ class RankService {
 
   Future<String> getDisplayName() async {
     if (accountDisplayName.isEmpty) {
-      Map response = await _fetchByAccountId(authProvider.accountId);
+      Map response = (await fetchByAccountId(authProvider.accountId)).first;
       accountDisplayName = response["displayName"];
     }
     return accountDisplayName;
@@ -317,7 +320,7 @@ class RankService {
     final accountDataList = await _database.getAllAccounts();
 
     final updateFutures = accountDataList.map((oldData) async {
-      final newData = await _fetchByAccountId(oldData["accountId"]);
+      final newData = (await fetchByAccountId(oldData["accountId"])).first;
       if (oldData["displayName"] != newData["displayName"]) {
         await _database.updatePlayerName(
             newData["accountId"]!, newData["displayName"]!);
@@ -384,7 +387,11 @@ class RankService {
     }
 
     if (query.length == 32) {
-      return [await _fetchByAccountId(query)];
+      var result = await fetchByAccountId(query);
+      if (result.isNotEmpty) {
+        return [(await fetchByAccountId(query)).first];
+      }
+      return [];
     }
 
     final epicResults = await _fetchResultsByPlatform("epic", query);
@@ -430,34 +437,73 @@ class RankService {
     return [];
   }
 
-  Future<Map<String, String>> _fetchByAccountId(String accountId) async {
-    Map<String, dynamic> jsonObj = (await ApiService().getData(
-        Endpoints.userByAccId, getBasicAuthHeader(),
-        queryParams: {"accountId": accountId}) as List<dynamic>)[0];
-    if (jsonObj.containsKey("displayName")) {
-      return {
-        'accountId': jsonObj["id"] as String,
-        'platform': "epic",
-        'displayName': jsonObj["displayName"] as String
-      };
+  Future<List<Map<String, String>>> fetchByAccountId(String accountId,
+      {List<String>? accountIds}) async {
+    List<Map<String, String>> results = [];
+
+    if (accountIds != null) {
+      int chunkSize = 100;
+      for (int i = 0; i < accountIds.length; i += chunkSize) {
+        List<String> chunk = accountIds.sublist(
+            i,
+            i + chunkSize > accountIds.length
+                ? accountIds.length
+                : i + chunkSize);
+
+        List<Map<String, String>> chunkResults =
+            await _fetchChunkByAccountId(chunk);
+        results.addAll(chunkResults);
+      }
     } else {
-      if (jsonObj["externalAuths"].containsKey("psn")) {
-        return {
+      List<Map<String, String>> singleResult =
+          await _fetchChunkByAccountId([accountId]);
+      results.addAll(singleResult);
+    }
+
+    return results;
+  }
+
+  Future<List<Map<String, String>>> _fetchChunkByAccountId(
+      List<String> accountIdChunk) async {
+    List<Map<String, String>> results = [];
+
+    Map<String, dynamic> queryParams = {"accountId": accountIdChunk};
+
+    List<dynamic> response = await ApiService().getData(
+        Endpoints.userByAccId, getBasicAuthHeader(),
+        queryParams: queryParams) as List<dynamic>;
+
+    for (Map<String, dynamic> jsonObj in response) {
+      Map<String, String> result = {};
+
+      if (jsonObj.containsKey("displayName")) {
+        result = {
+          'accountId': jsonObj["id"] as String,
+          'platform': "epic",
+          'displayName': jsonObj["displayName"] as String
+        };
+      } else if (jsonObj["externalAuths"].containsKey("psn")) {
+        result = {
           'accountId': jsonObj["id"] as String,
           'platform': "psn",
           'displayName':
               jsonObj["externalAuths"]["psn"]["externalDisplayName"] as String
         };
       } else if (jsonObj["externalAuths"].containsKey("xbl")) {
-        return {
+        result = {
           'accountId': jsonObj["id"] as String,
           'platform': "xbl",
           'displayName':
               jsonObj["externalAuths"]["xbl"]["externalDisplayName"] as String
         };
       }
+
+      if (result.isNotEmpty) {
+        results.add(result);
+      }
     }
-    return {};
+
+    return results;
   }
 
   Future<Map<String, String>> _fetchDisplayNameByPlatform(

@@ -57,6 +57,23 @@ class DataBase {
       ''');
 
     await batch.commit();
+
+    _addColumnIfNotExists(db, "nickName", "TEXT");
+  }
+
+  Future<void> _addColumnIfNotExists(
+      Database db, String columnName, String columnType,
+      {String tableName = "profile0"}) async {
+    List<Map<String, dynamic>> columns =
+        await db.rawQuery('PRAGMA table_info($tableName)');
+
+    List<String> existingColumns =
+        columns.map((column) => column['name'] as String).toList();
+
+    if (!existingColumns.contains(columnName)) {
+      await db
+          .execute('ALTER TABLE $tableName ADD COLUMN $columnName $columnType');
+    }
   }
 
   Future<void> updatePlayerTracking(

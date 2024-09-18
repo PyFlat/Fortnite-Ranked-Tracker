@@ -6,6 +6,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:flutter_single_instance/flutter_single_instance.dart';
+import 'package:fortnite_ranked_tracker/core/tournament_data_provider.dart';
 import 'package:internet_connection_checker/internet_connection_checker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
@@ -242,6 +243,7 @@ class _MyAppState extends State<MyApp>
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider(widget.talker)),
+        ChangeNotifierProvider(create: (_) => TournamentDataProvider())
       ],
       child: MaterialApp(
         navigatorObservers: [TalkerRouteObserver(widget.talker)],

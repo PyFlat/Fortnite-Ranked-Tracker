@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:fortnite_ranked_tracker/core/api_service.dart';
 import 'package:fortnite_ranked_tracker/core/auth_provider.dart';
+import 'package:fortnite_ranked_tracker/core/tournament_service.dart';
 import 'package:fortnite_ranked_tracker/screens/database_screen.dart';
 import 'package:fortnite_ranked_tracker/screens/graph_screen.dart';
 import 'package:talker_flutter/talker_flutter.dart';
@@ -12,6 +13,7 @@ import '../screens/home_screen.dart';
 import 'package:flutter/material.dart';
 
 import 'settings_screen.dart';
+import 'tournament_screen.dart';
 
 class MainScreen extends StatefulWidget {
   final AuthProvider authProvider;
@@ -38,6 +40,7 @@ class MainScreenState extends State<MainScreen> {
   List<Widget> get _widgetOptions {
     return <Widget>[
       HomeScreen(talker: widget.talker),
+      TournamentScreen(talker: widget.talker)
     ];
   }
 
@@ -50,6 +53,7 @@ class MainScreenState extends State<MainScreen> {
   Future<void> _initializeRankService() async {
     await ApiService().init(widget.talker, widget.authProvider, widget.dio);
     await RankService().init(widget.talker, widget.authProvider);
+    await TournamentService().init(widget.talker, widget.authProvider);
   }
 
   void _onItemTapped(int index) {
@@ -149,14 +153,21 @@ class MainScreenState extends State<MainScreen> {
                               } else if (snapshot.hasError) {
                                 return const Icon(Icons.error,
                                     color: Colors.red);
-                              } else if (snapshot.hasData) {
+                              } else if (snapshot.hasData &&
+                                  snapshot.data!.isNotEmpty) {
                                 return CircleAvatar(
                                   radius: 40,
                                   backgroundImage: NetworkImage(snapshot.data!),
                                 );
                               } else {
-                                return const Icon(Icons.image,
-                                    color: Colors.grey);
+                                return const CircleAvatar(
+                                  radius: 40,
+                                  child: Icon(
+                                    Icons.person_rounded,
+                                    color: Colors.grey,
+                                    size: 50,
+                                  ),
+                                );
                               }
                             },
                           ),
@@ -237,6 +248,15 @@ class MainScreenState extends State<MainScreen> {
                         accountsFuture: _getAccounts(),
                         scaffoldKey: scaffoldKey,
                         talker: widget.talker),
+                    ListTile(
+                      leading: const Icon(
+                        Icons.emoji_events_rounded,
+                        color: Colors.blueGrey,
+                      ),
+                      title: const Text("Tournaments",
+                          style: TextStyle(fontSize: 16)),
+                      onTap: () => _onItemTapped(1),
+                    ),
                   ],
                 ),
               ),

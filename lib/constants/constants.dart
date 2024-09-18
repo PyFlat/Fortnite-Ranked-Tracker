@@ -26,6 +26,17 @@ class Constants {
     "Unreal"
   ];
 
+  static const Map<String, String> regions = {
+    "EU": "Europe",
+    "NAC": "NA Central",
+    "NAE": "NA EAST",
+    "NAW": "NA WEST",
+    "OCE": "Oceania",
+    "ASIA": "Asia",
+    "ME": "Middle East",
+    "BR": "Brazil"
+  };
+
   static const String defaultSkinId =
       "CID_A_402_Athena_Commando_F_RebirthFresh";
 }

@@ -89,13 +89,13 @@ class ApiService {
 
   Future<dynamic> getData(String url, String headerAuthorization,
       {Map<String, String> pathParams = const {},
-      Map<String, String> queryParams = const {}}) async {
+      Map<String, dynamic> queryParams = const {}}) async {
     String urlEnd = pathParams.isEmpty ? url : addPathParams(url, pathParams);
     Response response;
     try {
-      response = await _dio.get(
-        urlEnd,
-        queryParameters: queryParams,
+      var uri = Uri.parse(urlEnd).resolveUri(Uri(queryParameters: queryParams));
+      response = await _dio.getUri(
+        uri,
         options: Options(
             headers: {"Authorization": headerAuthorization},
             responseType: ResponseType.json),
