@@ -2,19 +2,18 @@ import 'package:flutter/material.dart';
 import 'tournament_service.dart';
 
 class TournamentDataProvider with ChangeNotifier {
-  List<Tournament> _data = [];
+  List<Map<String, dynamic>> _data = [];
   bool _isLoading = false;
 
-  List<Tournament> get data => _data;
+  List<Map<String, dynamic>> get data => _data;
   bool get isLoading => _isLoading;
 
   Future<void> fetchData() async {
-    if (_data.isEmpty) {
-      _isLoading = true;
-      notifyListeners();
-      _data = await TournamentService().getEventData();
-      _isLoading = false;
-      notifyListeners();
-    }
+    _isLoading = true;
+    notifyListeners();
+    await TournamentService().fetchEvents();
+    _data = await TournamentService().getEvents();
+    _isLoading = false;
+    notifyListeners();
   }
 }

@@ -164,7 +164,8 @@ class HoverableLeaderboardItemState extends State<HoverableLeaderboardItem> {
     return Wrap(
       spacing: 8.0,
       runSpacing: 4.0,
-      children: (entry["displayName"] as List)
+      children: (entry["teamAccounts"] as Map)
+          .values
           .map((displayName) => _buildPillTag(displayName))
           .toList(),
     );

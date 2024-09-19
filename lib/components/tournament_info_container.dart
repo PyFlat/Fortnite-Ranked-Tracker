@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -5,10 +7,9 @@ import 'package:fortnite_ranked_tracker/constants/constants.dart';
 import 'package:fortnite_ranked_tracker/screens/leaderboard_screen.dart';
 import 'package:intl/intl.dart';
 import 'package:talker_flutter/talker_flutter.dart';
-import '../core/tournament_service.dart';
 
 class TournamentInfoContainer extends StatefulWidget {
-  final Tournament item;
+  final Map<String, dynamic> item;
   final Talker talker;
 
   const TournamentInfoContainer(
@@ -20,158 +21,219 @@ class TournamentInfoContainer extends StatefulWidget {
 
 class TournamentInfoContainerState extends State<TournamentInfoContainer> {
   bool _isHovered = false;
+  List<Map<String, dynamic>> sessionData = [];
+  String? selectedRegion;
+  late Future<void> _preloadData;
+  late Timer updateTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _preloadData = preloadSessionData();
+    updateTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (mounted) {
+        setState(() {});
+      }
+    });
+  }
+
+  Future<void> preloadSessionData() async {
+    List sessionFiles =
+        (widget.item["regions"] as Map).values.expand((x) => x).toList();
+
+    for (var sessionFile in sessionFiles) {
+      File regionFile = File(sessionFile);
+      List<int> compressedData = await regionFile.readAsBytes();
+
+      List<int> decompressedBytes = gzip.decode(compressedData);
+      String decompressedJsonString = utf8.decode(decompressedBytes);
+
+      Map<String, dynamic> sessionContent = jsonDecode(decompressedJsonString);
+
+      sessionContent.remove("entries");
+
+      sessionData.add(sessionContent);
+    }
+
+    await Future.delayed(const Duration(milliseconds: 200));
+
+    if (mounted) {
+      setState(() {});
+    }
+  }
 
   void _showTemplateSelectionSheet(BuildContext context, String region) {
-    showModalBottomSheet(
+    setState(() {
+      selectedRegion = region;
+    });
+
+    Map<String, dynamic>? nextEventWindow;
+
+    showModalBottomSheet<Map<String, dynamic>>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: Theme.of(context).canvasColor,
       builder: (BuildContext context) {
-        List<TournamentWindowTemplate> templates = widget.item.regions[region]!;
-        DateTime now = DateTime.now();
-        TournamentWindowTemplate? nextTemplate;
-
-        for (var template in templates) {
-          if (template.beginTime.isAfter(now)) {
-            nextTemplate = template;
-            break;
-          }
-        }
-
-        return Container(
-          height: MediaQuery.of(context).size.height * 0.9,
-          padding: const EdgeInsets.all(16.0),
-          decoration: BoxDecoration(
-            color: Theme.of(context).canvasColor,
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(20.0),
-              topRight: Radius.circular(20.0),
-            ),
-          ),
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: templates.map((template) {
-                bool isLive = template.beginTime.isBefore(now) &&
-                    template.endTime.isAfter(now);
-                bool isNext = nextTemplate == template;
-
-                String timeUntilNext = '';
-                if (isNext && !isLive) {
-                  Duration timeDifference = template.beginTime.difference(now);
-                  int days = timeDifference.inDays;
-                  int hours = timeDifference.inHours % 24;
-                  int minutes = timeDifference.inMinutes % 60;
-
-                  if (days > 0) {
-                    timeUntilNext =
-                        "Live in $days days $hours hours $minutes minutes";
-                  } else {
-                    if (hours > 0) {
-                      timeUntilNext = "Live in $hours hours $minutes minutes";
-                    } else {
-                      timeUntilNext = "Live in $minutes minutes";
-                    }
-                  }
-                }
-
-                return Card(
-                  elevation: 3,
-                  margin: const EdgeInsets.symmetric(vertical: 8.0),
-                  child: ListTile(
-                    contentPadding: const EdgeInsets.symmetric(
-                      vertical: 10.0,
-                      horizontal: 16.0,
-                    ),
-                    title: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Session ${template.session}${template.round > 0 ? " Round ${template.round}" : ""}',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: isLive
-                                ? Colors.redAccent
-                                : isNext
-                                    ? Colors.orange
-                                    : null,
-                          ),
-                        ),
-                        if (isLive)
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: Colors.redAccent,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: const Text(
-                              'LIVE',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-                    trailing: Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text(
-                          DateFormat.EEEE().format(template.beginTime),
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        Text(
-                          DateFormat('dd.MM.yyyy').format(template.beginTime),
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey,
-                          ),
-                        ),
-                      ],
-                    ),
-                    subtitle: Padding(
-                      padding: const EdgeInsets.only(top: 8.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            "${DateFormat('HH:mm').format(template.beginTime)} - "
-                            "${DateFormat('HH:mm').format(template.endTime)}",
-                            style: const TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey,
-                            ),
-                          ),
-                          if (isNext && !isLive)
-                            Padding(
-                              padding: const EdgeInsets.only(top: 8.0),
-                              child: Text(
-                                timeUntilNext,
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.orange,
-                                ),
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
-                    onTap: () {
-                      Navigator.pop(context, template);
-                    },
+        return FutureBuilder(
+            future: _preloadData,
+            builder: (BuildContext context, AsyncSnapshot snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return SizedBox(
+                  height: MediaQuery.of(context).size.height * 0.9,
+                  child: const Center(
+                    child: CircularProgressIndicator(),
                   ),
                 );
-              }).toList(),
-            ),
-          ),
-        );
+              }
+
+              DateTime now = DateTime.now();
+
+              List<Map<String, dynamic>> filteredSessions =
+                  sessionData.where((eventWindow) {
+                return (eventWindow['eventId'] as String).endsWith(region);
+              }).toList();
+
+              filteredSessions.sort((a, b) => DateTime.parse(a["beginTime"])
+                  .compareTo(DateTime.parse(b["beginTime"])));
+
+              for (var session in filteredSessions) {
+                if (DateTime.parse(session["beginTime"])
+                        .toLocal()
+                        .isAfter(now) &&
+                    nextEventWindow == null) {
+                  nextEventWindow = session;
+                  break;
+                }
+              }
+
+              return Container(
+                height: MediaQuery.of(context).size.height * 0.9,
+                padding: const EdgeInsets.all(16.0),
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: filteredSessions.map((eventWindow) {
+                      DateTime beginTime =
+                          DateTime.parse(eventWindow["beginTime"]).toLocal();
+                      DateTime endTime =
+                          DateTime.parse(eventWindow["endTime"]).toLocal();
+                      bool isLive = beginTime.isBefore(now) &&
+                          endTime.add(const Duration(minutes: 30)).isAfter(now);
+                      bool isNext = nextEventWindow == eventWindow;
+
+                      String timeUntilNext = '';
+                      if (isNext && !isLive) {
+                        Duration timeDifference = beginTime.difference(now);
+                        int days = timeDifference.inDays;
+                        int hours = timeDifference.inHours % 24;
+                        int minutes = timeDifference.inMinutes % 60;
+
+                        if (days > 0) {
+                          timeUntilNext =
+                              "Live in $days days $hours hours $minutes minutes";
+                        } else if (hours > 0) {
+                          timeUntilNext =
+                              "Live in $hours hours $minutes minutes";
+                        } else {
+                          timeUntilNext = "Live in $minutes minutes";
+                        }
+                      }
+
+                      return Card(
+                        elevation: 3,
+                        margin: const EdgeInsets.symmetric(vertical: 8.0),
+                        child: ListTile(
+                          contentPadding: const EdgeInsets.symmetric(
+                            vertical: 10.0,
+                            horizontal: 16.0,
+                          ),
+                          title: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'Session ${eventWindow["session"]}${eventWindow["round"] > 0 ? " Round ${eventWindow["round"]}" : ""}',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: isLive
+                                      ? Colors.redAccent
+                                      : (isNext ? Colors.orange : null),
+                                ),
+                              ),
+                              if (isLive)
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: Colors.redAccent,
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: const Text(
+                                    'LIVE',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                          trailing: Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Text(
+                                DateFormat.EEEE().format(beginTime),
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              Text(
+                                DateFormat('dd.MM.yyyy').format(beginTime),
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                            ],
+                          ),
+                          subtitle: Padding(
+                            padding: const EdgeInsets.only(top: 8.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  "${DateFormat('HH:mm').format(beginTime)} - ${DateFormat('HH:mm').format(endTime)}",
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                                if (isNext && !isLive)
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 8.0),
+                                    child: Text(
+                                      timeUntilNext,
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.orange,
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                          onTap: () {
+                            Navigator.pop(context, eventWindow);
+                          },
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+              );
+            });
       },
-    ).then((selectedTemplate) {
+    ).then((Map<String, dynamic>? selectedTemplate) {
       if (selectedTemplate != null && context.mounted) {
         Navigator.of(context).push(
           MaterialPageRoute(
@@ -185,8 +247,41 @@ class TournamentInfoContainerState extends State<TournamentInfoContainer> {
     });
   }
 
+  String _formatEventTime(DateTime startTime, DateTime endTime,
+      {bool isLive = false}) {
+    final now = DateTime.now();
+
+    if (isLive) {
+      return "LIVE NOW";
+    }
+
+    final duration = startTime.difference(now);
+
+    final days = duration.inDays;
+    final hours = duration.inHours % 24;
+    final minutes = duration.inMinutes % 60;
+
+    if (duration.isNegative) {
+      return "ENDED";
+    }
+
+    if (days > 0) {
+      return "IN ${days} DAY${days > 1 ? 'S' : ''} ${hours} HRS ${minutes} MINS";
+    } else if (hours > 0) {
+      return "IN ${hours} HRS ${minutes} MINS";
+    } else {
+      return "IN ${minutes} MINS";
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    bool isLive = DateTime.now().isAfter(widget.item["nextEventBeginTime"]) &&
+        DateTime.now().isBefore(widget.item["nextEventEndTime"]);
+
+    String formattedTime = _formatEventTime(
+        widget.item["nextEventBeginTime"], widget.item["nextEventEndTime"],
+        isLive: isLive);
     return GestureDetector(
       onTap: () {
         setState(() {
@@ -217,9 +312,56 @@ class TournamentInfoContainerState extends State<TournamentInfoContainer> {
               ),
               child: Stack(
                 children: [
-                  Image.network(
-                    widget.item.posterImageUrl,
-                    fit: BoxFit.cover,
+                  if (widget.item["imageUrl"] != null)
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8.0),
+                      child: Image.network(
+                        widget.item["imageUrl"],
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  Align(
+                    alignment: Alignment.topCenter,
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 8.0),
+                      child: FractionallySizedBox(
+                        widthFactor: 0.9,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                isLive
+                                    ? Colors.red.shade200
+                                    : Colors.purpleAccent,
+                                isLive ? Colors.red : Colors.purple,
+                              ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            borderRadius: BorderRadius.circular(12.0),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.2),
+                                spreadRadius: 2,
+                                blurRadius: 6,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                              vertical: 8.0, horizontal: 16.0),
+                          child: Text(
+                            formattedTime,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
                   Align(
                     alignment: Alignment.bottomCenter,
@@ -227,7 +369,7 @@ class TournamentInfoContainerState extends State<TournamentInfoContainer> {
                       padding: const EdgeInsets.only(
                           left: 12, right: 12, bottom: 24),
                       child: Text(
-                        widget.item.title,
+                        widget.item["title"],
                         textAlign: TextAlign.center,
                         style: const TextStyle(
                           fontSize: 24,
@@ -246,7 +388,6 @@ class TournamentInfoContainerState extends State<TournamentInfoContainer> {
                   ),
                   if (_isHovered) ...[
                     Positioned.fill(
-                      left: -1,
                       child: Container(
                         color: Colors.black.withOpacity(0.5),
                       ),
@@ -257,9 +398,9 @@ class TournamentInfoContainerState extends State<TournamentInfoContainer> {
                         alignment: Alignment.topCenter,
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
-                          children: widget.item.regions.entries
-                              .map((MapEntry<String, dynamic> entry) {
-                            String region = entry.key;
+                          children: (widget.item["regions"] as Map)
+                              .keys
+                              .map((region) {
                             return Padding(
                               padding: const EdgeInsets.only(
                                   bottom: 12, left: 24, right: 24),
@@ -278,7 +419,7 @@ class TournamentInfoContainerState extends State<TournamentInfoContainer> {
                           }).toList(),
                         ),
                       ),
-                    )
+                    ),
                   ],
                 ],
               ),

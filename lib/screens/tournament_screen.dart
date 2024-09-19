@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:fortnite_ranked_tracker/core/tournament_data_provider.dart';
-import 'package:fortnite_ranked_tracker/core/tournament_service.dart';
 import 'package:provider/provider.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 import '../components/tournament_info_container.dart';
@@ -32,17 +31,26 @@ class TournamentScreenState extends State<TournamentScreen>
     return Scaffold(
         body: dataProvider.isLoading
             ? const Center(child: CircularProgressIndicator())
-            : SingleChildScrollView(
-                child: Center(
-                  child: Wrap(
-                    children: dataProvider.data.map((Tournament item) {
-                      return Padding(
-                          padding: const EdgeInsets.all(12.0),
-                          child: TournamentInfoContainer(
-                            talker: widget.talker,
-                            item: item,
-                          ));
-                    }).toList(),
+            : Scaffold(
+                floatingActionButton: FloatingActionButton(
+                  onPressed: () {
+                    dataProvider.fetchData();
+                  },
+                  child: const Icon(Icons.refresh_rounded),
+                ),
+                body: SingleChildScrollView(
+                  child: Center(
+                    child: Wrap(
+                      children:
+                          dataProvider.data.map((Map<String, dynamic> item) {
+                        return Padding(
+                            padding: const EdgeInsets.all(12.0),
+                            child: TournamentInfoContainer(
+                              talker: widget.talker,
+                              item: item,
+                            ));
+                      }).toList(),
+                    ),
                   ),
                 ),
               ));

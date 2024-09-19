@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:fortnite_ranked_tracker/components/custom_search_bar.dart';
-import 'package:fortnite_ranked_tracker/core/rank_service.dart';
 import 'package:fortnite_ranked_tracker/core/tournament_service.dart';
 import 'package:fortnite_ranked_tracker/components/tournament_stats_display.dart';
-import 'package:intl/intl.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 
 import '../components/hoverable_leaderboard_item.dart';
@@ -16,25 +14,26 @@ class LeaderboardScreen extends StatefulWidget {
 
   final Talker talker;
 
-  final TournamentWindowTemplate tournamentWindow;
+  final Map<String, dynamic> tournamentWindow;
 
   @override
   LeaderboardScreenState createState() => LeaderboardScreenState();
 }
 
 class LeaderboardScreenState extends State<LeaderboardScreen> {
-  final List<dynamic> _allLeaderboardData = [];
+  List<Map<String, dynamic>> _allLeaderboardData = [];
   List<dynamic> _searchResults = [];
   String _searchQuery = '';
   bool _isLoading = false;
-  int _currentPage = 0;
+  int _currentPage = -1;
   final int _totalPages = 100;
   final SearchController _searchController = SearchController();
+  Future<void>? _initialData;
 
   @override
   void initState() {
     super.initState();
-    _loadNextPage();
+    _initialData = _loadInitialData();
     SystemChrome.setPreferredOrientations(
         [DeviceOrientation.landscapeLeft, DeviceOrientation.landscapeRight]);
   }
@@ -50,32 +49,33 @@ class LeaderboardScreenState extends State<LeaderboardScreen> {
     ]);
   }
 
-  Future<void> _loadNextPage() async {
-    if (_isLoading || _currentPage >= _totalPages) return;
-
+  Future<void> _loadInitialData() async {
+    await Future.delayed(const Duration(
+        milliseconds: 300)); //With this there is no lag without it there is
     setState(() => _isLoading = true);
 
     try {
       final result = await TournamentService()
           .getEventLeaderboard(_currentPage, widget.tournamentWindow);
 
-      final allAccountIds = _extractAccountIds(result);
-      final displayNames =
-          await RankService().fetchByAccountId("", accountIds: allAccountIds);
+      final nonEmptyResults = (result["entries"] as List)
+          .cast<Map<String, dynamic>>()
+          .where((entry) => entry.isNotEmpty)
+          .toList();
 
-      final modifiedEntries = _processEntries(result, displayNames);
-
-      if (mounted) {
-        if (_currentPage + 1 > result["totalPages"]) {
-          setState(() {
-            _currentPage = 101;
-            return;
-          });
-        }
+      if (nonEmptyResults.isNotEmpty) {
         setState(() {
-          _allLeaderboardData.addAll(modifiedEntries);
+          _allLeaderboardData = nonEmptyResults;
+          _currentPage = (nonEmptyResults.length / 100).floor();
           _updateSearchQuery(_searchController.text);
-          _currentPage++;
+        });
+
+        if (_currentPage < _totalPages) {
+          Future.microtask(_loadNextPage);
+        }
+      } else {
+        setState(() {
+          _currentPage = 0;
         });
         Future.microtask(_loadNextPage);
       }
@@ -86,38 +86,53 @@ class LeaderboardScreenState extends State<LeaderboardScreen> {
     }
   }
 
-  List<String> _extractAccountIds(Map<String, dynamic> result) {
-    return (result["entries"] as List).expand((entry) {
-      return (entry["teamAccountIds"] as List<dynamic>)
-          .map<String>((item) => item as String)
+  Future<void> _loadNextPage() async {
+    if (_isLoading || _currentPage >= _totalPages) return;
+
+    setState(() => _isLoading = true);
+
+    try {
+      final result = await TournamentService()
+          .getEventLeaderboard(_currentPage, widget.tournamentWindow);
+
+      final nonEmptyResults = (result["entries"] as List)
+          .cast<Map<String, dynamic>>()
+          .where((entry) => entry.isNotEmpty)
           .toList();
-    }).toList();
-  }
 
-  List<Map<String, dynamic>> _processEntries(
-      Map<String, dynamic> result, List<Map<String, dynamic>> displayNames) {
-    final displayNamesMap = {
-      for (var item in displayNames)
-        item['accountId'] as String: item['displayName'] as String,
-    };
+      if (mounted) {
+        if (_currentPage + 1 > result["totalPages"]) {
+          setState(() {
+            _currentPage = 101;
+            return;
+          });
+        }
+        setState(() {
+          _allLeaderboardData = nonEmptyResults;
+          _updateSearchQuery(_searchController.text);
+          _currentPage++;
+        });
 
-    return (result["entries"] as List).map((entry) {
-      final entryMap = Map<String, dynamic>.from(entry);
-      final accountIds = (entryMap['teamAccountIds'] as List).cast<String>();
-      final entryDisplayNames = accountIds.map((accountId) {
-        return displayNamesMap[accountId] ?? 'Unknown';
-      }).toList();
-      entryMap['displayName'] = entryDisplayNames;
-      return entryMap;
-    }).toList();
+        if (_currentPage < _totalPages) {
+          Future.microtask(_loadNextPage);
+        }
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
   }
 
   void _updateSearchQuery(String query) {
     setState(() {
       _searchQuery = query.toLowerCase();
       _searchResults = _allLeaderboardData.where((entry) {
+        if (entry.isEmpty) {
+          return false;
+        }
         final displayName =
-            (entry['displayName'] as List).join(" + ").toLowerCase();
+            (entry['teamAccounts'] as Map).values.join(" + ").toLowerCase();
         return displayName.contains(_searchQuery);
       }).toList();
     });
@@ -162,7 +177,7 @@ class LeaderboardScreenState extends State<LeaderboardScreen> {
                 const SizedBox(height: 16.0),
                 StatsDisplay(
                     entry: entry,
-                    scoringRules: widget.tournamentWindow.scoringRules)
+                    scoringRules: widget.tournamentWindow["scoringRules"])
               ],
             ),
           ),
@@ -195,13 +210,12 @@ class LeaderboardScreenState extends State<LeaderboardScreen> {
   }
 
   List<Widget> _buildUserInteractionButtons(Map<String, dynamic> entry) {
-    List<String> displayNames = List<String>.from(entry["displayName"]);
-    List<String> teamAccountIds = List<String>.from(entry["teamAccountIds"]);
+    Map<String, dynamic> teamAccounts =
+        Map<String, dynamic>.from(entry["teamAccounts"]);
 
-    return displayNames.asMap().entries.map((entry) {
-      int index = entry.key;
+    return teamAccounts.entries.map((entry) {
       String name = entry.value;
-      String accountId = teamAccountIds[index];
+      String accountId = entry.key;
 
       return Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -239,38 +253,54 @@ class LeaderboardScreenState extends State<LeaderboardScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          '${widget.tournamentWindow.title} - Session ${widget.tournamentWindow.session}${widget.tournamentWindow.round > 0 ? " Round ${widget.tournamentWindow.round}" : ""} (${DateFormat("dd.MM.yyyy").format(widget.tournamentWindow.beginTime.toLocal())}) - ${widget.tournamentWindow.regionTrivial}',
-        ),
-      ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: CustomSearchBar(
-              searchController: _searchController,
-              onChanged: _updateSearchQuery,
-            ),
+          // title: Text(
+          //   '${widget.tournamentWindow.title} - Session ${widget.tournamentWindow.session}${widget.tournamentWindow.round > 0 ? " Round ${widget.tournamentWindow.round}" : ""} (${DateFormat("dd.MM.yyyy").format(widget.tournamentWindow.beginTime.toLocal())}) - ${widget.tournamentWindow.regionTrivial}',
+          // ),
           ),
-          if (_searchResults.isEmpty && _isLoading)
-            const Expanded(
-              child: Center(
-                child: CircularProgressIndicator(),
-              ),
-            ),
-          if (_searchResults.isNotEmpty || !_isLoading)
-            Expanded(
-              child: ListView.builder(
-                itemCount: _searchResults.length,
-                prototypeItem: const SizedBox(height: 120),
-                itemBuilder: (context, index) {
-                  final entry = _searchResults[index];
-                  return _buildLeaderboardItem(entry, index);
-                },
-              ),
-            ),
-        ],
-      ),
+      body: FutureBuilder(
+          future: _initialData,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(
+                  child: Text(
+                'Searching For Event Data...',
+                style: TextStyle(
+                  fontSize: 36,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ));
+            }
+
+            return Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: CustomSearchBar(
+                    searchController: _searchController,
+                    onChanged: _updateSearchQuery,
+                  ),
+                ),
+                if (_searchResults.isEmpty && _isLoading)
+                  const Expanded(
+                    child: Center(
+                      child: CircularProgressIndicator(),
+                    ),
+                  ),
+                if (_searchResults.isNotEmpty || !_isLoading)
+                  Expanded(
+                    child: ListView.builder(
+                      itemCount: _searchResults.length,
+                      prototypeItem: const SizedBox(height: 120),
+                      itemBuilder: (context, index) {
+                        final entry = _searchResults[index];
+                        return _buildLeaderboardItem(entry, index);
+                      },
+                    ),
+                  ),
+              ],
+            );
+          }),
     );
   }
 
