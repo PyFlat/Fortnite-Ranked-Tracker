@@ -456,11 +456,6 @@ class TournamentInfoContainerState extends State<TournamentInfoContainer> {
                             nextSession ??=
                                 _getNextEventSession(filteredSessions);
 
-                            if (nextSession?["title"].contains("Performance") ??
-                                false) {
-                              print(nextSession);
-                            }
-
                             String regionLabel =
                                 Constants.regions[region] ?? region;
                             String sessionTime = nextSession != null
