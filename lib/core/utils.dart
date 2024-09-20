@@ -2,6 +2,8 @@ import 'dart:math';
 
 import 'package:intl/intl.dart';
 
+import '../constants/constants.dart';
+
 double convertProgressForUnreal(double x) {
   if (x < 1e6) {
     double logValue = log(x) / ln10;
@@ -63,4 +65,12 @@ Map<String, String> splitAndPrettifySeasonString(String inputStr) {
     "season": prettifySeasonString(firstPart),
     "mode": modeMappings[secondPart]!
   };
+}
+
+String? getRegionNameByEventId(String inputStr) {
+  if (Constants.regionRegex.hasMatch(inputStr)) {
+    RegExpMatch match = Constants.regionRegex.firstMatch(inputStr)!;
+    return match.namedGroup("region")!;
+  }
+  return null;
 }

@@ -8,6 +8,7 @@ import 'package:fortnite_ranked_tracker/screens/leaderboard_screen.dart';
 import 'package:intl/intl.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 
+import '../core/utils.dart';
 import 'hoverable_region_item.dart';
 
 class TournamentInfoContainer extends StatefulWidget {
@@ -69,12 +70,10 @@ class TournamentInfoContainerState extends State<TournamentInfoContainer> {
     List<Map<String, dynamic>> filteredSessions = [];
 
     for (var eventWindow in sessionData) {
-      if (Constants.regionRegex.hasMatch(eventWindow["eventId"])) {
-        RegExpMatch match =
-            Constants.regionRegex.firstMatch(eventWindow["eventId"])!;
-        if (match.namedGroup("region")! == regionName) {
-          filteredSessions.add(eventWindow);
-        }
+      String eventIdRegionName =
+          getRegionNameByEventId(eventWindow["eventId"])!;
+      if (eventIdRegionName == regionName) {
+        filteredSessions.add(eventWindow);
       }
     }
     return filteredSessions;
@@ -84,6 +83,9 @@ class TournamentInfoContainerState extends State<TournamentInfoContainer> {
       List<Map<String, dynamic>> sessions) {
     DateTime now = DateTime.now();
     Map<String, dynamic>? nextEventWindow;
+
+    sessions.sort((a, b) => DateTime.parse((a["beginTime"]))
+        .compareTo(DateTime.parse((b["beginTime"]))));
 
     for (var session in sessions) {
       if (DateTime.parse(session["beginTime"]).toLocal().isAfter(now) &&
@@ -362,49 +364,50 @@ class TournamentInfoContainerState extends State<TournamentInfoContainer> {
                         fit: BoxFit.cover,
                       ),
                     ),
-                  Align(
-                    alignment: Alignment.topCenter,
-                    child: Padding(
-                      padding: const EdgeInsets.only(top: 8.0),
-                      child: FractionallySizedBox(
-                        widthFactor: 0.9,
-                        child: Container(
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                isLive
-                                    ? Colors.red.shade200
-                                    : Colors.purpleAccent,
-                                isLive ? Colors.red : Colors.purple,
-                              ],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
-                            borderRadius: BorderRadius.circular(12.0),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.2),
-                                spreadRadius: 2,
-                                blurRadius: 6,
-                                offset: const Offset(0, 4),
+                  if (!_isHovered)
+                    Align(
+                      alignment: Alignment.topCenter,
+                      child: Padding(
+                        padding: const EdgeInsets.only(top: 8.0),
+                        child: FractionallySizedBox(
+                          widthFactor: 0.9,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  isLive
+                                      ? Colors.red.shade200
+                                      : Colors.purpleAccent,
+                                  isLive ? Colors.red : Colors.purple,
+                                ],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
                               ),
-                            ],
-                          ),
-                          padding: const EdgeInsets.symmetric(
-                              vertical: 8.0, horizontal: 16.0),
-                          child: Text(
-                            formattedTime,
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(12.0),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.2),
+                                  spreadRadius: 2,
+                                  blurRadius: 6,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
                             ),
-                            textAlign: TextAlign.center,
+                            padding: const EdgeInsets.symmetric(
+                                vertical: 8.0, horizontal: 16.0),
+                            child: Text(
+                              formattedTime,
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
                           ),
                         ),
                       ),
                     ),
-                  ),
                   Align(
                     alignment: Alignment.bottomCenter,
                     child: Padding(
@@ -439,44 +442,47 @@ class TournamentInfoContainerState extends State<TournamentInfoContainer> {
                           vertical: 8, horizontal: 12),
                       child: Align(
                         alignment: Alignment.topCenter,
-                        child: SingleChildScrollView(
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: (widget.item["regions"] as Map)
-                                .keys
-                                .map((region) {
-                              var filteredSessions =
-                                  _filterSessionsByRegion(region, sessionData);
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: (widget.item["regions"] as Map)
+                              .keys
+                              .map((region) {
+                            var filteredSessions =
+                                _filterSessionsByRegion(region, sessionData);
 
-                              Map<String, dynamic>? nextSession =
-                                  _getLiveSession(filteredSessions);
-                              bool isLive = nextSession != null;
-                              nextSession ??=
-                                  _getNextEventSession(filteredSessions);
+                            Map<String, dynamic>? nextSession =
+                                _getLiveSession(filteredSessions);
+                            bool isLive = nextSession != null;
+                            nextSession ??=
+                                _getNextEventSession(filteredSessions);
 
-                              String regionLabel =
-                                  Constants.regions[region] ?? region;
-                              String sessionTime = nextSession != null
-                                  ? _formatEventTime(
-                                      DateTime.parse(nextSession["beginTime"]),
-                                      DateTime.parse(nextSession["endTime"]),
-                                      isLive: isLive,
-                                      shortFormat: true)
-                                  : "ENDED";
+                            if (nextSession?["title"].contains("Performance") ??
+                                false) {
+                              print(nextSession);
+                            }
 
-                              bool isSoon = sessionTime.contains("MINS");
+                            String regionLabel =
+                                Constants.regions[region] ?? region;
+                            String sessionTime = nextSession != null
+                                ? _formatEventTime(
+                                    DateTime.parse(nextSession["beginTime"]),
+                                    DateTime.parse(nextSession["endTime"]),
+                                    isLive: isLive,
+                                    shortFormat: true)
+                                : "ENDED";
 
-                              return HoverableRegionItem(
-                                regionLabel: regionLabel,
-                                sessionTime: sessionTime,
-                                isLive: isLive,
-                                isSoon: isSoon,
-                                onTap: () {
-                                  _showTemplateSelectionSheet(context, region);
-                                },
-                              );
-                            }).toList(),
-                          ),
+                            bool isSoon = sessionTime.contains("MINS");
+
+                            return HoverableRegionItem(
+                              regionLabel: regionLabel,
+                              sessionTime: sessionTime,
+                              isLive: isLive,
+                              isSoon: isSoon,
+                              onTap: () {
+                                _showTemplateSelectionSheet(context, region);
+                              },
+                            );
+                          }).toList(),
                         ),
                       ),
                     ),

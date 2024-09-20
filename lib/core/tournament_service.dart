@@ -211,6 +211,7 @@ class TournamentService {
             await eventFile.create(recursive: true);
 
             Map<String, dynamic> tournamentBasicData = {
+              "title": tournamentDisplayData["long_format_title"],
               "eventId": event["eventId"],
               "eventGroup": event["eventGroup"],
               "windowId": window['eventWindowId'],

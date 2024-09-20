@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:fortnite_ranked_tracker/components/custom_search_bar.dart';
+import 'package:fortnite_ranked_tracker/constants/constants.dart';
 import 'package:fortnite_ranked_tracker/core/tournament_service.dart';
 import 'package:fortnite_ranked_tracker/components/tournament_stats_display.dart';
+import 'package:fortnite_ranked_tracker/core/utils.dart';
+import 'package:intl/intl.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 
 import '../components/hoverable_leaderboard_item.dart';
@@ -25,6 +28,7 @@ class LeaderboardScreenState extends State<LeaderboardScreen> {
   List<dynamic> _searchResults = [];
   String _searchQuery = '';
   bool _isLoading = false;
+  bool _isPaused = false;
   int _currentPage = -1;
   final int _totalPages = 100;
   final SearchController _searchController = SearchController();
@@ -50,8 +54,7 @@ class LeaderboardScreenState extends State<LeaderboardScreen> {
   }
 
   Future<void> _loadInitialData() async {
-    await Future.delayed(const Duration(
-        milliseconds: 300)); //With this there is no lag without it there is
+    await Future.delayed(const Duration(milliseconds: 300));
     setState(() => _isLoading = true);
 
     try {
@@ -87,7 +90,7 @@ class LeaderboardScreenState extends State<LeaderboardScreen> {
   }
 
   Future<void> _loadNextPage() async {
-    if (_isLoading || _currentPage >= _totalPages) return;
+    if (_isLoading || _currentPage >= _totalPages || _isPaused) return;
 
     setState(() => _isLoading = true);
 
@@ -251,12 +254,15 @@ class LeaderboardScreenState extends State<LeaderboardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    String regionName =
+        getRegionNameByEventId(widget.tournamentWindow["eventId"])!;
+    regionName = Constants.regions[regionName]!;
     return Scaffold(
       appBar: AppBar(
-          // title: Text(
-          //   '${widget.tournamentWindow.title} - Session ${widget.tournamentWindow.session}${widget.tournamentWindow.round > 0 ? " Round ${widget.tournamentWindow.round}" : ""} (${DateFormat("dd.MM.yyyy").format(widget.tournamentWindow.beginTime.toLocal())}) - ${widget.tournamentWindow.regionTrivial}',
-          // ),
-          ),
+        title: Text(
+          '${widget.tournamentWindow["title"]} - Session ${widget.tournamentWindow["session"]}${widget.tournamentWindow["round"] > 0 ? " Round ${widget.tournamentWindow["round"]}" : ""} (${DateFormat("dd.MM.yyyy").format(DateTime.parse(widget.tournamentWindow["beginTime"]).toLocal())}) - $regionName',
+        ),
+      ),
       body: FutureBuilder(
           future: _initialData,
           builder: (context, snapshot) {
@@ -275,10 +281,112 @@ class LeaderboardScreenState extends State<LeaderboardScreen> {
             return Column(
               children: [
                 Padding(
-                  padding: const EdgeInsets.all(8.0),
+                  padding: const EdgeInsets.all(16.0),
                   child: CustomSearchBar(
                     searchController: _searchController,
                     onChanged: _updateSearchQuery,
+                  ),
+                ),
+                Card(
+                  elevation: 4,
+                  margin: const EdgeInsets.all(16.0),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(12.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            const SizedBox(width: 12),
+                            Text('Loaded: ${_allLeaderboardData.length}',
+                                style: const TextStyle(fontSize: 14)),
+                            const SizedBox(width: 12),
+                            Text(
+                              _isLoading
+                                  ? 'Loading...(Page ${_currentPage + 1})'
+                                  : _isPaused
+                                      ? 'Paused...(Page ${_currentPage + 1})'
+                                      : 'Finished',
+                              style: TextStyle(
+                                color: _isLoading
+                                    ? Colors.orange
+                                    : _isPaused
+                                        ? Colors.red
+                                        : Colors.green,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ],
+                        ),
+                        Row(
+                          children: [
+                            ElevatedButton.icon(
+                              onPressed: () {
+                                setState(() {
+                                  _currentPage = 0;
+                                });
+                                Future.microtask(_loadNextPage);
+                              },
+                              label: const Text("Refresh"),
+                              icon: const Icon(Icons.refresh, size: 16),
+                              style: ElevatedButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8)),
+                            ),
+                            if (_isLoading)
+                              const SizedBox(
+                                width: 8,
+                              ),
+                            if (_isLoading || _isPaused)
+                              ElevatedButton.icon(
+                                onPressed: () {
+                                  setState(() {
+                                    _isPaused = !_isPaused;
+                                  });
+                                  Future.microtask(_loadNextPage);
+                                },
+                                label: const Text("Pause"),
+                                icon: const Icon(Icons.pause_rounded, size: 16),
+                                style: ElevatedButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 8)),
+                              ),
+                            if (_currentPage != 0 &&
+                                _currentPage <
+                                    _allLeaderboardData.length ~/ 100)
+                              const SizedBox(width: 8),
+                            if (_currentPage != 0 &&
+                                _currentPage <
+                                    _allLeaderboardData.length ~/ 100)
+                              ElevatedButton.icon(
+                                onPressed: () {
+                                  final nonEmptyResults =
+                                      (_allLeaderboardData as List)
+                                          .cast<Map<String, dynamic>>()
+                                          .where((entry) => entry.isNotEmpty)
+                                          .toList();
+
+                                  setState(() {
+                                    _isPaused = false;
+                                  });
+
+                                  _currentPage =
+                                      (nonEmptyResults.length / 100).floor();
+                                },
+                                label: const Text("Stop"),
+                                icon: const Icon(Icons.stop, size: 16),
+                                style: ElevatedButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 8)),
+                              ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
                 if (_searchResults.isEmpty && _isLoading)
