@@ -8,6 +8,8 @@ import 'package:fortnite_ranked_tracker/screens/leaderboard_screen.dart';
 import 'package:intl/intl.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 
+import 'hoverable_region_item.dart';
+
 class TournamentInfoContainer extends StatefulWidget {
   final Map<String, dynamic> item;
   final Talker talker;
@@ -62,12 +64,56 @@ class TournamentInfoContainerState extends State<TournamentInfoContainer> {
     }
   }
 
+  List<Map<String, dynamic>> _filterSessionsByRegion(
+      String regionName, List<Map<String, dynamic>> sessions) {
+    List<Map<String, dynamic>> filteredSessions = [];
+
+    for (var eventWindow in sessionData) {
+      if (Constants.regionRegex.hasMatch(eventWindow["eventId"])) {
+        RegExpMatch match =
+            Constants.regionRegex.firstMatch(eventWindow["eventId"])!;
+        if (match.namedGroup("region")! == regionName) {
+          filteredSessions.add(eventWindow);
+        }
+      }
+    }
+    return filteredSessions;
+  }
+
+  Map<String, dynamic>? _getNextEventSession(
+      List<Map<String, dynamic>> sessions) {
+    DateTime now = DateTime.now();
+    Map<String, dynamic>? nextEventWindow;
+
+    for (var session in sessions) {
+      if (DateTime.parse(session["beginTime"]).toLocal().isAfter(now) &&
+          nextEventWindow == null) {
+        nextEventWindow = session;
+        break;
+      }
+    }
+    return nextEventWindow;
+  }
+
+  Map<String, dynamic>? _getLiveSession(List<Map<String, dynamic>> sessions) {
+    Map<String, dynamic>? liveSession;
+    for (var eventWindow in sessions) {
+      DateTime now = DateTime.now();
+      DateTime beginTime = DateTime.parse(eventWindow["beginTime"]).toLocal();
+      DateTime endTime = DateTime.parse(eventWindow["endTime"]).toLocal();
+      bool isLive = beginTime.isBefore(now) &&
+          endTime.add(const Duration(minutes: 30)).isAfter(now);
+      if (isLive) {
+        liveSession = eventWindow;
+      }
+    }
+    return liveSession;
+  }
+
   void _showTemplateSelectionSheet(BuildContext context, String region) {
     setState(() {
       selectedRegion = region;
     });
-
-    Map<String, dynamic>? nextEventWindow;
 
     showModalBottomSheet<Map<String, dynamic>>(
       context: context,
@@ -86,25 +132,14 @@ class TournamentInfoContainerState extends State<TournamentInfoContainer> {
                 );
               }
 
-              DateTime now = DateTime.now();
-
               List<Map<String, dynamic>> filteredSessions =
-                  sessionData.where((eventWindow) {
-                return (eventWindow['eventId'] as String).endsWith(region);
-              }).toList();
+                  _filterSessionsByRegion(region, sessionData);
 
               filteredSessions.sort((a, b) => DateTime.parse(a["beginTime"])
                   .compareTo(DateTime.parse(b["beginTime"])));
 
-              for (var session in filteredSessions) {
-                if (DateTime.parse(session["beginTime"])
-                        .toLocal()
-                        .isAfter(now) &&
-                    nextEventWindow == null) {
-                  nextEventWindow = session;
-                  break;
-                }
-              }
+              Map<String, dynamic>? nextEventWindow =
+                  _getNextEventSession(filteredSessions);
 
               return Container(
                 height: MediaQuery.of(context).size.height * 0.9,
@@ -113,6 +148,7 @@ class TournamentInfoContainerState extends State<TournamentInfoContainer> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: filteredSessions.map((eventWindow) {
+                      DateTime now = DateTime.now();
                       DateTime beginTime =
                           DateTime.parse(eventWindow["beginTime"]).toLocal();
                       DateTime endTime =
@@ -248,7 +284,7 @@ class TournamentInfoContainerState extends State<TournamentInfoContainer> {
   }
 
   String _formatEventTime(DateTime startTime, DateTime endTime,
-      {bool isLive = false}) {
+      {bool isLive = false, shortFormat = false}) {
     final now = DateTime.now();
 
     if (isLive) {
@@ -266,11 +302,17 @@ class TournamentInfoContainerState extends State<TournamentInfoContainer> {
     }
 
     if (days > 0) {
-      return "IN ${days} DAY${days > 1 ? 'S' : ''} ${hours} HRS ${minutes} MINS";
+      if (shortFormat) {
+        return "IN $days DAY${days > 1 ? 'S' : ''}";
+      }
+      return "IN $days DAY${days > 1 ? 'S' : ''} $hours HRS $minutes MINS";
     } else if (hours > 0) {
-      return "IN ${hours} HRS ${minutes} MINS";
+      if (shortFormat) {
+        return "IN $hours HRS";
+      }
+      return "IN $hours HRS $minutes MINS";
     } else {
-      return "IN ${minutes} MINS";
+      return "IN $minutes MINS";
     }
   }
 
@@ -393,30 +435,48 @@ class TournamentInfoContainerState extends State<TournamentInfoContainer> {
                       ),
                     ),
                     Padding(
-                      padding: const EdgeInsets.only(top: 16),
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 8, horizontal: 12),
                       child: Align(
                         alignment: Alignment.topCenter,
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: (widget.item["regions"] as Map)
-                              .keys
-                              .map((region) {
-                            return Padding(
-                              padding: const EdgeInsets.only(
-                                  bottom: 12, left: 24, right: 24),
-                              child: SizedBox(
-                                width: double.infinity,
-                                child: ElevatedButton(
-                                  onPressed: () {
-                                    _showTemplateSelectionSheet(
-                                        context, region);
-                                  },
-                                  child:
-                                      Text(Constants.regions[region] ?? region),
-                                ),
-                              ),
-                            );
-                          }).toList(),
+                        child: SingleChildScrollView(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: (widget.item["regions"] as Map)
+                                .keys
+                                .map((region) {
+                              var filteredSessions =
+                                  _filterSessionsByRegion(region, sessionData);
+
+                              Map<String, dynamic>? nextSession =
+                                  _getLiveSession(filteredSessions);
+                              bool isLive = nextSession != null;
+                              nextSession ??=
+                                  _getNextEventSession(filteredSessions);
+
+                              String regionLabel =
+                                  Constants.regions[region] ?? region;
+                              String sessionTime = nextSession != null
+                                  ? _formatEventTime(
+                                      DateTime.parse(nextSession["beginTime"]),
+                                      DateTime.parse(nextSession["endTime"]),
+                                      isLive: isLive,
+                                      shortFormat: true)
+                                  : "ENDED";
+
+                              bool isSoon = sessionTime.contains("MINS");
+
+                              return HoverableRegionItem(
+                                regionLabel: regionLabel,
+                                sessionTime: sessionTime,
+                                isLive: isLive,
+                                isSoon: isSoon,
+                                onTap: () {
+                                  _showTemplateSelectionSheet(context, region);
+                                },
+                              );
+                            }).toList(),
+                          ),
                         ),
                       ),
                     ),

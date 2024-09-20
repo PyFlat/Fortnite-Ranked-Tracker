@@ -34,7 +34,7 @@ class TournamentScreenState extends State<TournamentScreen>
             : Scaffold(
                 floatingActionButton: FloatingActionButton(
                   onPressed: () {
-                    dataProvider.fetchData();
+                    dataProvider.fetchData(force: true);
                   },
                   child: const Icon(Icons.refresh_rounded),
                 ),

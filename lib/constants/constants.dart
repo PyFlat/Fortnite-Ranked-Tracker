@@ -5,6 +5,8 @@ class Constants {
   static const String dataJson = "application/json";
   static const String dataUrlEncoded = "application/x-www-form-urlencoded";
 
+  static RegExp regionRegex = RegExp(r'S\d+_\w+_(?<region>[A-Z]+)(\S+)?');
+
   static const List<String> ranks = [
     "Bronze I",
     "Bronze II",

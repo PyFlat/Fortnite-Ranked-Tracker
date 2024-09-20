@@ -5,6 +5,7 @@ import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 
+import '../constants/constants.dart';
 import 'auth_provider.dart';
 import 'api_service.dart';
 import '../constants/endpoints.dart';
@@ -54,7 +55,7 @@ class TournamentService {
           final Map<String, dynamic> regions = {};
 
           DateTime nextEventStartTime = DateTime(9999, 12, 31, 23, 59, 59);
-          ;
+
           DateTime nextEventEndtime = DateTime(0000, 01, 01, 00, 00, 00);
 
           DateTime now = DateTime.now();
@@ -70,10 +71,10 @@ class TournamentService {
               }
 
               String regionName = "";
-              RegExp regionRegex = RegExp(r'S\d+_\w+_(?<region>[A-Z]+)\S+');
 
-              if (regionRegex.hasMatch(file.path)) {
-                RegExpMatch match = regionRegex.firstMatch(file.path)!;
+              if (Constants.regionRegex.hasMatch(file.path)) {
+                RegExpMatch match =
+                    Constants.regionRegex.firstMatch(file.path)!;
                 regionName = match.namedGroup("region")!;
               }
 
