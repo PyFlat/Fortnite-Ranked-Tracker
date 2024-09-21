@@ -320,12 +320,16 @@ class TournamentInfoContainerState extends State<TournamentInfoContainer> {
 
   @override
   Widget build(BuildContext context) {
-    bool isLive = DateTime.now().isAfter(widget.item["nextEventBeginTime"]) &&
-        DateTime.now().isBefore(widget.item["nextEventEndTime"]);
+    Map<String, dynamic>? nextSession = _getLiveSession(sessionData);
+    bool isLive = nextSession != null;
+    nextSession ??= _getNextEventSession(sessionData);
 
-    String formattedTime = _formatEventTime(
-        widget.item["nextEventBeginTime"], widget.item["nextEventEndTime"],
-        isLive: isLive);
+    String formattedTime = nextSession != null
+        ? _formatEventTime(DateTime.parse(nextSession["beginTime"]),
+            DateTime.parse(nextSession["endTime"]),
+            isLive: isLive)
+        : "ENDED";
+
     return GestureDetector(
       onTap: () {
         setState(() {

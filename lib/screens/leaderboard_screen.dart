@@ -349,8 +349,12 @@ class LeaderboardScreenState extends State<LeaderboardScreen> {
                                   });
                                   Future.microtask(_loadNextPage);
                                 },
-                                label: const Text("Pause"),
-                                icon: const Icon(Icons.pause_rounded, size: 16),
+                                label: Text(_isPaused ? "Continue" : "Pause"),
+                                icon: Icon(
+                                    _isPaused
+                                        ? Icons.play_arrow_rounded
+                                        : Icons.pause_rounded,
+                                    size: 16),
                                 style: ElevatedButton.styleFrom(
                                     padding: const EdgeInsets.symmetric(
                                         horizontal: 8)),
