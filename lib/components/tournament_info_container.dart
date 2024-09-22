@@ -330,6 +330,8 @@ class TournamentInfoContainerState extends State<TournamentInfoContainer> {
             isLive: isLive)
         : "ENDED";
 
+    bool isEnded = formattedTime.contains("ENDED");
+
     return GestureDetector(
       onTap: () {
         setState(() {
@@ -381,8 +383,14 @@ class TournamentInfoContainerState extends State<TournamentInfoContainer> {
                                 colors: [
                                   isLive
                                       ? Colors.red.shade200
-                                      : Colors.purpleAccent,
-                                  isLive ? Colors.red : Colors.purple,
+                                      : isEnded
+                                          ? Colors.grey
+                                          : Colors.purpleAccent,
+                                  isLive
+                                      ? Colors.red
+                                      : isEnded
+                                          ? Colors.blueGrey
+                                          : Colors.purple,
                                 ],
                                 begin: Alignment.topLeft,
                                 end: Alignment.bottomRight,

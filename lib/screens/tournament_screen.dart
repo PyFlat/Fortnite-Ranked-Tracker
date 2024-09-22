@@ -28,6 +28,17 @@ class TournamentScreenState extends State<TournamentScreen>
 
     final dataProvider = Provider.of<TournamentDataProvider>(context);
 
+    List<Map<String, dynamic>> upcomingEvents = dataProvider.data
+        .where((data) => (data["nextEventEndTime"] as DateTime)
+            .add(const Duration(minutes: 30))
+            .isAfter(DateTime.now()))
+        .toList();
+    List<Map<String, dynamic>> endedEvents = dataProvider.data
+        .where((data) => (data["nextEventEndTime"] as DateTime)
+            .add(const Duration(minutes: 30))
+            .isBefore(DateTime.now()))
+        .toList();
+
     return Scaffold(
         body: dataProvider.isLoading
             ? const Center(child: CircularProgressIndicator())
@@ -39,18 +50,36 @@ class TournamentScreenState extends State<TournamentScreen>
                   child: const Icon(Icons.refresh_rounded),
                 ),
                 body: SingleChildScrollView(
-                  child: Center(
-                    child: Wrap(
-                      children:
-                          dataProvider.data.map((Map<String, dynamic> item) {
-                        return Padding(
-                            padding: const EdgeInsets.all(12.0),
-                            child: TournamentInfoContainer(
-                              talker: widget.talker,
-                              item: item,
-                            ));
-                      }).toList(),
-                    ),
+                  child: Column(
+                    children: [
+                      Wrap(
+                        children:
+                            upcomingEvents.map((Map<String, dynamic> item) {
+                          return Padding(
+                              padding: const EdgeInsets.all(12.0),
+                              child: TournamentInfoContainer(
+                                talker: widget.talker,
+                                item: item,
+                              ));
+                        }).toList(),
+                      ),
+                      const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 8),
+                        child: Divider(
+                          thickness: 2,
+                        ),
+                      ),
+                      Wrap(
+                        children: endedEvents.map((Map<String, dynamic> item) {
+                          return Padding(
+                              padding: const EdgeInsets.all(12.0),
+                              child: TournamentInfoContainer(
+                                talker: widget.talker,
+                                item: item,
+                              ));
+                        }).toList(),
+                      ),
+                    ],
                   ),
                 ),
               ));
