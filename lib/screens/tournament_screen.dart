@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:fortnite_ranked_tracker/core/tournament_data_provider.dart';
 import 'package:provider/provider.dart';
@@ -14,9 +16,14 @@ class TournamentScreen extends StatefulWidget {
 
 class TournamentScreenState extends State<TournamentScreen>
     with AutomaticKeepAliveClientMixin {
+  Timer? refreshTimer;
   @override
   void initState() {
     super.initState();
+    refreshTimer = Timer.periodic(const Duration(minutes: 10), (_) {
+      Provider.of<TournamentDataProvider>(context, listen: false)
+          .fetchData(force: true);
+    });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<TournamentDataProvider>(context, listen: false).fetchData();
     });
@@ -83,6 +90,12 @@ class TournamentScreenState extends State<TournamentScreen>
                   ),
                 ),
               ));
+  }
+
+  @override
+  void dispose() {
+    refreshTimer?.cancel();
+    super.dispose();
   }
 
   @override

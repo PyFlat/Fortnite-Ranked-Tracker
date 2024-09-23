@@ -47,23 +47,21 @@ class TournamentService {
     final List<Map<String, dynamic>> events = [];
     final parentDirectory = Directory(directoryPath);
 
-    if (parentDirectory.existsSync()) {
-      for (var folder in parentDirectory.listSync()) {
+    if (await parentDirectory.exists()) {
+      await for (var folder in parentDirectory.list()) {
         if (folder is Directory) {
           final Map<String, dynamic> eventMap = {};
           eventMap['eventId'] = folder.path.split(Platform.pathSeparator).last;
           final Map<String, dynamic> regions = {};
 
           DateTime nextEventStartTime = DateTime(9999, 12, 31, 23, 59, 59);
-
           DateTime nextEventEndtime = DateTime(0000, 01, 01, 00, 00, 00);
-
           DateTime now = DateTime.now();
 
-          for (var file in folder.listSync()) {
+          await for (var file in folder.list()) {
             if (file is File) {
               if (file.path.endsWith("info.json")) {
-                var input = file.readAsStringSync();
+                var input = await file.readAsString();
                 var map = jsonDecode(input);
                 eventMap["title"] = map["title"];
                 eventMap["imageUrl"] = map["imageUrl"];
@@ -113,7 +111,6 @@ class TournamentService {
         }
       }
       DateTime now = DateTime.now();
-
       events.sort((a, b) {
         DateTime beginA = a["nextEventBeginTime"] as DateTime;
         DateTime endA = a["nextEventEndTime"] as DateTime;
@@ -207,7 +204,7 @@ class TournamentService {
           File eventFile = File(
               "${eventFileDirectory.path}/${window["eventWindowId"]}.json.gz");
 
-          if (!eventFile.existsSync()) {
+          if (!await eventFile.exists()) {
             await eventFile.create(recursive: true);
 
             Map<String, dynamic> tournamentBasicData = {
@@ -233,8 +230,8 @@ class TournamentService {
 
       File infoFile = File("${eventFileDirectory.path}/info.json");
 
-      if (!infoFile.existsSync()) {
-        infoFile.createSync(recursive: true);
+      if (!await infoFile.exists()) {
+        await infoFile.create(recursive: true);
 
         Map<String, dynamic> tournamentInfoData = {
           "title": tournamentDisplayData["long_format_title"],
