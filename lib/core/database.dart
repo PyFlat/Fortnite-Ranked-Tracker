@@ -7,7 +7,14 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 class DataBase {
   late Database _db;
   late Directory _directory;
-  List<String> keys = ["battleRoyale", "zeroBuild", "rocketRacing"];
+  bool systemDBInitialized = false;
+  List<String> keys = [
+    "battleRoyale",
+    "zeroBuild",
+    "rocketRacing",
+    "reload",
+    "reloadZeroBuild"
+  ];
 
   DataBase._();
 
@@ -41,6 +48,10 @@ class DataBase {
   }
 
   Future<void> _initSystemDB(Database db) async {
+    if (systemDBInitialized) {
+      return;
+    }
+    systemDBInitialized = true;
     Batch batch = db.batch();
 
     batch.execute('''
@@ -51,6 +62,8 @@ class DataBase {
           battleRoyale INTEGER DEFAULT 0,
           zeroBuild INTEGER DEFAULT 0,
           rocketRacing INTEGER DEFAULT 0,
+          reload INTEGER DEFAULT 0,
+          reloadZeroBuild INTEGER DEFAULT 0,
           position INTEGER,
           visible INTEGER DEFAULT 1
         )
@@ -59,11 +72,15 @@ class DataBase {
     await batch.commit();
 
     _addColumnIfNotExists(db, "nickName", "TEXT");
+
+    _addColumnIfNotExists(db, "reload", "INTEGER", defaultValue: 0);
+
+    _addColumnIfNotExists(db, "reloadZeroBuild", "INTEGER", defaultValue: 0);
   }
 
   Future<void> _addColumnIfNotExists(
       Database db, String columnName, String columnType,
-      {String tableName = "profile0"}) async {
+      {String tableName = "profile0", dynamic defaultValue}) async {
     List<Map<String, dynamic>> columns =
         await db.rawQuery('PRAGMA table_info($tableName)');
 
@@ -71,8 +88,10 @@ class DataBase {
         columns.map((column) => column['name'] as String).toList();
 
     if (!existingColumns.contains(columnName)) {
-      await db
-          .execute('ALTER TABLE $tableName ADD COLUMN $columnName $columnType');
+      String defaultClause =
+          defaultValue != null ? ' DEFAULT $defaultValue' : '';
+      await db.execute(
+          'ALTER TABLE $tableName ADD COLUMN $columnName $columnType$defaultClause');
     }
   }
 
@@ -89,7 +108,14 @@ class DataBase {
 
     List<Map<String, dynamic>> existingRecords = await _db.query(
       tableName,
-      columns: ['accountId', 'battleRoyale', 'zeroBuild', 'rocketRacing'],
+      columns: [
+        'accountId',
+        'battleRoyale',
+        'zeroBuild',
+        'rocketRacing',
+        'reload',
+        'reloadZeroBuild'
+      ],
       where: 'accountId = ?',
       whereArgs: [params['accountId']],
     );
@@ -131,13 +157,19 @@ class DataBase {
 
     final List<Map<String, dynamic>> queryResult = await _db.query(
       tableName,
-      columns: ['battleRoyale', 'zeroBuild', 'rocketRacing'],
+      columns: [
+        'battleRoyale',
+        'zeroBuild',
+        'rocketRacing',
+        'reload',
+        'reloadZeroBuild'
+      ],
       where: 'accountId = ?',
       whereArgs: [accountId],
     );
 
     if (queryResult.isEmpty) {
-      return [false, false, false];
+      return [false, false, false, false, false];
     }
 
     final Map<String, dynamic> playerData = queryResult.first;
@@ -145,6 +177,8 @@ class DataBase {
       playerData['battleRoyale'] == 1,
       playerData['zeroBuild'] == 1,
       playerData['rocketRacing'] == 1,
+      playerData['reload'] == 1,
+      playerData['reloadZeroBuild'] == 1
     ];
   }
 
@@ -216,6 +250,12 @@ class DataBase {
       if (account["rocketRacing"] == 1) {
         accountData["Rocket Racing"] = {};
       }
+      if (account["reload"] == 1) {
+        accountData["Reload"] = {};
+      }
+      if (account["reloadZeroBuild"] == 1) {
+        accountData["Reload Zero Build"] = {};
+      }
 
       result.add(accountData);
     }
@@ -237,7 +277,9 @@ class DataBase {
       };
       if (account["rocketRacing"] +
               account["battleRoyale"] +
-              account["zeroBuild"] ==
+              account["zeroBuild"] +
+              account["reload"] +
+              account["reloadZeroBuild"] ==
           0) {
         result.add(accountData);
       }
@@ -252,7 +294,7 @@ class DataBase {
     _db.delete(tableName, where: "accountId = ?", whereArgs: accountIds);
     for (String accountId in accountIds) {
       Database db = await openDatabase(accountId);
-      await db.close(); // Closes the databse so no OS-Access-Execption occurs
+      await db.close();
       String path = join(_directory.path, "databases", "$accountId.db");
       await File(path).delete();
     }

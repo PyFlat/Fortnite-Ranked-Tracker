@@ -27,9 +27,9 @@ class RankService {
   String accountDisplayName = "";
   bool lastServerStatus = true;
 
-  final _rankUpdateController = StreamController<void>.broadcast();
+  final _rankUpdateController = StreamController<List?>.broadcast();
 
-  Stream<void> get rankUpdates => _rankUpdateController.stream;
+  Stream<List?> get rankUpdates => _rankUpdateController.stream;
 
   late AuthProvider authProvider;
   late Talker talker;
@@ -52,7 +52,7 @@ class RankService {
       _currentSeason = await _fetchCurrentSeason();
       _activeTracks = await _fetchSeasonTracks();
 
-      _rankTypes = ['br', 'zb', 'rr'];
+      _rankTypes = ['br', 'zb', 'rr', 'rl', 'rlzb'];
 
       await startRankBulkTrack();
       await checkDisplayNames();
@@ -62,8 +62,8 @@ class RankService {
     }
   }
 
-  void emitDataRefresh() {
-    _rankUpdateController.add(null);
+  void emitDataRefresh({List? data}) {
+    _rankUpdateController.add(data);
   }
 
   String getBasicAuthHeader() {
@@ -134,7 +134,7 @@ class RankService {
   }
 
   Future<List<String>> _fetchSeasonTracks() async {
-    List<String> tracks = ["", "", ""];
+    List<String> tracks = ["", "", "", "", ""];
 
     dynamic jsonObject = await ApiService().getData(
         Endpoints.activeTracks, getBasicAuthHeader(),
@@ -143,7 +143,9 @@ class RankService {
     Map<String, int> rankingTypeToIndex = {
       "ranked-br": 0,
       "ranked-zb": 1,
-      "delmar-competitive": 2
+      "delmar-competitive": 2,
+      "ranked_blastberry_build": 3,
+      "ranked_blastberry_nobuild": 4
     };
 
     for (var data in jsonObject) {
@@ -161,7 +163,11 @@ class RankService {
         ? 0
         : key == "ranked-zb"
             ? 1
-            : 2;
+            : key == "delmar-competitive"
+                ? 2
+                : key == "ranked_blastberry_build"
+                    ? 3
+                    : 4;
   }
 
   Future<Database> connectToDB(String accountId) async {
@@ -332,7 +338,7 @@ class RankService {
 
   Future<void> startRankBulkTrack() async {
     List<String> tracks = _activeTracks;
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < tracks.length; i++) {
       List<Map<String, dynamic>> accountData =
           await _database.getAccountDataByType(i, "accountId", true);
       List<String> ids =

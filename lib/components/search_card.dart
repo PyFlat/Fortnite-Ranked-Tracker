@@ -44,12 +44,16 @@ class SearchCardState extends State<SearchCard> {
     final bool brActive = activeRankingTypes[0];
     final bool zbActive = activeRankingTypes[1];
     final bool rrActive = activeRankingTypes[2];
+    final bool rlActive = activeRankingTypes[3];
+    final bool rlzbActive = activeRankingTypes[4];
 
     List<dynamic> formattedResult = [
       null,
       null,
       null,
-      [brActive, zbActive, rrActive]
+      null,
+      null,
+      [brActive, zbActive, rrActive, rlActive, rlzbActive]
     ];
     for (dynamic item in result) {
       String progressText = item["currentDivision"] == 17
@@ -80,6 +84,10 @@ class SearchCardState extends State<SearchCard> {
         formattedResult[1] = formattedItem;
       } else if (item["rankingType"] == "delmar-competitive") {
         formattedResult[2] = formattedItem;
+      } else if (item["rankingType"] == "ranked_blastberry_build") {
+        formattedResult[3] = formattedItem;
+      } else if (item["rankingType"] == "ranked_blastberry_nobuild") {
+        formattedResult[4] = formattedItem;
       }
     }
     return formattedResult;
@@ -98,7 +106,9 @@ class SearchCardState extends State<SearchCard> {
           final brData = snapshot.data?[0];
           final zbData = snapshot.data?[1];
           final rrData = snapshot.data?[2];
-          final active = snapshot.data?[3];
+          final rlData = snapshot.data?[3];
+          final rlzbData = snapshot.data?[4];
+          final active = snapshot.data?[5];
           return SizedBox(
             width: 350,
             height: 350,
@@ -134,6 +144,23 @@ class SearchCardState extends State<SearchCard> {
               rocketRacingRankImagePath: getImageAssetPath(rrData),
               rocketRacingRank: getStringValue(rrData, "Rank"),
               rocketRacingTracking: active[2],
+              reloadActive: true,
+              reloadProgressText: getStringValue(rlData, 'RankProgressionText'),
+              reloadProgress: getDoubleValue(rlData, 'RankProgression'),
+              reloadLastChanged: getStringValue(rlData, 'LastChanged'),
+              reloadRankImagePath: getImageAssetPath(rlData),
+              reloadRank: getStringValue(rlData, "Rank"),
+              reloadTracking: active[3],
+              reloadZeroBuildActive: true,
+              reloadZeroBuildProgressText:
+                  getStringValue(rlzbData, 'RankProgressionText'),
+              reloadZeroBuildProgress:
+                  getDoubleValue(rlzbData, 'RankProgression'),
+              reloadZeroBuildLastChanged:
+                  getStringValue(rlzbData, 'LastChanged'),
+              reloadZeroBuildRankImagePath: getImageAssetPath(rlzbData),
+              reloadZeroBuildRank: getStringValue(rlzbData, "Rank"),
+              reloadZeroBuildTracking: active[4],
               talker: widget.talker,
             ),
           );

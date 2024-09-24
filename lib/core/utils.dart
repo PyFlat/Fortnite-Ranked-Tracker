@@ -53,6 +53,8 @@ Map<String, String> modeMappings = {
   'BR': 'Battle Royale',
   'ZB': 'Zero Build',
   'RR': 'Rocket Racing',
+  'RL': 'Reload',
+  'RLZB': 'Reload Zero Build'
 };
 
 Map<String, String> splitAndPrettifySeasonString(String inputStr) {

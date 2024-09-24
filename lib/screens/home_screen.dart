@@ -25,18 +25,27 @@ class HomeScreenState extends State<HomeScreen>
   List<Map<String, dynamic>> _previousData = [];
   final List<Color?> _currentCardColors = [];
   final List<double> _currentScales = [];
-  final List _rankedModes = ["Battle Royale", "Zero Build", "Rocket Racing"];
+  final List _rankedModes = [
+    "Battle Royale",
+    "Zero Build",
+    "Rocket Racing",
+    "Reload",
+    "Reload Zero Build"
+  ];
   bool _firstIteration = true;
 
   List<Map<String, dynamic>> data = [];
 
   late Future<List<Map<String, dynamic>>> _future;
 
+  List? rankUpdateData;
+
   @override
   void initState() {
     super.initState();
     _future = _getData();
-    _rankService.rankUpdates.listen((_) {
+    _rankService.rankUpdates.listen((List? data) {
+      rankUpdateData = data;
       if (mounted) {
         setState(() {
           _future = _getData();
@@ -67,7 +76,9 @@ class HomeScreenState extends State<HomeScreen>
     final accountTypes = {
       "Battle Royale": "br",
       "Zero Build": "zb",
-      "Rocket Racing": "rr"
+      "Rocket Racing": "rr",
+      "Reload": "rl",
+      "Reload Zero Build": "rlzb"
     };
     List<String> accountIds =
         data.map((item) => item['AccountId'] as String).toList();
@@ -301,6 +312,11 @@ class HomeScreenState extends State<HomeScreen>
                 Future.delayed(const Duration(seconds: 1, milliseconds: 250),
                     () => _resetCardState(i));
                 index = dataChanged;
+              }
+
+              if (rankUpdateData != null &&
+                  item["AccountId"] == rankUpdateData![0]) {
+                index = rankUpdateData![1];
               }
 
               if (_currentCardColors.length <= i) {

@@ -27,6 +27,8 @@ class DashboardCard extends StatelessWidget {
     final battleRoyaleValues = getGameModeValues(item, 'Battle Royale');
     final zeroBuildValues = getGameModeValues(item, 'Zero Build');
     final rocketRacingValues = getGameModeValues(item, 'Rocket Racing');
+    final reloadValues = getGameModeValues(item, 'Reload');
+    final reloadZeroBuildValues = getGameModeValues(item, 'Reload Zero Build');
 
     return RankCard(
       displayName: displayName,
@@ -77,6 +79,31 @@ class DashboardCard extends StatelessWidget {
       rocketRacingRankImagePath: getImageAssetPath(rocketRacingValues),
       rocketRacingRank: getStringValue(rocketRacingValues, 'Rank'),
       rocketRacingActive: rocketRacingValues != null,
+
+      // Reload
+      reloadProgressText: getStringValue(reloadValues, 'RankProgressionText'),
+      reloadProgress: getDoubleValue(reloadValues, 'RankProgression'),
+      reloadLastProgress: getStringValue(reloadValues, 'LastProgress'),
+      reloadLastChanged: getStringValue(reloadValues, 'LastChanged'),
+      reloadDailyMatches: getIntValue(reloadValues, 'DailyMatches'),
+      reloadRankImagePath: getImageAssetPath(reloadValues),
+      reloadRank: getStringValue(reloadValues, 'Rank'),
+      reloadActive: reloadValues != null,
+
+      // Reload Zero Build
+      reloadZeroBuildProgressText:
+          getStringValue(reloadZeroBuildValues, 'RankProgressionText'),
+      reloadZeroBuildProgress:
+          getDoubleValue(reloadZeroBuildValues, 'RankProgression'),
+      reloadZeroBuildLastProgress:
+          getStringValue(reloadZeroBuildValues, 'LastProgress'),
+      reloadZeroBuildLastChanged:
+          getStringValue(reloadZeroBuildValues, 'LastChanged'),
+      reloadZeroBuildDailyMatches:
+          getIntValue(reloadZeroBuildValues, 'DailyMatches'),
+      reloadZeroBuildRankImagePath: getImageAssetPath(reloadZeroBuildValues),
+      reloadZeroBuildRank: getStringValue(reloadZeroBuildValues, 'Rank'),
+      reloadZeroBuildActive: reloadZeroBuildValues != null,
       talker: talker,
     );
   }

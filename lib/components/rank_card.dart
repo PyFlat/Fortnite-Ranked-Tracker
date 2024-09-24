@@ -45,6 +45,26 @@ class RankCard extends StatefulWidget {
   final bool rocketRacingActive;
   final bool? rocketRacingTracking;
 
+  final String? reloadProgressText;
+  final double? reloadProgress;
+  final String? reloadLastProgress;
+  final String? reloadLastChanged;
+  final int? reloadDailyMatches;
+  final String? reloadRankImagePath;
+  final String? reloadRank;
+  final bool reloadActive;
+  final bool? reloadTracking;
+
+  final String? reloadZeroBuildProgressText;
+  final double? reloadZeroBuildProgress;
+  final String? reloadZeroBuildLastProgress;
+  final String? reloadZeroBuildLastChanged;
+  final int? reloadZeroBuildDailyMatches;
+  final String? reloadZeroBuildRankImagePath;
+  final String? reloadZeroBuildRank;
+  final bool reloadZeroBuildActive;
+  final bool? reloadZeroBuildTracking;
+
   final Color? color;
 
   final int? initialIndex;
@@ -89,6 +109,24 @@ class RankCard extends StatefulWidget {
       this.rocketRacingRank,
       required this.rocketRacingActive,
       this.rocketRacingTracking,
+      this.reloadProgressText,
+      this.reloadProgress,
+      this.reloadLastProgress,
+      this.reloadLastChanged,
+      this.reloadDailyMatches,
+      this.reloadRankImagePath,
+      this.reloadRank,
+      required this.reloadActive,
+      this.reloadTracking,
+      this.reloadZeroBuildProgressText,
+      this.reloadZeroBuildProgress,
+      this.reloadZeroBuildLastProgress,
+      this.reloadZeroBuildLastChanged,
+      this.reloadZeroBuildDailyMatches,
+      this.reloadZeroBuildRankImagePath,
+      this.reloadZeroBuildRank,
+      required this.reloadZeroBuildActive,
+      this.reloadZeroBuildTracking,
       required this.talker});
 
   @override
@@ -100,12 +138,16 @@ class RankCardState extends State<RankCard>
   late bool _battleRoyaleTracking;
   late bool _zeroBuildTracking;
   late bool _rocketRacingTracking;
+  late bool _reloadTracking;
+  late bool _reloadZeroBuildTracking;
 
   int _currentIndex = 0;
   final List<String> _tabNames = [
     "Battle Royale",
     "Zero Build",
     "Rocket Racing",
+    "Reload",
+    "Reload Zero Build"
   ];
 
   @override
@@ -114,13 +156,15 @@ class RankCardState extends State<RankCard>
     _battleRoyaleTracking = widget.battleRoyaleTracking ?? false;
     _zeroBuildTracking = widget.zeroBuildTracking ?? false;
     _rocketRacingTracking = widget.rocketRacingTracking ?? false;
+    _reloadTracking = widget.reloadTracking ?? false;
+    _reloadZeroBuildTracking = widget.reloadZeroBuildTracking ?? false;
     _currentIndex = widget.initialIndex ?? 0;
   }
 
   Future<void> _updatePlayerTracking(bool value, int key) async {
     await DataBase().updatePlayerTracking(
         value, key, widget.accountId!, widget.displayName);
-    RankService().emitDataRefresh();
+    RankService().emitDataRefresh(data: [widget.accountId!, key]);
   }
 
   @override
@@ -359,6 +403,44 @@ class RankCardState extends State<RankCard>
             await _updatePlayerTracking(value, 2);
           },
         );
+      case 3:
+        return _buildContent(
+          widget.reloadProgressText,
+          widget.reloadProgress,
+          widget.reloadLastProgress,
+          widget.reloadLastChanged,
+          widget.reloadDailyMatches,
+          widget.reloadRankImagePath,
+          widget.reloadRank,
+          widget.reloadActive,
+          _reloadTracking,
+          "Reload",
+          (bool value) async {
+            setState(() {
+              _reloadTracking = value;
+            });
+            await _updatePlayerTracking(value, 3);
+          },
+        );
+      case 4:
+        return _buildContent(
+          widget.reloadZeroBuildProgressText,
+          widget.reloadZeroBuildProgress,
+          widget.reloadZeroBuildLastProgress,
+          widget.reloadZeroBuildLastChanged,
+          widget.reloadZeroBuildDailyMatches,
+          widget.reloadZeroBuildRankImagePath,
+          widget.reloadZeroBuildRank,
+          widget.reloadZeroBuildActive,
+          _reloadZeroBuildTracking,
+          "Reload Zero Build",
+          (bool value) async {
+            setState(() {
+              _reloadZeroBuildTracking = value;
+            });
+            await _updatePlayerTracking(value, 4);
+          },
+        );
       default:
         return const Center(child: Text("Invalid Index"));
     }
@@ -400,10 +482,12 @@ class RankCardState extends State<RankCard>
       return Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(
-            'Tracking for `$category` is not active!',
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+          Center(
+            child: Text(
+              'Tracking for `$category` is not active!',
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+            ),
           ),
           const SizedBox(height: 15),
           FilledButton.icon(
