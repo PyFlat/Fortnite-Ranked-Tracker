@@ -141,6 +141,18 @@ class LeaderboardScreenState extends State<LeaderboardScreen> {
     });
   }
 
+  void _openUser(String displayName, String accountId) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+          builder: (context) => SearchScreen(
+                accountId: accountId,
+                displayName: displayName,
+                talker: widget.talker,
+              )),
+    );
+  }
+
   void _showDetails(dynamic entry) {
     showModalBottomSheet(
       context: context,
@@ -173,14 +185,11 @@ class LeaderboardScreenState extends State<LeaderboardScreen> {
                 ),
                 const SizedBox(height: 16.0),
                 Divider(color: Colors.grey[700]),
-                const SizedBox(height: 4.0),
-                ..._buildUserInteractionButtons(entry),
-                const SizedBox(height: 4.0),
-                Divider(color: Colors.grey[700]),
                 const SizedBox(height: 16.0),
                 StatsDisplay(
                     entry: entry,
-                    scoringRules: widget.tournamentWindow["scoringRules"])
+                    scoringRules: widget.tournamentWindow["scoringRules"],
+                    openUser: _openUser)
               ],
             ),
           ),
@@ -209,46 +218,6 @@ class LeaderboardScreenState extends State<LeaderboardScreen> {
               fontSize: fontSize, fontWeight: fontWeight, color: color),
         ),
       ],
-    );
-  }
-
-  List<Widget> _buildUserInteractionButtons(Map<String, dynamic> entry) {
-    Map<String, dynamic> teamAccounts =
-        Map<String, dynamic>.from(entry["teamAccounts"]);
-
-    return teamAccounts.entries.map((entry) {
-      String name = entry.value;
-      String accountId = entry.key;
-
-      return Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Expanded(
-            child: Text(
-              name,
-              style: TextStyle(color: Colors.grey.shade300, fontSize: 16.0),
-            ),
-          ),
-          IconButton(
-            icon: Icon(Icons.open_in_new_rounded, color: Colors.grey.shade300),
-            onPressed: () {
-              _openUser(name, accountId);
-            },
-          ),
-        ],
-      );
-    }).toList();
-  }
-
-  void _openUser(String displayName, String accountId) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-          builder: (context) => SearchScreen(
-                accountId: accountId,
-                displayName: displayName,
-                talker: widget.talker,
-              )),
     );
   }
 

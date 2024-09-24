@@ -4,9 +4,13 @@ import 'package:intl/intl.dart';
 class StatsDisplay extends StatelessWidget {
   final Map<String, dynamic> entry;
   final List scoringRules;
+  final Function(String, String) openUser;
 
   const StatsDisplay(
-      {super.key, required this.entry, required this.scoringRules});
+      {super.key,
+      required this.entry,
+      required this.scoringRules,
+      required this.openUser});
 
   @override
   Widget build(BuildContext context) {
@@ -41,9 +45,53 @@ class StatsDisplay extends StatelessWidget {
   }
 
   Widget _buildGeneralStats() {
+    Map<String, dynamic> teamAccounts =
+        Map<String, dynamic>.from(entry["teamAccounts"]);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        ...teamAccounts.entries.toList().asMap().entries.map((entry) {
+          int index = entry.key;
+          var mapEntry = entry.value;
+          String accountId = mapEntry.key;
+          String name = mapEntry.value;
+
+          int lastIndex = teamAccounts.entries.length - 1;
+
+          return Card(
+            margin: EdgeInsets.only(bottom: index != lastIndex ? 8.0 : 0.0),
+            color: const Color(0xFF2C2F33),
+            elevation: 3,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8.0),
+            ),
+            child: ListTile(
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16.0),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8.0),
+              ),
+              title: Text(
+                name,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 18.0,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              trailing: IconButton(
+                icon: const Icon(Icons.open_in_new_rounded,
+                    color: Colors.deepPurple),
+                onPressed: () {
+                  openUser(name, accountId);
+                },
+              ),
+              onTap: () {
+                openUser(name, accountId);
+              },
+            ),
+          );
+        }),
+        const Divider(),
         _buildStatRow(
           text: 'Wins: ${_getSessionHistoryStat("VICTORY_ROYALE_STAT", entry)}',
           icon: Icons.emoji_events_rounded,
@@ -73,6 +121,11 @@ class StatsDisplay extends StatelessWidget {
           text:
               'Avg Points: ${(entry["pointsEarned"] / (entry["sessionHistory"] as List).length).toStringAsFixed(2)}',
           icon: Icons.hotel_class_rounded,
+        ),
+        _buildStatRow(
+          text:
+              'Avg Place: ${(_getSessionHistoryStat("PLACEMENT_STAT_INDEX", entry) / (entry["sessionHistory"] as List).length).toStringAsFixed(2)}',
+          icon: Icons.leaderboard_rounded,
         ),
       ],
     );
@@ -221,7 +274,7 @@ class StatsDisplay extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 8.0),
       padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
       decoration: BoxDecoration(
-        color: Colors.grey.shade800,
+        color: const Color(0xFF2C2F33),
         borderRadius: BorderRadius.circular(8.0),
       ),
       child: Row(

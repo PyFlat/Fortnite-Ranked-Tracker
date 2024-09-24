@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:ui';
 
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:flutter_single_instance/flutter_single_instance.dart';
@@ -51,7 +52,7 @@ void main() async {
         }
         windowManager.waitUntilReadyToShow(windowOptions, () async {
           bool showWindow = prefs.getBool("showAtStartup") ?? true;
-          if (showWindow) {
+          if (showWindow || kDebugMode) {
             await windowManager.show();
           }
           await windowManager.focus();
