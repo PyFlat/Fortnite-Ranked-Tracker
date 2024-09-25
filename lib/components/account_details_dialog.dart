@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_svg/svg.dart';
 
 import '../core/database.dart';
 import '../core/rank_service.dart';
@@ -24,20 +25,17 @@ class AccountDetailsDialog extends StatefulWidget {
 }
 
 class _AccountDetailsDialogState extends State<AccountDetailsDialog> {
-  late TextEditingController _nameController;
-  late TextEditingController _idController;
   late TextEditingController _nickNameController;
-  bool _showCheckmarkName = false;
-  bool _showCheckmarkId = false;
+  late Future<Map<String, dynamic>> _displayNamesFuture;
 
   bool _editNickName = false;
 
   @override
   void initState() {
     super.initState();
-    _nameController = TextEditingController(text: widget.accountName);
-    _idController = TextEditingController(text: widget.accountId);
     _nickNameController = TextEditingController(text: widget.nickName);
+
+    _displayNamesFuture = _getAllDisplayNames();
 
     if (widget.nickName != null) {
       _editNickName = true;
@@ -51,29 +49,22 @@ class _AccountDetailsDialogState extends State<AccountDetailsDialog> {
     setState(() {});
   }
 
-  void _copyToClipboard(String text, String type) {
-    Clipboard.setData(ClipboardData(text: text));
-    setState(() {
-      if (type == 'name') {
-        _showCheckmarkName = true;
-        Future.delayed(const Duration(seconds: 1), () {
-          if (mounted) {
-            setState(() {
-              _showCheckmarkName = false;
-            });
-          }
-        });
-      } else if (type == 'id') {
-        _showCheckmarkId = true;
-        Future.delayed(const Duration(seconds: 1), () {
-          if (mounted) {
-            setState(() {
-              _showCheckmarkId = false;
-            });
-          }
-        });
+  Future<Map<String, dynamic>> _getAllDisplayNames() async {
+    Map<String, dynamic> accountMap = (await RankService()
+            .fetchByAccountId(widget.accountId, returnAll: true))
+        .first;
+    Set<String> seenDisplayNames = {};
+
+    accountMap.removeWhere((key, value) {
+      String displayName = value['displayName']!;
+      if (seenDisplayNames.contains(displayName)) {
+        return true;
+      } else {
+        seenDisplayNames.add(displayName);
+        return false;
       }
     });
+    return accountMap;
   }
 
   void _updateNickName() async {
@@ -113,108 +104,72 @@ class _AccountDetailsDialogState extends State<AccountDetailsDialog> {
         'Account Details',
         style: TextStyle(fontSize: 18.0, fontWeight: FontWeight.bold),
       ),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Column(
-                  children: [
-                    TextField(
-                      readOnly: true,
-                      controller: _nameController,
-                      enableInteractiveSelection: false,
-                      textAlign: TextAlign.center,
-                      textAlignVertical: TextAlignVertical.top,
-                      decoration: InputDecoration(
-                        labelText: "Display Name",
-                        enabledBorder: _getInputBorder(),
-                        border: _getInputBorder(),
-                        focusedBorder: _getInputBorder(),
-                        suffixIcon: _showCheckmarkName
-                            ? const Icon(Icons.check_circle,
-                                color: Colors.green)
-                            : IconButton(
-                                icon: const Icon(Icons.copy),
-                                onPressed: () {
-                                  _copyToClipboard(widget.accountName, 'name');
-                                },
-                              ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16.0),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Column(
-                  children: [
-                    TextField(
-                      readOnly: true,
-                      controller: _idController,
-                      enableInteractiveSelection: false,
-                      textAlign: TextAlign.center,
-                      textAlignVertical: TextAlignVertical.top,
-                      decoration: InputDecoration(
-                        labelText: "Account Id",
-                        enabledBorder: _getInputBorder(),
-                        border: _getInputBorder(),
-                        focusedBorder: _getInputBorder(),
-                        suffixIcon: _showCheckmarkId
-                            ? const Icon(Icons.check_circle,
-                                color: Colors.green)
-                            : IconButton(
-                                icon: const Icon(Icons.copy),
-                                onPressed: () {
-                                  _copyToClipboard(widget.accountId, 'id');
-                                },
-                              ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16.0),
-          if (_editNickName)
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Column(
-                    children: [
-                      TextField(
-                        readOnly: false,
-                        controller: _nickNameController,
-                        enableInteractiveSelection: true,
-                        textAlign: TextAlign.center,
-                        textAlignVertical: TextAlignVertical.top,
-                        onChanged: (value) {
-                          _updateNickName();
-                        },
-                        decoration: InputDecoration(
-                          labelText: "Nickname",
-                          enabledBorder: _getInputBorder(),
-                          border: _getInputBorder(),
-                          focusedBorder: _getInputBorder(),
-                        ),
-                      ),
-                    ],
+      content: FutureBuilder(
+          future: _displayNamesFuture,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Padding(
+                    padding: EdgeInsets.all(8.0),
+                    child: Center(child: CircularProgressIndicator()),
                   ),
-                ),
-              ],
-            ),
-        ],
-      ),
+                ],
+              );
+            }
+            if (snapshot.hasData) {
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  ...snapshot.data!.values.map(
+                    (value) {
+                      return DisplayNameRow(
+                        text: value["displayName"],
+                        accountType: value["platform"],
+                        inputBorder: _getInputBorder(),
+                      );
+                    },
+                  ),
+                  DisplayNameRow(
+                    text: widget.accountId,
+                    inputBorder: _getInputBorder(),
+                    labelText: "Account Id",
+                  ),
+                  if (_editNickName)
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            children: [
+                              TextField(
+                                readOnly: false,
+                                controller: _nickNameController,
+                                enableInteractiveSelection: true,
+                                textAlign: TextAlign.center,
+                                textAlignVertical: TextAlignVertical.top,
+                                onChanged: (value) {
+                                  _updateNickName();
+                                },
+                                decoration: InputDecoration(
+                                  labelText: "Nickname",
+                                  enabledBorder: _getInputBorder(),
+                                  border: _getInputBorder(),
+                                  focusedBorder: _getInputBorder(),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                ],
+              );
+            }
+            return const SizedBox.shrink();
+          }),
       actions: [
         TextButton(
           onPressed: () {
@@ -242,4 +197,92 @@ void showAccountDetailsDialog(BuildContext context, String accountName,
           nickNameChanged: nickNameChanged);
     },
   );
+}
+
+class DisplayNameRow extends StatefulWidget {
+  final String text;
+  final String? accountType;
+  final String? labelText;
+  final OutlineInputBorder inputBorder;
+
+  const DisplayNameRow(
+      {super.key,
+      required this.text,
+      this.accountType,
+      this.labelText,
+      required this.inputBorder});
+
+  @override
+  State<DisplayNameRow> createState() => _DisplayNameRowState();
+}
+
+class _DisplayNameRowState extends State<DisplayNameRow> {
+  late TextEditingController nameController;
+  @override
+  void initState() {
+    nameController = TextEditingController(text: widget.text);
+    super.initState();
+  }
+
+  bool showCheckmark = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Expanded(
+            child: Column(
+              children: [
+                TextField(
+                  readOnly: true,
+                  controller: nameController,
+                  enableInteractiveSelection: false,
+                  textAlign: TextAlign.center,
+                  textAlignVertical: TextAlignVertical.top,
+                  decoration: InputDecoration(
+                    labelText: widget.labelText,
+                    enabledBorder: widget.inputBorder,
+                    border: widget.inputBorder,
+                    focusedBorder: widget.inputBorder,
+                    prefixIcon: widget.accountType != null
+                        ? Padding(
+                            padding: const EdgeInsets.all(12.0),
+                            child: SvgPicture.asset(
+                              "assets/icons/${widget.accountType}.svg",
+                              colorFilter: const ColorFilter.mode(
+                                  Colors.white, BlendMode.srcIn),
+                            ),
+                          )
+                        : null,
+                    suffixIcon: showCheckmark
+                        ? const Icon(Icons.check_circle, color: Colors.green)
+                        : IconButton(
+                            icon: const Icon(Icons.copy),
+                            onPressed: () {
+                              Clipboard.setData(
+                                  ClipboardData(text: widget.text));
+                              setState(() {
+                                showCheckmark = true;
+                                Future.delayed(const Duration(seconds: 1), () {
+                                  if (mounted) {
+                                    setState(() {
+                                      showCheckmark = false;
+                                    });
+                                  }
+                                });
+                              });
+                            },
+                          ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }

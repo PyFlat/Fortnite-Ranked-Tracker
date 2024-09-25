@@ -387,7 +387,7 @@ class RankService {
     }
   }
 
-  Future<List<Map<String, String>>> search(String query) async {
+  Future<List<Map<String, dynamic>>> search(String query) async {
     if (query.isEmpty || (query.length > 16 && query.length != 32)) {
       return [];
     }
@@ -443,9 +443,9 @@ class RankService {
     return [];
   }
 
-  Future<List<Map<String, String>>> fetchByAccountId(String accountId,
-      {List<String>? accountIds}) async {
-    List<Map<String, String>> results = [];
+  Future<List<Map<String, dynamic>>> fetchByAccountId(String accountId,
+      {List<String>? accountIds, bool returnAll = false}) async {
+    List<Map<String, dynamic>> results = [];
 
     if (accountIds != null) {
       int chunkSize = 100;
@@ -456,22 +456,23 @@ class RankService {
                 ? accountIds.length
                 : i + chunkSize);
 
-        List<Map<String, String>> chunkResults =
-            await _fetchChunkByAccountId(chunk);
+        List<Map<String, dynamic>> chunkResults =
+            await _fetchChunkByAccountId(chunk, returnAll: returnAll);
         results.addAll(chunkResults);
       }
     } else {
-      List<Map<String, String>> singleResult =
-          await _fetchChunkByAccountId([accountId]);
+      List<Map<String, dynamic>> singleResult =
+          await _fetchChunkByAccountId([accountId], returnAll: returnAll);
       results.addAll(singleResult);
     }
 
     return results;
   }
 
-  Future<List<Map<String, String>>> _fetchChunkByAccountId(
-      List<String> accountIdChunk) async {
-    List<Map<String, String>> results = [];
+  Future<List<Map<String, dynamic>>> _fetchChunkByAccountId(
+      List<String> accountIdChunk,
+      {bool returnAll = false}) async {
+    List<Map<String, dynamic>> results = [];
 
     Map<String, dynamic> queryParams = {"accountId": accountIdChunk};
 
@@ -480,7 +481,8 @@ class RankService {
         queryParams: queryParams) as List<dynamic>;
 
     for (Map<String, dynamic> jsonObj in response) {
-      Map<String, String> result = {};
+      Map<String, dynamic> result = {};
+      Map<String, dynamic> allResults = {};
 
       if (jsonObj.containsKey("displayName")) {
         result = {
@@ -488,20 +490,32 @@ class RankService {
           'platform': "epic",
           'displayName': jsonObj["displayName"] as String
         };
-      } else if (jsonObj["externalAuths"].containsKey("psn")) {
+        allResults.addAll({"epic": result});
+      }
+      if (jsonObj["externalAuths"].containsKey("psn") &&
+          (result.isEmpty || returnAll)) {
         result = {
           'accountId': jsonObj["id"] as String,
           'platform': "psn",
           'displayName':
               jsonObj["externalAuths"]["psn"]["externalDisplayName"] as String
         };
-      } else if (jsonObj["externalAuths"].containsKey("xbl")) {
+        allResults.addAll({"psn": result});
+      }
+      if (jsonObj["externalAuths"].containsKey("xbl") &&
+          (result.isEmpty || returnAll)) {
         result = {
           'accountId': jsonObj["id"] as String,
           'platform': "xbl",
           'displayName':
               jsonObj["externalAuths"]["xbl"]["externalDisplayName"] as String
         };
+        allResults.addAll({"xbl": result});
+      }
+
+      if (returnAll) {
+        results.add(allResults);
+        continue;
       }
 
       if (result.isNotEmpty) {

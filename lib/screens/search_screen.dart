@@ -29,8 +29,9 @@ class _SearchScreenState extends State<SearchScreen> {
   String searchTerm = "";
   final GlobalKey searchCardKey = GlobalKey();
 
-  Future<List<Map<String, String>>?> _search(String query) async {
-    final List<Map<String, String>> results = await RankService().search(query);
+  Future<List<Map<String, dynamic>>?> _search(String query) async {
+    final List<Map<String, dynamic>> results =
+        await RankService().search(query);
 
     return results;
   }
@@ -80,7 +81,7 @@ class _SearchScreenState extends State<SearchScreen> {
                       searchRunning = true;
 
                       _refreshSuggestions();
-                      final List<Map<String, String>>? results =
+                      final List<Map<String, dynamic>>? results =
                           (await _search(value))?.toList();
                       if (results == null) {
                         return;
@@ -88,7 +89,7 @@ class _SearchScreenState extends State<SearchScreen> {
 
                       _lastOptions =
                           List<ListTile>.generate(results.length, (int index) {
-                        final Map<String, String> item = results[index];
+                        final Map<String, dynamic> item = results[index];
                         return ListTile(
                           leading: SvgPicture.asset(
                             "assets/icons/${item['platform']}.svg",
