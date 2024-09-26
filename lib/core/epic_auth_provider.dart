@@ -8,7 +8,7 @@ import 'package:talker_flutter/talker_flutter.dart';
 import '../constants/endpoints.dart';
 import '../constants/constants.dart';
 
-class AuthProvider with ChangeNotifier {
+class EpicAuthProvider with ChangeNotifier {
   late String _accessToken;
   late String _accountId;
   late String _displayName;
@@ -17,7 +17,7 @@ class AuthProvider with ChangeNotifier {
   Timer? _refreshTimer; // Make this nullable to handle initial state
   bool _isInitialized = false;
 
-  AuthProvider(Talker talker) {
+  EpicAuthProvider(Talker talker) {
     _talker = talker;
     _accessToken = "";
     _initAuth();

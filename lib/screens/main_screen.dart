@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:fortnite_ranked_tracker/core/api_service.dart';
-import 'package:fortnite_ranked_tracker/core/auth_provider.dart';
+import 'package:fortnite_ranked_tracker/core/epic_auth_provider.dart';
 import 'package:fortnite_ranked_tracker/core/tournament_service.dart';
 import 'package:fortnite_ranked_tracker/screens/database_screen.dart';
 import 'package:fortnite_ranked_tracker/screens/graph_screen.dart';
@@ -16,7 +16,7 @@ import 'settings_screen.dart';
 import 'tournament_screen.dart';
 
 class MainScreen extends StatefulWidget {
-  final AuthProvider authProvider;
+  final EpicAuthProvider authProvider;
   final Talker talker;
   final Dio dio;
 

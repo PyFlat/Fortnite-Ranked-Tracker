@@ -8,7 +8,7 @@ import 'package:talker_flutter/talker_flutter.dart';
 import '../constants/constants.dart';
 import '../constants/endpoints.dart';
 import '../core/api_service.dart';
-import '../core/auth_provider.dart';
+import 'epic_auth_provider.dart';
 import '../core/database.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
@@ -31,7 +31,7 @@ class RankService {
 
   Stream<List?> get rankUpdates => _rankUpdateController.stream;
 
-  late AuthProvider authProvider;
+  late EpicAuthProvider authProvider;
   late Talker talker;
 
   RankService._();
@@ -44,7 +44,7 @@ class RankService {
 
   List<String> get activeTracks => _instance._activeTracks;
 
-  Future<void> init(Talker talker, AuthProvider authProvider) async {
+  Future<void> init(Talker talker, EpicAuthProvider authProvider) async {
     if (!_isInitialized) {
       this.authProvider = authProvider;
       this.talker = talker;

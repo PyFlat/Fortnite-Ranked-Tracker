@@ -7,7 +7,7 @@ import 'package:talker_flutter/talker_flutter.dart';
 
 import '../constants/constants.dart';
 import '../constants/endpoints.dart';
-import '../core/auth_provider.dart';
+import '../core/epic_auth_provider.dart';
 import '../core/api_service.dart';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
@@ -15,7 +15,7 @@ import 'package:provider/provider.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 class AuthScreen extends StatefulWidget {
-  final AuthProvider authProvider;
+  final EpicAuthProvider authProvider;
   final Talker talker;
   final Dio dio;
 
@@ -96,7 +96,8 @@ class _AuthScreenState extends State<AuthScreen> {
     await writeToFile(filePath, jsonEncode(deviceDataJson));
 
     if (mounted) {
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final authProvider =
+          Provider.of<EpicAuthProvider>(context, listen: false);
       await authProvider.initializeAuth();
 
       if (mounted) {

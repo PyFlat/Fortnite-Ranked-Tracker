@@ -8,7 +8,7 @@
 PRODUCT_NAME = Fortnite Ranked Tracker
 
 // The application's bundle identifier
-PRODUCT_BUNDLE_IDENTIFIER = com.pyflat.fortnite_ranked_tracker
+PRODUCT_BUNDLE_IDENTIFIER = com.pyflat.fortniterankedtracker
 
 // The copyright displayed in application information
 PRODUCT_COPYRIGHT = Copyright © 2024 com.pyflat. All rights reserved.

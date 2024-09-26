@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_settings_ui/flutter_settings_ui.dart';
@@ -55,6 +56,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
             return SettingsList(
               sections: [
                 SettingsSection(title: const Text("Application"), tiles: [
+                  SettingsTile(
+                    leading: const Icon(Icons.logout_rounded),
+                    title: const Text("Logout"),
+                    onPressed: (context) {
+                      FirebaseAuth.instance.signOut();
+                      Navigator.of(context).pop();
+                    },
+                  ),
                   SettingsTile(
                     leading: const Icon(Icons.delete_forever_rounded),
                     title: const Text("Purge Databases of Inactive Users"),

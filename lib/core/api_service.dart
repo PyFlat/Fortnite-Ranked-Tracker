@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:dio/dio.dart';
-import 'package:fortnite_ranked_tracker/core/auth_provider.dart';
+import 'package:fortnite_ranked_tracker/core/epic_auth_provider.dart';
 import 'package:talker_dio_logger/talker_dio_logger.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 
@@ -13,7 +13,8 @@ class ApiService {
   static final ApiService _instance = ApiService._();
   factory ApiService() => _instance;
 
-  Future<void> init(Talker talker, AuthProvider authProvider, Dio dio) async {
+  Future<void> init(
+      Talker talker, EpicAuthProvider authProvider, Dio dio) async {
     if (!_isInitialized) {
       _talker = talker;
       _dio = dio;

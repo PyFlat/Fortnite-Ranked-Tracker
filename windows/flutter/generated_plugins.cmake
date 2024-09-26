@@ -3,7 +3,8 @@
 #
 
 list(APPEND FLUTTER_PLUGIN_LIST
-  connectivity_plus
+  firebase_auth
+  firebase_core
   fullscreen_window
   screen_retriever
   share_plus

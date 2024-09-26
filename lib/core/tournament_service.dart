@@ -6,7 +6,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 
 import '../constants/constants.dart';
-import 'auth_provider.dart';
+import 'epic_auth_provider.dart';
 import 'api_service.dart';
 import '../constants/endpoints.dart';
 import 'rank_service.dart';
@@ -14,7 +14,7 @@ import 'rank_service.dart';
 class TournamentService {
   bool _isInitialized = false;
 
-  late AuthProvider authProvider;
+  late EpicAuthProvider authProvider;
   late Talker talker;
   late String directoryPath;
 
@@ -22,7 +22,7 @@ class TournamentService {
   static final TournamentService _instance = TournamentService._();
   factory TournamentService() => _instance;
 
-  Future<void> init(Talker talker, AuthProvider authProvider) async {
+  Future<void> init(Talker talker, EpicAuthProvider authProvider) async {
     if (!_isInitialized) {
       this.authProvider = authProvider;
       this.talker = talker;
