@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fortnite_ranked_tracker/constants/constants.dart';
 
 import '../core/season_service.dart';
 import 'season_selector.dart';
@@ -27,16 +28,13 @@ class IndividualPageHeaderState extends State<IndividualPageHeader> {
 
   @override
   Widget build(BuildContext context) {
-    Map<String, String>? seasonInfo;
+    Map<String, dynamic>? seasonInfo;
     if (widget.seasonService != null) {
-      seasonInfo = widget.seasonService!.getCurrentSeason() != null
-          ? widget.seasonService!
-              .formatSeason(widget.seasonService!.getCurrentSeason()!)
-          : null;
+      seasonInfo = widget.seasonService!.getCurrentSeason();
     }
 
     final displayText = seasonInfo != null
-        ? "${seasonInfo["season"]!} - ${seasonInfo["mode"]!}"
+        ? "${seasonInfo["tableName"]!} - ${Constants.rankingTypeNames[seasonInfo["rankingType"]]}"
         : "Select a Season";
 
     return Padding(

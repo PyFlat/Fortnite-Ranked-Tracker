@@ -2,10 +2,8 @@ import 'package:fortnite_ranked_tracker/components/home_page_edit_sheet.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 
 import '../core/rank_service.dart';
-import '../core/utils.dart';
 
 import '../components/dashboard_card.dart';
-import '../core/database.dart';
 import 'package:flutter/material.dart';
 
 import 'search_screen.dart';
@@ -20,7 +18,6 @@ class HomeScreen extends StatefulWidget {
 
 class HomeScreenState extends State<HomeScreen>
     with SingleTickerProviderStateMixin {
-  final DataBase _database = DataBase();
   final RankService _rankService = RankService();
   List<Map<String, dynamic>> _previousData = [];
   final List<Color?> _currentCardColors = [];
@@ -36,19 +33,19 @@ class HomeScreenState extends State<HomeScreen>
 
   List<Map<String, dynamic>> data = [];
 
-  late Future<List<Map<String, dynamic>>> _future;
+  late Stream<List<Map<String, dynamic>>> subscriptionStream;
 
   List? rankUpdateData;
 
   @override
   void initState() {
     super.initState();
-    _future = _getData();
+    subscriptionStream = RankService().subscribeToDB();
     _rankService.rankUpdates.listen((List? data) {
       rankUpdateData = data;
       if (mounted) {
         setState(() {
-          _future = _getData();
+          subscriptionStream = RankService().subscribeToDB();
         });
       }
     });
@@ -68,101 +65,6 @@ class HomeScreenState extends State<HomeScreen>
     }
 
     return percentageDifference;
-  }
-
-  Future<List<Map<String, dynamic>>> _getData() async {
-    List<Map<String, dynamic>> data = await _database.getAccountDataActive();
-    Map<String, String> avatarImages = {};
-    final accountTypes = {
-      "Battle Royale": "br",
-      "Zero Build": "zb",
-      "Rocket Racing": "rr",
-      "Reload": "rl",
-      "Reload Zero Build": "rlzb"
-    };
-    List<String> accountIds =
-        data.map((item) => item['AccountId'] as String).toList();
-
-    String joinedAccountIds = accountIds.join(',');
-
-    if (accountIds.isNotEmpty) {
-      avatarImages = await RankService().getAccountAvatarById(joinedAccountIds);
-    }
-
-    for (Map<String, dynamic> account in data) {
-      for (var entry in accountTypes.entries) {
-        String accountType = entry.key;
-        String typeCode = entry.value;
-        account["AccountAvatar"] = avatarImages[account["AccountId"]];
-
-        if (account.containsKey(accountType)) {
-          try {
-            List result = await _rankService.getRankedDataByAccountId(
-                account["AccountId"], typeCode);
-
-            if (result.isEmpty) {
-              account[accountType] = {
-                "DailyMatches": null,
-                "LastProgress": null,
-                "LastChanged": null,
-                "Rank": "Unranked",
-                "RankProgression": null,
-                "RankProgressionText": null,
-                "TotalProgress": null
-              };
-              continue;
-            }
-
-            var rankData = result[0];
-
-            int dataProgress = rankData["progress"];
-
-            String lastProgress = calculatePercentageDifference(
-                rankData["total_progress"],
-                result.length > 1 ? result[1]["total_progress"] : 0,
-                rankData["rank"],
-                result.length > 1 ? result[1]["rank"] : "Unranked");
-
-            double progress = rankData["rank"] != "Unreal"
-                ? dataProgress / 100
-                : convertProgressForUnreal(dataProgress.toDouble());
-
-            String progressText = rankData["rank"] == "Unreal"
-                ? '#$dataProgress'
-                : "$dataProgress%";
-
-            int dailyMatches;
-            DateTime rankDatetime = DateTime.parse(rankData["datetime"]);
-
-            DateTime now = DateTime.now();
-
-            DateTime rankDate = DateTime(
-                rankDatetime.year, rankDatetime.month, rankDatetime.day);
-            DateTime today = DateTime(now.year, now.month, now.day);
-
-            if (rankDate == today) {
-              dailyMatches = rankData["daily_match_id"];
-            } else {
-              dailyMatches = 0;
-            }
-
-            account[accountType] = {
-              "DailyMatches": dailyMatches,
-              "LastProgress": lastProgress,
-              "LastChanged": formatDateTime(rankData["datetime"]),
-              "Rank": rankData["rank"],
-              "RankProgression": progress,
-              "RankProgressionText": progressText,
-              "TotalProgress": rankData["total_progress"]
-            };
-          } catch (e) {
-            widget.talker.error(
-                "Error updating $accountType for account ${account['AccountId']}: $e");
-          }
-        }
-      }
-    }
-    return data;
   }
 
   int _hasDataChanged(
@@ -188,6 +90,10 @@ class HomeScreenState extends State<HomeScreen>
             }
             dataChanged = -1;
           } else {
+            if (oldData.containsKey(rankMode) &&
+                oldData[rankMode]["Rank"] == "Unranked") {
+              return dataChanged = -2;
+            }
             dataChanged = index;
           }
         }
@@ -239,160 +145,185 @@ class HomeScreenState extends State<HomeScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      floatingActionButton: Row(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          FloatingActionButton.extended(
-            heroTag: "edit-btn",
-            onPressed: () => showHomePageEditSheet(context),
-            label: const Text("Edit"),
-            icon: const Icon(Icons.edit),
-          ),
-          const SizedBox(
-            width: 15,
-          ),
-          FloatingActionButton.extended(
-            heroTag: "search-btn",
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (context) => SearchScreen(
-                          talker: widget.talker,
-                        )),
-              );
-            },
-            label: const Text("Search"),
-            icon: const Icon(Icons.search),
-          ),
-        ],
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: FutureBuilder<List<Map<String, dynamic>>>(
-          future: _future,
-          builder: (context, snapshot) {
-            data = snapshot.data ?? [];
-
-            _sortCardList();
-
-            List<Widget> cards = [];
-
-            for (int i = 0; i < data.length; i++) {
-              var item = data[i];
-
-              int dataChanged = -1;
-              if (_previousData.isNotEmpty) {
-                if (i >= _previousData.length) {
-                  dataChanged = -1;
-                } else {
-                  dataChanged = _hasDataChanged(item, _previousData[i]);
-                }
-              }
-
-              bool hasChanged = dataChanged >= 0;
-
-              int progressionDifference = hasChanged
-                  ? _getProgressionDifference(
-                      item, _previousData[i], _rankedModes[dataChanged])
-                  : 0;
-              Color cardColor = Colors.black26;
-              double cardScale = 1.0;
-              int index = 0;
-
-              if (hasChanged) {
-                if (progressionDifference > 0) {
-                  cardColor = Colors.green.withOpacity(0.75);
-                } else if (progressionDifference < 0) {
-                  cardColor = Colors.red.withOpacity(0.75);
-                } else if (progressionDifference == 0) {
-                  cardColor = Colors.yellow.withOpacity(0.75);
-                }
-                cardScale = 1.05;
-                Future.delayed(const Duration(seconds: 1, milliseconds: 250),
-                    () => _resetCardState(i));
-                index = dataChanged;
-              }
-
-              if (rankUpdateData != null &&
-                  item["AccountId"] == rankUpdateData![0]) {
-                index = rankUpdateData![1];
-              }
-
-              if (_currentCardColors.length <= i) {
-                _currentCardColors.add(Colors.black26);
-                _currentScales.add(1.0);
-              }
-              _currentCardColors[i] = cardColor;
-              _currentScales[i] = cardScale;
-
-              if (item["Visible"] == 0) {
-                continue;
-              }
-
-              cards.add(_buildAnimatedCard(item, i, index));
-            }
-
-            _previousData = List.from(data);
-
-            if (!_firstIteration && cards.isEmpty) {
-              bool hasData = data.isNotEmpty;
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      hasData ? Icons.visibility_off : Icons.dashboard_outlined,
-                      size: 100,
-                      color: Colors.grey,
-                    ),
-                    const SizedBox(height: 20),
-                    Text(
-                      hasData
-                          ? 'All cards are currently hidden'
-                          : 'Welcome to your Dashboard',
-                      style: const TextStyle(
-                          fontSize: 20, fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 10),
-                    Text(
-                      hasData
-                          ? 'Toggle visibility to see your data.'
-                          : 'Here’s how you can get started...',
-                      style: const TextStyle(fontSize: 16, color: Colors.grey),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 20),
-                    ElevatedButton(
-                      onPressed: () {
-                        if (hasData) {
-                          showHomePageEditSheet(context);
-                        } else {
-                          //TODO: Link tutorial video and/or Discord Server for help
-                        }
-                      },
-                      child: Text(hasData ? 'Edit Cards' : 'Learn More'),
-                    ),
-                  ],
-                ),
-              );
-            }
-
-            _firstIteration = false;
-
-            return SingleChildScrollView(
-              child: Center(
-                child: Wrap(
-                  spacing: 10.0,
-                  runSpacing: 10.0,
-                  children: cards,
-                ),
-              ),
-            );
-          },
+        floatingActionButton: Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            FloatingActionButton.extended(
+              heroTag: "edit-btn",
+              onPressed: () => showHomePageEditSheet(context),
+              label: const Text("Edit"),
+              icon: const Icon(Icons.edit),
+            ),
+            const SizedBox(
+              width: 15,
+            ),
+            FloatingActionButton.extended(
+              heroTag: "search-btn",
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => SearchScreen(
+                            talker: widget.talker,
+                          )),
+                );
+              },
+              label: const Text("Search"),
+              icon: const Icon(Icons.search),
+            ),
+          ],
         ),
-      ),
-    );
+        body: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: StreamBuilder<List<Map<String, dynamic>>>(
+            stream: subscriptionStream,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting &&
+                  _firstIteration) {
+                return Center(child: CircularProgressIndicator());
+              } else if (snapshot.hasError) {
+                return Center(child: Text('Error: ${snapshot.error}'));
+              } else if (snapshot.hasData) {
+                data = List.from(snapshot.data ?? []);
+
+                _sortCardList();
+
+                List<Widget> cards = [];
+
+                for (int i = 0; i < data.length; i++) {
+                  var item = data[i];
+
+                  int dataChanged = -1;
+                  if (_previousData.isNotEmpty) {
+                    if (i >= _previousData.length) {
+                      dataChanged = -1;
+                    } else {
+                      dataChanged = _hasDataChanged(item, _previousData[i]);
+                    }
+                  }
+
+                  bool hasChanged = dataChanged >= 0;
+
+                  int progressionDifference = hasChanged
+                      ? _getProgressionDifference(
+                          item, _previousData[i], _rankedModes[dataChanged])
+                      : 0;
+                  Color cardColor = Colors.black26;
+                  double cardScale = 1.0;
+                  int index = 0;
+
+                  if (hasChanged) {
+                    if (progressionDifference > 0) {
+                      cardColor = Colors.green.withOpacity(0.75);
+                    } else if (progressionDifference < 0) {
+                      cardColor = Colors.red.withOpacity(0.75);
+                    } else if (progressionDifference == 0) {
+                      cardColor = Colors.yellow.withOpacity(0.75);
+                    }
+                    if (_previousData[i][_rankedModes[dataChanged]] != null &&
+                        _previousData[i][_rankedModes[dataChanged]]["Rank"] ==
+                            "Unranked") {
+                      cardColor = Colors.blue.withOpacity(0.75);
+                    }
+                    cardScale = 1.05;
+                    Future.delayed(
+                        const Duration(seconds: 1, milliseconds: 250),
+                        () => _resetCardState(i));
+                    index = dataChanged;
+                  }
+
+                  Map<String, int> rankingTypeToIndex = {
+                    "battleRoyale": 0,
+                    "zeroBuild": 1,
+                    "rocketRacing": 2,
+                    "reload": 3,
+                    "reloadZeroBuild": 4
+                  };
+
+                  if (rankUpdateData != null &&
+                      item["AccountId"] == rankUpdateData![0]) {
+                    index = rankingTypeToIndex[rankUpdateData![1]]!;
+                  }
+
+                  if (_currentCardColors.length <= i) {
+                    _currentCardColors.add(Colors.black26);
+                    _currentScales.add(1.0);
+                  }
+                  _currentCardColors[i] = cardColor;
+                  _currentScales[i] = cardScale;
+
+                  if (!item["Visible"]) {
+                    continue;
+                  }
+
+                  cards.add(_buildAnimatedCard(item, i, index));
+                }
+
+                _previousData = List.from(data);
+
+                if (!_firstIteration && cards.isEmpty) {
+                  bool hasData = data.isNotEmpty;
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          hasData
+                              ? Icons.visibility_off
+                              : Icons.dashboard_outlined,
+                          size: 100,
+                          color: Colors.grey,
+                        ),
+                        const SizedBox(height: 20),
+                        Text(
+                          hasData
+                              ? 'All cards are currently hidden'
+                              : 'Welcome to your Dashboard',
+                          style: const TextStyle(
+                              fontSize: 20, fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 10),
+                        Text(
+                          hasData
+                              ? 'Toggle visibility to see your data.'
+                              : 'Here’s how you can get started...',
+                          style:
+                              const TextStyle(fontSize: 16, color: Colors.grey),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 20),
+                        ElevatedButton(
+                          onPressed: () {
+                            if (hasData) {
+                              showHomePageEditSheet(context);
+                            } else {
+                              //TODO: Link tutorial video and/or Discord Server for help
+                            }
+                          },
+                          child: Text(hasData ? 'Edit Cards' : 'Learn More'),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                _firstIteration = false;
+
+                return SingleChildScrollView(
+                  child: Center(
+                    child: Wrap(
+                      spacing: 10.0,
+                      runSpacing: 10.0,
+                      children: cards,
+                    ),
+                  ),
+                );
+              } else {
+                return Center(child: Text('No data'));
+              }
+            },
+          ),
+        ));
   }
 
   Widget buildCard(

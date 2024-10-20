@@ -1,10 +1,9 @@
 import 'package:data_table_2/data_table_2.dart';
 import 'package:flutter/material.dart';
 import 'package:fortnite_ranked_tracker/components/individual_page_header.dart';
+import 'package:fortnite_ranked_tracker/core/rank_service.dart';
 import '../components/season_selector.dart';
 import '../core/season_service.dart';
-import 'package:sqflite_common_ffi/sqflite_ffi.dart';
-import '../core/database.dart';
 
 class DatabaseScreen extends StatefulWidget {
   final Map<String, dynamic> account;
@@ -17,7 +16,6 @@ class DatabaseScreen extends StatefulWidget {
 
 class _DatabaseScreenState extends State<DatabaseScreen> {
   final SeasonService _seasonService = SeasonService();
-  final DataBase _database = DataBase();
   int _sortedColumn = 0;
   bool _isAscending = false;
 
@@ -65,24 +63,9 @@ class _DatabaseScreenState extends State<DatabaseScreen> {
       throw Exception("No season selected");
     }
 
-    await Future.delayed(const Duration(milliseconds: 200));
-
-    Database db = await _database.openDatabase(widget.account["accountId"]);
-
-    final columnsQuery =
-        await db.rawQuery("PRAGMA table_info('$currentSeason')");
-    final columnNames =
-        columnsQuery.map((column) => column['name'] as String).toList();
-
-    final sortClause =
-        "ORDER BY ${columns2[_sortedColumn]} ${_isAscending ? 'ASC' : 'DESC'}";
-
-    final data = await db.rawQuery("SELECT * FROM $currentSeason $sortClause");
-
-    return {
-      'columns': columnNames,
-      'data': data,
-    };
+    return await RankService().getSeasonBySeasonId(
+        widget.account["accountId"], currentSeason["tableId"],
+        sortBy: columns2[_sortedColumn], isAscending: _isAscending);
   }
 
   void _refreshData() {
@@ -156,9 +139,9 @@ class _DatabaseScreenState extends State<DatabaseScreen> {
                         return const Center(child: Text('No data available'));
                       } else {
                         final dbColumns =
-                            snapshot.data!['columns'] as List<String>;
-                        final data = snapshot.data!['data']
-                            as List<Map<String, dynamic>>;
+                            (snapshot.data!['columns'] as List).cast<String>();
+                        final data = (snapshot.data!['data'] as List)
+                            .cast<Map<String, dynamic>>();
 
                         return Padding(
                           padding: const EdgeInsets.all(8.0),

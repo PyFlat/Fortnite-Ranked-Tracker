@@ -1,11 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fortnite_ranked_tracker/components/custom_search_bar.dart';
-import 'package:fortnite_ranked_tracker/core/database.dart';
-import 'package:fortnite_ranked_tracker/core/utils.dart';
 
 import '../constants/constants.dart';
-import '../constants/endpoints.dart';
-import '../core/api_service.dart';
 import '../core/rank_service.dart';
 import 'dart:async';
 
@@ -82,7 +78,8 @@ class GraphBottomSheetContentState extends State<GraphBottomSheetContent> {
                               setState(() {
                                 bool itemExists = items.any((item) =>
                                     item["accountId"] == result["accountId"] &&
-                                    item["season"] == result["season"]);
+                                    item["season"]["tableId"] ==
+                                        result["season"]["tableId"]);
 
                                 if (!itemExists) {
                                   items.add(result);
@@ -137,17 +134,13 @@ class GraphBottomSheetContentState extends State<GraphBottomSheetContent> {
                   ],
                 );
               } else {
-                Map seasonInfo = {};
-                if (filteredItems[index]["season"] != null) {
-                  seasonInfo = splitAndPrettifySeasonString(
-                      filteredItems[index]["season"]);
-                }
+                Map seasonInfo = filteredItems[index]["season"] ?? {};
 
                 return ListTile(
                   title: Text(filteredItems[index]["displayName"]),
                   subtitle: seasonInfo.isNotEmpty
                       ? Text(
-                          "${seasonInfo["season"]!} - ${seasonInfo["mode"]!}")
+                          "${seasonInfo["tableName"]} - ${Constants.rankingTypeNames[seasonInfo["rankingType"]]}")
                       : null,
                   leading: IconButton(
                     icon: filteredItems[index]["visible"]
@@ -189,7 +182,7 @@ class GraphBottomSheetContentState extends State<GraphBottomSheetContent> {
                                   await _showAddItemScreen(
                                 context,
                                 accountId: items[originalIndex]["accountId"],
-                                seasonId: items[originalIndex]["season"] ?? "",
+                                season: items[originalIndex]["season"] ?? {},
                               );
 
                               if (result != null) {
@@ -243,27 +236,28 @@ class GraphBottomSheetContentState extends State<GraphBottomSheetContent> {
     }
   }
 
-  Future<Map<String, dynamic>> _prepareData(
-      BuildContext context, String accountId, String seasonId) async {
-    DataBase database = DataBase();
-    List<Map<String, dynamic>> data = await database.getFilteredAccountData();
+  Future<Map<String, dynamic>> _prepareData(BuildContext context,
+      String accountId, Map<String, dynamic> season) async {
+    List<Map<String, dynamic>> data =
+        await RankService().getAccountsWithSeasons();
+
     data = List.from(data);
 
     Map<String, String> avatarImages = {};
-    List<String> accountIds =
-        data.map((item) => item['accountId'] as String).toList();
-    String joinedAccountIds = accountIds.join(',');
+    // List<String> accountIds =
+    //     data.map((item) => item['accountId'] as String).toList();
+    // String joinedAccountIds = accountIds.join(',');
 
-    if (accountIds.isNotEmpty) {
-      avatarImages = await RankService().getAccountAvatarById(joinedAccountIds);
-    }
+    // if (accountIds.isNotEmpty) {
+    //   avatarImages = await RankService().getAccountAvatarById(joinedAccountIds);
+    // }
 
     List<Map<String, dynamic>> allSeasons = [];
     for (Map item in data) {
-      List seasonNames = await database.getTrackedSeasons(item["accountId"]);
-      for (String seasonName in seasonNames) {
-        allSeasons
-            .add({"accountId": item["accountId"], "seasonId": seasonName});
+      List seasons = await RankService().getTrackedSeasons(item[
+          "accountId"]); // VERY SLOW (2 Seconds) --> Rewrite so the server takes bulk accountIds...
+      for (Map<String, dynamic> season in seasons) {
+        allSeasons.add({"accountId": item["accountId"], "seasonData": season});
       }
     }
 
@@ -277,13 +271,13 @@ class GraphBottomSheetContentState extends State<GraphBottomSheetContent> {
       'allSeasons': allSeasons,
       'accountDetails': accountDetails,
       'selectedAccountId': accountId.isNotEmpty ? accountId : null,
-      'selectedSeasonId': seasonId.isNotEmpty ? seasonId : null,
+      'selectedSeason': season.isNotEmpty ? season : null,
     };
   }
 
   Future<Map<String, dynamic>?> _showAddItemScreen(BuildContext context,
-      {String accountId = "", String seasonId = ""}) async {
-    final dataFuture = _prepareData(context, accountId, seasonId);
+      {String accountId = "", Map<String, dynamic>? season}) async {
+    final dataFuture = _prepareData(context, accountId, season ?? {});
 
     return await showModalBottomSheet<Map<String, dynamic>?>(
       context: context,
@@ -308,11 +302,11 @@ class GraphBottomSheetContentState extends State<GraphBottomSheetContent> {
 
             final data = snapshot.data!;
             final List<Map<String, dynamic>> dataList = data['data'];
-            final Map<String, String> avatarImages = data['avatarImages'];
+            // final Map<String, String> avatarImages = data['avatarImages'];
             final List<Map<String, dynamic>> allSeasons = data['allSeasons'];
             final Map<String, String> accountDetails = data['accountDetails'];
             String? selectedAccountId = data['selectedAccountId'];
-            String? selectedSeasonId = data['selectedSeasonId'];
+            Map<String, dynamic>? selectedSeason = data['selectedSeason'];
             String searchQuery = '';
             SearchController searchController = SearchController();
             ScrollController scrollController = ScrollController();
@@ -377,27 +371,28 @@ class GraphBottomSheetContentState extends State<GraphBottomSheetContent> {
                                     title: Text(item["displayName"]),
                                     subtitle: Text(
                                         "Tracked Seasons: ${filteredSeasons.length}"),
-                                    leading: CircleAvatar(
-                                      backgroundImage: NetworkImage(
-                                          avatarImages[item["accountId"]] ??
-                                              ApiService().addPathParams(
-                                                  Endpoints.skinIcon, {
-                                                "skinId":
-                                                    Constants.defaultSkinId
-                                              })),
-                                    ),
+                                    // leading: CircleAvatar(
+                                    //   backgroundImage: NetworkImage(
+                                    //       avatarImages[item["accountId"]] ??
+                                    //           ApiService().addPathParams(
+                                    //               Endpoints.skinIcon, {
+                                    //             "skinId":
+                                    //                 Constants.defaultSkinId
+                                    //           })),
+                                    // ),
                                   );
                                 },
                                 body: Column(
                                   children: filteredSeasons.map((season) {
                                     bool isSelectedSeason =
-                                        selectedSeasonId == season["seasonId"];
-                                    Map<String, String> readableSeason =
-                                        splitAndPrettifySeasonString(
-                                            season["seasonId"]);
+                                        selectedSeason?["tableId"] ==
+                                            season["seasonData"]["tableId"];
+                                    Map<String, dynamic> seasonData =
+                                        season["seasonData"];
                                     return ListTile(
-                                      title: Text(readableSeason["season"]!),
-                                      subtitle: Text(readableSeason["mode"]!),
+                                      title: Text(seasonData["tableName"]!),
+                                      subtitle: Text(Constants.rankingTypeNames[
+                                          seasonData["rankingType"]]),
                                       trailing: isSelectedSeason
                                           ? const Icon(Icons.check,
                                               color: Colors.blue)
@@ -407,7 +402,7 @@ class GraphBottomSheetContentState extends State<GraphBottomSheetContent> {
                                           : Colors.transparent,
                                       onTap: () {
                                         setState(() {
-                                          selectedSeasonId = season["seasonId"];
+                                          selectedSeason = season["seasonData"];
                                         });
                                       },
                                     );
@@ -428,7 +423,7 @@ class GraphBottomSheetContentState extends State<GraphBottomSheetContent> {
                               setState(() {
                                 selectedAccountId =
                                     isExpanded ? accountId : null;
-                                selectedSeasonId = null;
+                                selectedSeason = null;
                               });
                             },
                           ),
@@ -446,14 +441,14 @@ class GraphBottomSheetContentState extends State<GraphBottomSheetContent> {
                           ),
                           ElevatedButton(
                             onPressed: selectedAccountId != null &&
-                                    selectedSeasonId != null
+                                    selectedSeason != null
                                 ? () {
                                     Navigator.of(context).pop({
                                       "visible": true,
                                       "displayName":
                                           accountDetails[selectedAccountId]!,
                                       "accountId": selectedAccountId,
-                                      "season": selectedSeasonId,
+                                      "season": selectedSeason,
                                       "color": Color(
                                               (math.Random().nextDouble() *
                                                       0xFFFFFF)

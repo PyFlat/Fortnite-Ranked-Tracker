@@ -1,28 +1,21 @@
 import 'package:dio/dio.dart';
 import 'package:fortnite_ranked_tracker/core/api_service.dart';
-import 'package:fortnite_ranked_tracker/core/epic_auth_provider.dart';
-import 'package:fortnite_ranked_tracker/core/tournament_service.dart';
 import 'package:fortnite_ranked_tracker/screens/database_screen.dart';
 import 'package:fortnite_ranked_tracker/screens/graph_screen.dart';
 import 'package:talker_flutter/talker_flutter.dart';
-import '../constants/constants.dart';
-import '../constants/endpoints.dart';
-import '../core/database.dart';
 import '../core/rank_service.dart';
 import '../screens/home_screen.dart';
 import 'package:flutter/material.dart';
 
 import 'settings_screen.dart';
-import 'tournament_screen.dart';
+// import 'tournament_screen.dart';
 
 class MainScreen extends StatefulWidget {
-  final EpicAuthProvider authProvider;
   final Talker talker;
   final Dio dio;
 
   const MainScreen({
     super.key,
-    required this.authProvider,
     required this.talker,
     required this.dio,
   });
@@ -32,7 +25,6 @@ class MainScreen extends StatefulWidget {
 }
 
 class MainScreenState extends State<MainScreen> {
-  final DataBase _database = DataBase();
   final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
   int _selectedIndex = 0;
   Future<void>? _initializationFuture;
@@ -40,7 +32,6 @@ class MainScreenState extends State<MainScreen> {
   List<Widget> get _widgetOptions {
     return <Widget>[
       HomeScreen(talker: widget.talker),
-      TournamentScreen(talker: widget.talker)
     ];
   }
 
@@ -51,9 +42,8 @@ class MainScreenState extends State<MainScreen> {
   }
 
   Future<void> _initializeRankService() async {
-    await ApiService().init(widget.talker, widget.authProvider, widget.dio);
-    await RankService().init(widget.talker, widget.authProvider);
-    await TournamentService().init(widget.talker, widget.authProvider);
+    await ApiService().init(widget.talker, widget.dio);
+    await RankService().init(widget.talker);
   }
 
   void _onItemTapped(int index) {
@@ -61,37 +51,6 @@ class MainScreenState extends State<MainScreen> {
       _selectedIndex = index;
     });
     Navigator.pop(context);
-  }
-
-  Future<List<Map<String, dynamic>>> _getAccounts() async {
-    List<Map<String, dynamic>> data = await _database.getFilteredAccountData();
-    Map<String, String> avatarImages = {};
-    List<String> accountIds =
-        data.map((item) => item['accountId'] as String).toList();
-
-    String joinedAccountIds = accountIds.join(',');
-
-    if (accountIds.isNotEmpty) {
-      avatarImages = await RankService().getAccountAvatarById(joinedAccountIds);
-    }
-
-    List<Map<String, dynamic>> updatedData = [];
-
-    List<Future<void>> futures = data.map((account) async {
-      Map<String, dynamic> mutableAccount = Map.from(account);
-      mutableAccount["accountAvatar"] = avatarImages[account["accountId"]];
-
-      mutableAccount["trackedSeasons"] = await _database
-          .getTrackedTableCount(mutableAccount["accountId"], limit: 1);
-
-      updatedData.add(mutableAccount);
-    }).toList();
-
-    await Future.wait(futures);
-
-    updatedData.sort((a, b) => a['displayName'].compareTo(b['displayName']));
-
-    return updatedData;
   }
 
   @override
@@ -142,42 +101,42 @@ class MainScreenState extends State<MainScreen> {
                       ),
                       child: Row(
                         children: [
-                          StreamBuilder(
-                            stream: RankService().getAccountAvatar(),
-                            builder: (context, snapshot) {
-                              if (snapshot.connectionState ==
-                                  ConnectionState.waiting) {
-                                return const CircleAvatar(
-                                    radius: 40,
-                                    child: CircularProgressIndicator());
-                              } else if (snapshot.hasError) {
-                                return const Icon(Icons.error,
-                                    color: Colors.red);
-                              } else if (snapshot.hasData &&
-                                  snapshot.data!.isNotEmpty) {
-                                return CircleAvatar(
-                                  radius: 40,
-                                  backgroundImage: NetworkImage(snapshot.data!),
-                                );
-                              } else {
-                                return const CircleAvatar(
-                                  radius: 40,
-                                  child: Icon(
-                                    Icons.person_rounded,
-                                    color: Colors.grey,
-                                    size: 50,
-                                  ),
-                                );
-                              }
-                            },
-                          ),
+                          // StreamBuilder(
+                          //   stream: RankService().getAccountAvatar(),
+                          //   builder: (context, snapshot) {
+                          //     if (snapshot.connectionState ==
+                          //         ConnectionState.waiting) {
+                          //       return const CircleAvatar(
+                          //           radius: 40,
+                          //           child: CircularProgressIndicator());
+                          //     } else if (snapshot.hasError) {
+                          //       return const Icon(Icons.error,
+                          //           color: Colors.red);
+                          //     } else if (snapshot.hasData &&
+                          //         snapshot.data!.isNotEmpty) {
+                          //       return CircleAvatar(
+                          //         radius: 40,
+                          //         backgroundImage: NetworkImage(snapshot.data!),
+                          //       );
+                          //     } else {
+                          //       return const CircleAvatar(
+                          //         radius: 40,
+                          //         child: Icon(
+                          //           Icons.person_rounded,
+                          //           color: Colors.grey,
+                          //           size: 50,
+                          //         ),
+                          //       );
+                          //     }
+                          //   },
+                          // ),
                           const SizedBox(width: 16),
                           Expanded(
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Text(
-                                  widget.authProvider.displayName,
+                                  "",
                                   textAlign: TextAlign.center,
                                   style: const TextStyle(
                                     color: Colors.white,
@@ -185,37 +144,37 @@ class MainScreenState extends State<MainScreen> {
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
-                                StreamBuilder(
-                                  stream: RankService().getServerStatusStream(),
-                                  builder: (context, snapshot) {
-                                    if (snapshot.hasData) {
-                                      return Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          Icon(
-                                            Icons.circle,
-                                            color: snapshot.data!
-                                                ? Colors.green
-                                                : Colors.red,
-                                          ),
-                                          const SizedBox(
-                                            width: 8,
-                                          ),
-                                          Text(
-                                            "Fortnite is ${snapshot.data! ? "online" : "offline"}.",
-                                            textAlign: TextAlign.center,
-                                            style: const TextStyle(
-                                              color: Colors.grey,
-                                              fontSize: 16,
-                                            ),
-                                          ),
-                                        ],
-                                      );
-                                    }
-                                    return const SizedBox.shrink();
-                                  },
-                                )
+                                // StreamBuilder(
+                                //   stream: RankService().getServerStatusStream(),
+                                //   builder: (context, snapshot) {
+                                //     if (snapshot.hasData) {
+                                //       return Row(
+                                //         mainAxisAlignment:
+                                //             MainAxisAlignment.center,
+                                //         children: [
+                                //           Icon(
+                                //             Icons.circle,
+                                //             color: snapshot.data!
+                                //                 ? Colors.green
+                                //                 : Colors.red,
+                                //           ),
+                                //           const SizedBox(
+                                //             width: 8,
+                                //           ),
+                                //           Text(
+                                //             "Fortnite is ${snapshot.data! ? "online" : "offline"}.",
+                                //             textAlign: TextAlign.center,
+                                //             style: const TextStyle(
+                                //               color: Colors.grey,
+                                //               fontSize: 16,
+                                //             ),
+                                //           ),
+                                //         ],
+                                //       );
+                                //     }
+                                //     return const SizedBox.shrink();
+                                //   },
+                                // )
                               ],
                             ),
                           ),
@@ -238,14 +197,14 @@ class MainScreenState extends State<MainScreen> {
                         name: 'Database',
                         icon: const Icon(Icons.storage_rounded,
                             color: Colors.blueGrey),
-                        accountsFuture: _getAccounts(),
+                        accountsFuture: RankService().getAccountsWithSeasons(),
                         scaffoldKey: scaffoldKey,
                         talker: widget.talker),
                     AccountListTile(
                         name: 'Graph',
                         icon: const Icon(Icons.trending_up_rounded,
                             color: Colors.blueGrey),
-                        accountsFuture: _getAccounts(),
+                        accountsFuture: RankService().getAccountsWithSeasons(),
                         scaffoldKey: scaffoldKey,
                         talker: widget.talker),
                     ListTile(
@@ -372,11 +331,11 @@ class AccountListTile extends StatelessWidget {
                               builder: (context) =>
                                   GraphScreen(talker: talker)));
                     },
-                    leading: CircleAvatar(
-                      backgroundImage: NetworkImage(ApiService().addPathParams(
-                          Endpoints.skinIcon,
-                          {"skinId": Constants.defaultSkinId})),
-                    ),
+                    // leading: CircleAvatar(
+                    //   backgroundImage: NetworkImage(ApiService().addPathParams(
+                    //       Endpoints.skinIcon,
+                    //       {"skinId": Constants.defaultSkinId})),
+                    // ),
                     title: const Text("[All Users]"),
                     subtitle: Text(
                         "All tracked seasons: ${suggestions.map((element) => element["trackedSeasons"]).toList().reduce((a, b) => a + b)}"),
@@ -393,13 +352,17 @@ class AccountListTile extends StatelessWidget {
                           MaterialPageRoute(builder: (context) {
                             return name == "Database"
                                 ? DatabaseScreen(account: account)
-                                : GraphScreen(account: account, talker: talker);
+                                : GraphScreen(
+                                    account: account,
+                                    talker: talker,
+                                  );
                           }),
                         );
                       },
-                      leading: CircleAvatar(
-                        backgroundImage: NetworkImage(account["accountAvatar"]),
-                      ),
+                      // leading: CircleAvatar(
+                      //   backgroundImage:
+                      //       NetworkImage(account["accountAvatar"]),
+                      // ),
                       title: Text(account['displayName'] ?? ''),
                       subtitle:
                           Text("Tracked seasons: ${account["trackedSeasons"]}"),

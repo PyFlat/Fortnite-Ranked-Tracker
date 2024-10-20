@@ -508,8 +508,9 @@ class _GraphScreenState extends State<GraphScreen> {
       if (item["season"] == null || item["visible"] == false) {
         continue;
       }
-      final data = await RankService()
-          .getRankedDataBySeason(item["accountId"], item["season"]);
+      final data = (await RankService().getSeasonBySeasonId(
+          item["accountId"], item["season"]["tableId"],
+          isAscending: true))["data"];
 
       List<FlSpot> spots = [];
       for (int i = 0; i < data.length; i++) {

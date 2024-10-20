@@ -9,20 +9,18 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:flutter_single_instance/flutter_single_instance.dart';
-import 'package:fortnite_ranked_tracker/core/tournament_data_provider.dart';
+// import 'package:fortnite_ranked_tracker/core/tournament_data_provider.dart';
 import 'package:fortnite_ranked_tracker/screens/login_screen.dart';
 import 'package:fortnite_ranked_tracker/screens/no_connection_screen.dart';
 import 'package:internet_connection_checker/internet_connection_checker.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:provider/provider.dart';
+// import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 import 'package:tray_manager/tray_manager.dart';
 import 'package:window_manager/window_manager.dart';
 
-import 'core/epic_auth_provider.dart';
 import 'firebase_options.dart';
-import 'screens/auth_screen.dart';
 import 'screens/main_screen.dart';
 
 void main() async {
@@ -249,24 +247,18 @@ class _MyAppState extends State<MyApp>
 
   @override
   Widget build(BuildContext context) {
-    return MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => EpicAuthProvider(widget.talker)),
-        ChangeNotifierProvider(create: (_) => TournamentDataProvider())
-      ],
-      child: MaterialApp(
-        navigatorObservers: [TalkerRouteObserver(widget.talker)],
-        theme: ThemeData.dark(),
-        debugShowCheckedModeBanner: false,
-        title: 'Fortnite Ranked Tracker',
-        home: SafeArea(
-            child: _isOffline
-                ? const NoConnectionScreen()
-                : FirebaseAuthCheck(
-                    talker: widget.talker,
-                    dio: dio,
-                  )),
-      ),
+    return MaterialApp(
+      navigatorObservers: [TalkerRouteObserver(widget.talker)],
+      theme: ThemeData.dark(),
+      debugShowCheckedModeBanner: false,
+      title: 'Fortnite Ranked Tracker',
+      home: SafeArea(
+          child: _isOffline
+              ? const NoConnectionScreen()
+              : FirebaseAuthCheck(
+                  talker: widget.talker,
+                  dio: dio,
+                )),
     );
   }
 }
@@ -286,7 +278,7 @@ class FirebaseAuthCheck extends StatelessWidget {
           return const Scaffold(
               body: Center(child: CircularProgressIndicator()));
         } else if (snapshot.hasData) {
-          return AuthenticationHandler(
+          return MainScreen(
             talker: talker,
             dio: dio,
           );
@@ -296,44 +288,6 @@ class FirebaseAuthCheck extends StatelessWidget {
           );
         }
       },
-    );
-  }
-}
-
-class AuthenticationHandler extends StatelessWidget {
-  const AuthenticationHandler(
-      {super.key, required this.talker, required this.dio});
-
-  final Talker talker;
-  final Dio dio;
-
-  @override
-  Widget build(BuildContext context) {
-    final authProvider = Provider.of<EpicAuthProvider>(context);
-
-    return FutureBuilder(
-      future: authProvider.initializeAuth(),
-      builder: (ctx, authResultSnapshot) => authResultSnapshot
-                  .connectionState ==
-              ConnectionState.waiting
-          ? const SplashScreen()
-          : authProvider.accessToken.isNotEmpty
-              ? MainScreen(authProvider: authProvider, talker: talker, dio: dio)
-              : AuthScreen(
-                  authProvider: authProvider, talker: talker, dio: dio),
-    );
-  }
-}
-
-class SplashScreen extends StatelessWidget {
-  const SplashScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(
-        child: CircularProgressIndicator(),
-      ),
     );
   }
 }

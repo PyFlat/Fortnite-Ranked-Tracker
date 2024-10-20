@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 
-import '../core/database.dart';
 import '../screens/database_screen.dart';
 import '../screens/graph_screen.dart';
 import '../screens/search_screen.dart';
@@ -62,8 +61,6 @@ class UserPopupMenu extends StatelessWidget {
                         },
                         talker: talker,
                       )));
-        } else if (value == "delete_user") {
-          _showConfirmationDialog(context);
         }
       },
       itemBuilder: (BuildContext context) {
@@ -75,10 +72,6 @@ class UserPopupMenu extends StatelessWidget {
           const PopupMenuDivider(),
           buildMenuItem("Open Database", const Icon(Icons.storage_rounded)),
           buildMenuItem("Open Graph", const Icon(Icons.trending_up_rounded)),
-          const PopupMenuDivider(),
-          buildMenuItem("Delete User",
-              Icon(Icons.delete_forever_rounded, color: Colors.red.shade400),
-              textStyle: TextStyle(color: Colors.red.shade400)),
         ];
       },
     );
@@ -97,47 +90,6 @@ class UserPopupMenu extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-
-  Future<void> _showConfirmationDialog(BuildContext context) async {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Row(
-            children: <Widget>[
-              Icon(Icons.warning_rounded,
-                  color: Colors.red.shade400, size: 32.0),
-              const SizedBox(width: 10),
-              const Text(
-                'Warning',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700),
-              ),
-            ],
-          ),
-          content: const Text(
-            'Are you certain you want to delete all user data?\nThis action cannot be undone.',
-            textAlign: TextAlign.center,
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: const Text('Cancel'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-            TextButton(
-              child: const Text('Proceed'),
-              onPressed: () async {
-                await DataBase().removeAccounts([accountId]);
-                if (!context.mounted) return;
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
-        );
-      },
     );
   }
 }

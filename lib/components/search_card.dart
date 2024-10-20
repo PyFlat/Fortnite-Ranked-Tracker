@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fortnite_ranked_tracker/components/rank_card.dart';
 import 'package:fortnite_ranked_tracker/constants/constants.dart';
-import 'package:fortnite_ranked_tracker/core/database.dart';
 import 'package:fortnite_ranked_tracker/core/utils.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 
@@ -22,24 +21,35 @@ class SearchCard extends StatefulWidget {
 }
 
 class SearchCardState extends State<SearchCard> {
+  late Future<List<dynamic>> fetchingFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    fetchingFuture = _fetchSelectedItem();
+  }
+
   String? nickName;
   String? accountAvatar;
 
-  void refresh() {
-    setState(() {});
+  void refresh() async {
+    String? newNickName =
+        await RankService().getPlayerNickName(widget.accountId);
+    if (mounted) {
+      setState(() {
+        nickName = newNickName;
+      });
+    }
   }
 
   Future<List<dynamic>> _fetchSelectedItem() async {
     List<dynamic> result =
         await RankService().getSingleProgress(widget.accountId);
 
-    List<bool> activeRankingTypes =
-        await DataBase().getPlayerTracking(widget.accountId);
+    List<dynamic> activeRankingTypes =
+        await RankService().getPlayerTracking(widget.accountId);
 
-    accountAvatar = (await RankService()
-        .getAccountAvatarById(widget.accountId))[widget.accountId];
-
-    nickName = await DataBase().getPlayerNickName(widget.accountId);
+    nickName = await RankService().getPlayerNickName(widget.accountId);
 
     final bool brActive = activeRankingTypes[0];
     final bool zbActive = activeRankingTypes[1];
@@ -58,7 +68,7 @@ class SearchCardState extends State<SearchCard> {
     for (dynamic item in result) {
       String progressText = item["currentDivision"] == 17
           ? '#${item["currentPlayerRanking"]}'
-          : "${(item["promotionProgress"] * 100 as double).round()}%";
+          : "${(item["promotionProgress"] * 100 as num).round()}%";
 
       Map<String, dynamic> formattedItem;
 
@@ -96,7 +106,7 @@ class SearchCardState extends State<SearchCard> {
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<List<dynamic>>(
-      future: _fetchSelectedItem(),
+      future: fetchingFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const CircularProgressIndicator();
@@ -115,7 +125,7 @@ class SearchCardState extends State<SearchCard> {
             child: RankCard(
               displayName: widget.displayName,
               accountId: widget.accountId,
-              accountAvatar: accountAvatar,
+              // accountAvatar: accountAvatar,
               nickName: nickName,
               searchCardKey: widget.key as GlobalKey,
               showMenu: false,

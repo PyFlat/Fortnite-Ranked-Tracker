@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:dio/dio.dart';
-import 'package:fortnite_ranked_tracker/core/epic_auth_provider.dart';
 import 'package:talker_dio_logger/talker_dio_logger.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 
@@ -13,8 +12,9 @@ class ApiService {
   static final ApiService _instance = ApiService._();
   factory ApiService() => _instance;
 
-  Future<void> init(
-      Talker talker, EpicAuthProvider authProvider, Dio dio) async {
+  Dio get dio => _dio;
+
+  Future<void> init(Talker talker, Dio dio) async {
     if (!_isInitialized) {
       _talker = talker;
       _dio = dio;
@@ -29,9 +29,6 @@ class ApiService {
               if (responseObject != null) {
                 if (responseObject.statusCode == 404) {
                   return responseObject.data["numericErrorCode"] != 18007;
-                } else if (responseObject.statusCode == 401) {
-                  authProvider.initializeAuth(force: true);
-                  return responseObject.data["numericErrorCode"] != 1031;
                 }
                 return responseObject.statusCode != 429;
               } else {
@@ -60,7 +57,8 @@ class ApiService {
   Future<dynamic> postData(
       String url, dynamic body, String headerAuthorization, String contentType,
       {Map<String, String> pathParams = const {},
-      Map<String, String> queryParams = const {}}) async {
+      Map<String, String> queryParams = const {},
+      CancelToken? cancelToken}) async {
     final headers = {
       'Authorization': headerAuthorization,
     };
@@ -74,7 +72,8 @@ class ApiService {
       final response = await _dio.post(urlEnd,
           queryParameters: queryParams,
           options: Options(headers: headers, responseType: ResponseType.json),
-          data: body);
+          data: body,
+          cancelToken: cancelToken);
 
       return response.data;
     } on DioException catch (e) {

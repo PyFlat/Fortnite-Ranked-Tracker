@@ -1,10 +1,10 @@
-import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 
 import 'package:dio/dio.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:fortnite_ranked_tracker/core/rank_service.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key, required this.dio});
@@ -17,8 +17,10 @@ class LoginPage extends StatefulWidget {
 
 class LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _emailController =
+      TextEditingController(text: "johannes.25406@gmail.com");
+  final TextEditingController _passwordController =
+      TextEditingController(text: "test1234");
   late AnimationController _emailAnimationController;
   late AnimationController _passwordAnimationController;
   bool _emailIsEmpty = false;
@@ -69,10 +71,7 @@ class LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
         email: _emailController.text,
         password: _passwordController.text,
       );
-
-      await widget.dio.post("http://localhost:3000/auth/after-login",
-          data:
-              jsonEncode({"idToken": await userCredential.user!.getIdToken()}));
+      RankService().afterRegister(userCredential);
     } catch (e) {
       if (mounted) {
         setState(() {

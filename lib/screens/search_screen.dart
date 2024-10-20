@@ -27,13 +27,16 @@ class _SearchScreenState extends State<SearchScreen> {
   bool searchRunning = false;
   bool firstSearchDone = false;
   String searchTerm = "";
-  final GlobalKey searchCardKey = GlobalKey();
+  GlobalKey searchCardKey = GlobalKey();
 
   Future<List<Map<String, dynamic>>?> _search(String query) async {
-    final List<Map<String, dynamic>> results =
-        await RankService().search(query);
+    if (query.isEmpty || (query.length > 16 && query.length != 32)) {
+      return [];
+    }
 
-    return results;
+    List<Map<String, dynamic>> result = await RankService()
+        .searchByQuery(query, onlyAccountId: query.length == 32);
+    return result;
   }
 
   @override
@@ -99,6 +102,7 @@ class _SearchScreenState extends State<SearchScreen> {
                           title: Text(item['displayName'] ?? ''),
                           onTap: () {
                             setState(() {
+                              searchCardKey = GlobalKey();
                               _selectedAccountId = item['accountId'];
                               _selectedDisplayName = item['displayName'];
                             });

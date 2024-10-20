@@ -1,23 +1,11 @@
-import 'database.dart';
-import 'utils.dart';
-
 class SeasonService {
-  final DataBase _database = DataBase();
-  String? _currentSeason;
+  Map<String, dynamic>? _currentSeason;
 
-  Future<List<String>> fetchSeasons(String accountId) async {
-    return await _database.getTrackedSeasons(accountId);
-  }
-
-  String? getCurrentSeason() {
+  Map<String, dynamic>? getCurrentSeason() {
     return _currentSeason;
   }
 
-  void setCurrentSeason(String? season) {
+  void setCurrentSeason(Map<String, dynamic>? season) {
     _currentSeason = season;
-  }
-
-  Map<String, String> formatSeason(String season) {
-    return splitAndPrettifySeasonString(season);
   }
 }

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/svg.dart';
 
-import '../core/database.dart';
 import '../core/rank_service.dart';
 import 'search_card.dart';
 
@@ -45,13 +44,15 @@ class _AccountDetailsDialogState extends State<AccountDetailsDialog> {
   }
 
   Future<void> _checkPlayerExisting() async {
-    _editNickName = await DataBase().getPlayerIsExisiting(widget.accountId);
+    _editNickName = await RankService().getPlayerExisting(widget.accountId);
     setState(() {});
   }
 
   Future<Map<String, dynamic>> _getAllDisplayNames() async {
-    Map<String, dynamic> accountMap = (await RankService()
-            .fetchByAccountId(widget.accountId, returnAll: true))
+    Map<String, dynamic> accountMap = (await RankService().searchByQuery(
+            widget.accountId,
+            onlyAccountId: true,
+            returnAll: true))
         .first;
     Set<String> seenDisplayNames = {};
 
@@ -71,11 +72,9 @@ class _AccountDetailsDialogState extends State<AccountDetailsDialog> {
     if (widget.nickNameChanged != null) {
       widget.nickNameChanged!(widget.accountId, _nickNameController.text);
     }
-    DataBase database = DataBase();
-    await database.updatePlayerNickName(
-        widget.accountId, _nickNameController.text);
+    await RankService()
+        .setPlayerNickName(widget.accountId, _nickNameController.text);
 
-    RankService().emitDataRefresh();
     if (widget.searchCardKey != null &&
         widget.searchCardKey!.currentState != null) {
       (widget.searchCardKey!.currentState! as SearchCardState).refresh();
@@ -173,6 +172,7 @@ class _AccountDetailsDialogState extends State<AccountDetailsDialog> {
       actions: [
         TextButton(
           onPressed: () {
+            RankService().emitDataRefresh();
             Navigator.of(context).pop();
           },
           child: const Text('Close'),

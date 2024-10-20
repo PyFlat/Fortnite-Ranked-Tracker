@@ -30,10 +30,35 @@ class DashboardCard extends StatelessWidget {
     final reloadValues = getGameModeValues(item, 'Reload');
     final reloadZeroBuildValues = getGameModeValues(item, 'Reload Zero Build');
 
+    String? battleRoyaleLastChanged =
+        getStringValue(battleRoyaleValues, 'LastChanged');
+    String? zeroBuildLastChanged =
+        getStringValue(zeroBuildValues, 'LastChanged');
+    String? rocketRacingLastChanged =
+        getStringValue(rocketRacingValues, 'LastChanged');
+    String? reloadLastChanged = getStringValue(reloadValues, 'LastChanged');
+    String? reloadZeroBuildLastChanged =
+        getStringValue(reloadZeroBuildValues, 'LastChanged');
+
+    battleRoyaleLastChanged = battleRoyaleLastChanged != null
+        ? formatDateTime(battleRoyaleLastChanged)
+        : null;
+    zeroBuildLastChanged = zeroBuildLastChanged != null
+        ? formatDateTime(zeroBuildLastChanged)
+        : null;
+    rocketRacingLastChanged = rocketRacingLastChanged != null
+        ? formatDateTime(rocketRacingLastChanged)
+        : null;
+    reloadLastChanged =
+        reloadLastChanged != null ? formatDateTime(reloadLastChanged) : null;
+    reloadZeroBuildLastChanged = reloadZeroBuildLastChanged != null
+        ? formatDateTime(reloadZeroBuildLastChanged)
+        : null;
+
     return RankCard(
       displayName: displayName,
       accountId: accountId,
-      nickName: nickName,
+      nickName: nickName == "" ? null : nickName,
       showMenu: true,
       showSwitches: false,
       accountAvatar: accountAvatar,
@@ -48,8 +73,7 @@ class DashboardCard extends StatelessWidget {
           getDoubleValue(battleRoyaleValues, 'RankProgression'),
       battleRoyaleLastProgress:
           getStringValue(battleRoyaleValues, 'LastProgress'),
-      battleRoyaleLastChanged:
-          getStringValue(battleRoyaleValues, 'LastChanged'),
+      battleRoyaleLastChanged: battleRoyaleLastChanged,
       battleRoyaleDailyMatches: getIntValue(battleRoyaleValues, 'DailyMatches'),
       battleRoyaleRankImagePath: getImageAssetPath(battleRoyaleValues),
       battleRoyaleRank: getStringValue(battleRoyaleValues, 'Rank'),
@@ -60,7 +84,7 @@ class DashboardCard extends StatelessWidget {
           getStringValue(zeroBuildValues, 'RankProgressionText'),
       zeroBuildProgress: getDoubleValue(zeroBuildValues, 'RankProgression'),
       zeroBuildLastProgress: getStringValue(zeroBuildValues, 'LastProgress'),
-      zeroBuildLastChanged: getStringValue(zeroBuildValues, 'LastChanged'),
+      zeroBuildLastChanged: zeroBuildLastChanged,
       zeroBuildDailyMatches: getIntValue(zeroBuildValues, 'DailyMatches'),
       zeroBuildRankImagePath: getImageAssetPath(zeroBuildValues),
       zeroBuildRank: getStringValue(zeroBuildValues, 'Rank'),
@@ -73,8 +97,7 @@ class DashboardCard extends StatelessWidget {
           getDoubleValue(rocketRacingValues, 'RankProgression'),
       rocketRacingLastProgress:
           getStringValue(rocketRacingValues, 'LastProgress'),
-      rocketRacingLastChanged:
-          getStringValue(rocketRacingValues, 'LastChanged'),
+      rocketRacingLastChanged: rocketRacingLastChanged,
       rocketRacingDailyMatches: getIntValue(rocketRacingValues, 'DailyMatches'),
       rocketRacingRankImagePath: getImageAssetPath(rocketRacingValues),
       rocketRacingRank: getStringValue(rocketRacingValues, 'Rank'),
@@ -84,7 +107,7 @@ class DashboardCard extends StatelessWidget {
       reloadProgressText: getStringValue(reloadValues, 'RankProgressionText'),
       reloadProgress: getDoubleValue(reloadValues, 'RankProgression'),
       reloadLastProgress: getStringValue(reloadValues, 'LastProgress'),
-      reloadLastChanged: getStringValue(reloadValues, 'LastChanged'),
+      reloadLastChanged: reloadLastChanged,
       reloadDailyMatches: getIntValue(reloadValues, 'DailyMatches'),
       reloadRankImagePath: getImageAssetPath(reloadValues),
       reloadRank: getStringValue(reloadValues, 'Rank'),
@@ -97,8 +120,7 @@ class DashboardCard extends StatelessWidget {
           getDoubleValue(reloadZeroBuildValues, 'RankProgression'),
       reloadZeroBuildLastProgress:
           getStringValue(reloadZeroBuildValues, 'LastProgress'),
-      reloadZeroBuildLastChanged:
-          getStringValue(reloadZeroBuildValues, 'LastChanged'),
+      reloadZeroBuildLastChanged: reloadZeroBuildLastChanged,
       reloadZeroBuildDailyMatches:
           getIntValue(reloadZeroBuildValues, 'DailyMatches'),
       reloadZeroBuildRankImagePath: getImageAssetPath(reloadZeroBuildValues),

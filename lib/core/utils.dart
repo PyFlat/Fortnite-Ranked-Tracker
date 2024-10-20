@@ -57,18 +57,6 @@ Map<String, String> modeMappings = {
   'RLZB': 'Reload Zero Build'
 };
 
-Map<String, String> splitAndPrettifySeasonString(String inputStr) {
-  int lastUnderscoreIndex = inputStr.lastIndexOf("_");
-
-  String firstPart = inputStr.substring(0, lastUnderscoreIndex);
-  String secondPart = inputStr.substring(lastUnderscoreIndex + 1).toUpperCase();
-
-  return {
-    "season": prettifySeasonString(firstPart),
-    "mode": modeMappings[secondPart]!
-  };
-}
-
 String? getRegionNameByEventId(String inputStr) {
   if (Constants.regionRegex.hasMatch(inputStr)) {
     RegExpMatch match = Constants.regionRegex.firstMatch(inputStr)!;

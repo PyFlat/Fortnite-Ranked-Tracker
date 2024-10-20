@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:percent_indicator/circular_percent_indicator.dart';
 import 'package:talker_flutter/talker_flutter.dart';
-import '../core/database.dart';
 import '../core/rank_service.dart';
 import 'account_details_dialog.dart';
 import 'user_popup_menu.dart';
@@ -161,10 +160,10 @@ class RankCardState extends State<RankCard>
     _currentIndex = widget.initialIndex ?? 0;
   }
 
-  Future<void> _updatePlayerTracking(bool value, int key) async {
-    await DataBase().updatePlayerTracking(
-        value, key, widget.accountId!, widget.displayName);
-    RankService().emitDataRefresh(data: [widget.accountId!, key]);
+  Future<void> _updatePlayerTracking(bool value, String rankingType) async {
+    await RankService()
+        .setPlayerTracking(rankingType, value, widget.accountId!);
+    RankService().emitDataRefresh(data: [widget.accountId!, rankingType]);
   }
 
   @override
@@ -362,7 +361,7 @@ class RankCardState extends State<RankCard>
             setState(() {
               _battleRoyaleTracking = value;
             });
-            await _updatePlayerTracking(value, 0);
+            await _updatePlayerTracking(value, "battleRoyale");
           },
         );
       case 1:
@@ -381,7 +380,7 @@ class RankCardState extends State<RankCard>
             setState(() {
               _zeroBuildTracking = value;
             });
-            await _updatePlayerTracking(value, 1);
+            await _updatePlayerTracking(value, "zeroBuild");
           },
         );
       case 2:
@@ -400,7 +399,7 @@ class RankCardState extends State<RankCard>
             setState(() {
               _rocketRacingTracking = value;
             });
-            await _updatePlayerTracking(value, 2);
+            await _updatePlayerTracking(value, "rocketRacing");
           },
         );
       case 3:
@@ -419,7 +418,7 @@ class RankCardState extends State<RankCard>
             setState(() {
               _reloadTracking = value;
             });
-            await _updatePlayerTracking(value, 3);
+            await _updatePlayerTracking(value, "reload");
           },
         );
       case 4:
@@ -438,7 +437,7 @@ class RankCardState extends State<RankCard>
             setState(() {
               _reloadZeroBuildTracking = value;
             });
-            await _updatePlayerTracking(value, 4);
+            await _updatePlayerTracking(value, "reloadZeroBuild");
           },
         );
       default:

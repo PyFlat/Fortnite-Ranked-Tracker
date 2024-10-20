@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:fortnite_ranked_tracker/components/user_popup_menu.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 
-import '../core/database.dart';
 import '../core/rank_service.dart';
 
 class HomePageEditSheet extends StatefulWidget {
@@ -59,9 +58,9 @@ class HomePageEditSheetState extends State<HomePageEditSheet> {
 
   void _toggleVisibilityAll() {
     setState(() {
-      bool allVisible = data.every((item) => item["Visible"] == 1);
+      bool allVisible = data.every((item) => item["Visible"]);
       for (var item in data) {
-        item["Visible"] = allVisible ? 0 : 1;
+        item["Visible"] = !allVisible;
       }
     });
   }
@@ -142,6 +141,8 @@ class HomePageEditSheetState extends State<HomePageEditSheet> {
         return bValue.compareTo(aValue);
       } else if (aValue is double && bValue is double) {
         return aValue.compareTo(bValue);
+      } else if (aValue is bool && bValue is bool) {
+        return aValue ? -1 : 1;
       } else {
         throw ArgumentError('Unsupported field type for sorting');
       }
@@ -197,7 +198,7 @@ class HomePageEditSheetState extends State<HomePageEditSheet> {
   }
 
   Icon _getToggleVisibilityAllIcon() {
-    bool allVisible = data.every((item) => item["Visible"] == 1);
+    bool allVisible = data.every((item) => item["Visible"]);
     return Icon(
       allVisible ? Icons.visibility_off_rounded : Icons.visibility_rounded,
       size: 30,
@@ -268,9 +269,9 @@ class HomePageEditSheetState extends State<HomePageEditSheet> {
                       setState(() {
                         loading = true;
                       });
-                      await DataBase().updateDataEdited(data);
+                      await RankService().updateDataEdited(data);
                       RankService().emitDataRefresh();
-                      await Future.delayed(const Duration(milliseconds: 500));
+                      await Future.delayed(const Duration(milliseconds: 200));
                       if (context.mounted) {
                         setState(() {
                           loading = false;
@@ -298,10 +299,10 @@ class HomePageEditSheetState extends State<HomePageEditSheet> {
 
                 Icon visibilityIcon() {
                   return Icon(
-                    item["Visible"] == 1
+                    item["Visible"]
                         ? Icons.visibility_rounded
                         : Icons.visibility_off_rounded,
-                    color: item["Visible"] == 1 ? null : Colors.redAccent,
+                    color: item["Visible"] ? null : Colors.redAccent,
                   );
                 }
 
@@ -309,13 +310,13 @@ class HomePageEditSheetState extends State<HomePageEditSheet> {
                     ? getTrackedTextBasedOnSort(sortBy, item)
                     : null;
                 final displayText =
-                    '${item["NickName"] ?? item["DisplayName"]}${trackedText != null ? " ($trackedText)" : ""}';
+                    '${item["NickName"] == "" ? item["DisplayName"] : item["NickName"]}${trackedText != null ? " ($trackedText)" : ""}';
 
                 return ListTile(
                   key: ValueKey(index),
-                  leading: CircleAvatar(
-                    backgroundImage: NetworkImage(item["AccountAvatar"]),
-                  ),
+                  // leading: CircleAvatar(
+                  //   backgroundImage: NetworkImage(item["AccountAvatar"]),
+                  // ),
                   title: Text(
                     displayText,
                     style: const TextStyle(
@@ -323,9 +324,8 @@ class HomePageEditSheetState extends State<HomePageEditSheet> {
                       fontSize: 16,
                     ),
                   ),
-                  subtitle: item["NickName"] != null
-                      ? Text(item["DisplayName"])
-                      : null,
+                  subtitle:
+                      item["NickName"] != "" ? Text(item["DisplayName"]) : null,
                   trailing: Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     mainAxisSize: MainAxisSize.min,
@@ -335,7 +335,7 @@ class HomePageEditSheetState extends State<HomePageEditSheet> {
                         tooltip: "Toggle visibility",
                         onPressed: () {
                           setState(() {
-                            item["Visible"] = item["Visible"] == 1 ? 0 : 1;
+                            item["Visible"] = !item["Visible"];
                           });
                         },
                       ),

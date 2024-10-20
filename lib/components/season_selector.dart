@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../core/rank_service.dart';
 import '../core/season_service.dart';
+import '../constants/constants.dart';
 
 class SeasonSelector extends StatelessWidget {
   final SeasonService seasonService;
@@ -18,10 +20,10 @@ class SeasonSelector extends StatelessWidget {
     showModalBottomSheet(
       context: context,
       builder: (BuildContext context) {
-        return FutureBuilder<List<String>>(
-          future: seasonService.fetchSeasons(accountId),
-          builder:
-              (BuildContext context, AsyncSnapshot<List<String>> snapshot) {
+        return FutureBuilder<List<Map<String, dynamic>>>(
+          future: RankService().getTrackedSeasons(accountId),
+          builder: (BuildContext context,
+              AsyncSnapshot<List<Map<String, dynamic>>> snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(child: CircularProgressIndicator());
             } else if (snapshot.hasError) {
@@ -46,15 +48,12 @@ class SeasonSelector extends StatelessWidget {
                     child: ListView.builder(
                       itemCount: seasons.length,
                       itemBuilder: (context, index) {
-                        String season = seasons[index];
-                        Map<String, String> season_ =
-                            seasonService.formatSeason(season);
-
                         return ListTile(
-                          title: Text(season_["season"]!),
-                          subtitle: Text(season_["mode"]!),
+                          title: Text(seasons[index]["tableName"]),
+                          subtitle: Text(Constants
+                              .rankingTypeNames[seasons[index]["rankingType"]]),
                           onTap: () {
-                            seasonService.setCurrentSeason(season);
+                            seasonService.setCurrentSeason(seasons[index]);
                             onSeasonSelected();
                             Navigator.pop(context);
                           },
