@@ -204,7 +204,8 @@ class MainScreenState extends State<MainScreen> {
                         name: 'Graph',
                         icon: const Icon(Icons.trending_up_rounded,
                             color: Colors.blueGrey),
-                        accountsFuture: RankService().getAccountsWithSeasons(),
+                        accountsFuture:
+                            RankService().getAccountsWithSeasons(limit: 6),
                         scaffoldKey: scaffoldKey,
                         talker: widget.talker),
                     ListTile(

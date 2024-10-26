@@ -1,1 +1,25 @@
-{"flutter":{"platforms":{"android":{"default":{"projectId":"fortnite-ranked-tracker-7ee82","appId":"1:329373414923:android:783c0e391f78ce9b99f90e","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"fortnite-ranked-tracker-7ee82","configurations":{"android":"1:329373414923:android:783c0e391f78ce9b99f90e","ios":"1:329373414923:ios:e8e2e47f44bfe0ec99f90e","macos":"1:329373414923:ios:e8e2e47f44bfe0ec99f90e","web":"1:329373414923:web:daef95da0a88af8c99f90e","windows":"1:329373414923:web:bcdd15e6d9739cf199f90e"}}}}}}
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "fortnite-ranked-tracker-7ee82",
+          "appId": "1:329373414923:android:783c0e391f78ce9b99f90e",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "fortnite-ranked-tracker-7ee82",
+          "configurations": {
+            "android": "1:329373414923:android:783c0e391f78ce9b99f90e",
+            "ios": "1:329373414923:ios:e8e2e47f44bfe0ec99f90e",
+            "macos": "1:329373414923:ios:e8e2e47f44bfe0ec99f90e",
+            "web": "1:329373414923:web:daef95da0a88af8c99f90e",
+            "windows": "1:329373414923:web:bcdd15e6d9739cf199f90e"
+          }
+        }
+      }
+    }
+  }
+}

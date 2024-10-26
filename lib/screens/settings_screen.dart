@@ -72,9 +72,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       });
                     },
                     title: const Text("Show window at startup"),
-                    enabled: Platform.isWindows ||
-                            Platform.isMacOS ||
-                            Platform.isLinux
+                    enabled: !kIsWeb &&
+                            (Platform.isWindows ||
+                                Platform.isMacOS ||
+                                Platform.isLinux)
                         ? true
                         : false,
                   ),
@@ -99,10 +100,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       }
                     },
                     title: const Text("Autostart the Application"),
-                    enabled:
-                        (Platform.isWindows || Platform.isLinux) && !kDebugMode
-                            ? true
-                            : false,
+                    enabled: !kIsWeb &&
+                            ((Platform.isWindows || Platform.isLinux) &&
+                                !kDebugMode)
+                        ? true
+                        : false,
                   ),
                   SettingsTile.switchTile(
                     leading: const Icon(Icons.arrow_downward_rounded),
@@ -119,8 +121,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       }
                     },
                     title: const Text("Minimize to tray when closed"),
-                    enabled:
-                        Platform.isWindows || Platform.isLinux ? true : false,
+                    enabled: !kIsWeb && (Platform.isWindows || Platform.isLinux)
+                        ? true
+                        : false,
                   )
                 ]),
               ],

@@ -521,7 +521,11 @@ class _GraphScreenState extends State<GraphScreen> {
         spots.add(FlSpot(i.toDouble(), yValue.toDouble()));
       }
       if (_currentOffsetY == 0) {
-        _currentOffsetY = (data[0]["total_progress"] as int).toDouble() - 10;
+        num start = data[0]["total_progress"] as num;
+        if (start >= 1700) {
+          start = 1700 + (convertProgressForUnreal(start.toDouble()) * 300);
+        }
+        _currentOffsetY = start - 10;
         _sliderVerticalStateMovment = _currentOffsetY / 2000;
       }
       if (data.length > _dataLength) {

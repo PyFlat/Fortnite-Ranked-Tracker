@@ -239,7 +239,7 @@ class GraphBottomSheetContentState extends State<GraphBottomSheetContent> {
   Future<Map<String, dynamic>> _prepareData(BuildContext context,
       String accountId, Map<String, dynamic> season) async {
     List<Map<String, dynamic>> data =
-        await RankService().getAccountsWithSeasons();
+        await RankService().getAccountsWithSeasons(limit: 6, detailed: true);
 
     data = List.from(data);
 
@@ -252,15 +252,6 @@ class GraphBottomSheetContentState extends State<GraphBottomSheetContent> {
     //   avatarImages = await RankService().getAccountAvatarById(joinedAccountIds);
     // }
 
-    List<Map<String, dynamic>> allSeasons = [];
-    for (Map item in data) {
-      List seasons = await RankService().getTrackedSeasons(item[
-          "accountId"]); // VERY SLOW (2 Seconds) --> Rewrite so the server takes bulk accountIds...
-      for (Map<String, dynamic> season in seasons) {
-        allSeasons.add({"accountId": item["accountId"], "seasonData": season});
-      }
-    }
-
     Map<String, String> accountDetails = {
       for (var item in data) item['accountId']: item['displayName']
     };
@@ -268,7 +259,6 @@ class GraphBottomSheetContentState extends State<GraphBottomSheetContent> {
     return {
       'data': data,
       'avatarImages': avatarImages,
-      'allSeasons': allSeasons,
       'accountDetails': accountDetails,
       'selectedAccountId': accountId.isNotEmpty ? accountId : null,
       'selectedSeason': season.isNotEmpty ? season : null,
@@ -303,7 +293,7 @@ class GraphBottomSheetContentState extends State<GraphBottomSheetContent> {
             final data = snapshot.data!;
             final List<Map<String, dynamic>> dataList = data['data'];
             // final Map<String, String> avatarImages = data['avatarImages'];
-            final List<Map<String, dynamic>> allSeasons = data['allSeasons'];
+            // final List<Map<String, dynamic>> allSeasons = data['allSeasons'];
             final Map<String, String> accountDetails = data['accountDetails'];
             String? selectedAccountId = data['selectedAccountId'];
             Map<String, dynamic>? selectedSeason = data['selectedSeason'];
@@ -355,11 +345,13 @@ class GraphBottomSheetContentState extends State<GraphBottomSheetContent> {
                                     .contains(searchQuery.toLowerCase()))
                                 .map((item) {
                               List<Map<String, dynamic>> filteredSeasons =
-                                  allSeasons
-                                      .where((season) =>
-                                          season["accountId"] ==
-                                          item["accountId"])
-                                      .toList();
+                                  (dataList
+                                          .where((season) =>
+                                              season["accountId"] ==
+                                              item["accountId"])
+                                          .toList()
+                                          .first["trackedSeasons"] as List)
+                                      .cast<Map<String, dynamic>>();
 
                               return ExpansionPanel(
                                 backgroundColor:
@@ -386,13 +378,12 @@ class GraphBottomSheetContentState extends State<GraphBottomSheetContent> {
                                   children: filteredSeasons.map((season) {
                                     bool isSelectedSeason =
                                         selectedSeason?["tableId"] ==
-                                            season["seasonData"]["tableId"];
-                                    Map<String, dynamic> seasonData =
-                                        season["seasonData"];
+                                            season["tableId"];
+
                                     return ListTile(
-                                      title: Text(seasonData["tableName"]!),
+                                      title: Text(season["tableName"]!),
                                       subtitle: Text(Constants.rankingTypeNames[
-                                          seasonData["rankingType"]]),
+                                          season["rankingType"]]),
                                       trailing: isSelectedSeason
                                           ? const Icon(Icons.check,
                                               color: Colors.blue)
@@ -402,7 +393,7 @@ class GraphBottomSheetContentState extends State<GraphBottomSheetContent> {
                                           : Colors.transparent,
                                       onTap: () {
                                         setState(() {
-                                          selectedSeason = season["seasonData"];
+                                          selectedSeason = season;
                                         });
                                       },
                                     );

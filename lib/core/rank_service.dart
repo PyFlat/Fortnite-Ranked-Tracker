@@ -1,8 +1,11 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:fetch_client/fetch_client.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_client_sse/constants/sse_request_type_enum.dart';
 import 'package:flutter_client_sse/flutter_client_sse.dart';
+import 'package:http/http.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 
 import '../constants/constants.dart';
@@ -123,33 +126,72 @@ class RankService {
 
     List<Map<String, dynamic>> currentData = [];
 
-    SSEClient.subscribeToSSE(
-      method: SSERequestType.GET,
-      url: Endpoints.subscribe,
-      header: {"Authorization": await getBasicAuthHeader()},
-    ).listen((event) {
-      String eventData = event.data!.trim();
-      if (eventData != "undefined") {
-        eventData = eventData.substring(1, eventData.length - 1);
-        eventData = eventData.replaceAll(r'\"', '"');
+    if (kIsWeb) {
+      final client = FetchClient(mode: RequestMode.cors);
+      final url = Uri.parse(Endpoints.subscribe);
+      final headers = {"Authorization": await getBasicAuthHeader()};
+      StreamedResponse response =
+          await client.send(Request('GET', url)..headers.addAll(headers));
 
-        final List decodedData = jsonDecode(eventData);
+      if (response.statusCode == 200) {
+        response.stream.listen(
+          (onData) {
+            final textData = utf8.decode(onData);
 
-        currentData = decodedData.cast<Map<String, dynamic>>();
+            if (textData.contains("data:")) {
+              final dataIndex = textData.indexOf("data: ") + "data: ".length;
+              final payload = textData.substring(dataIndex).trim();
 
-        controller.add(List.from(currentData));
+              try {
+                final jsonData = jsonDecode(payload);
+                final jsonData2 = jsonDecode(jsonData) as List;
+                currentData = jsonData2.cast<Map<String, dynamic>>();
+                controller.add(List.from(currentData));
+              } catch (e) {
+                talker.error("Failed to decode JSON: $e");
+              }
+            }
+          },
+          onError: (error) {
+            talker.error("Stream error: $error");
+          },
+          onDone: () {
+            client.close();
+          },
+        );
       }
-    });
+    } else {
+      SSEClient.subscribeToSSE(
+        method: SSERequestType.GET,
+        url: Endpoints.subscribe,
+        header: {"Authorization": await getBasicAuthHeader()},
+      ).listen((event) {
+        String eventData = event.data!.trim();
+        if (eventData != "undefined") {
+          eventData = eventData.substring(1, eventData.length - 1);
+          eventData = eventData.replaceAll(r'\"', '"');
+
+          final List decodedData = jsonDecode(eventData);
+
+          currentData = decodedData.cast<Map<String, dynamic>>();
+
+          controller.add(List.from(currentData));
+        }
+      });
+    }
 
     yield* controller.stream;
 
     await controller.close();
   }
 
-  Future<List<Map<String, dynamic>>> getAccountsWithSeasons({limit = 1}) async {
+  Future<List<Map<String, dynamic>>> getAccountsWithSeasons(
+      {limit = 1, detailed = false}) async {
     List result = await ApiService().getData(
-        Endpoints.accounts, await getBasicAuthHeader(),
-        queryParams: {"limit": limit.toString()});
+        Endpoints.accounts, await getBasicAuthHeader(), queryParams: {
+      "limit": limit.toString(),
+      "detailed": detailed.toString()
+    });
 
     List<Map<String, dynamic>> resultCasted =
         result.cast<Map<String, dynamic>>();

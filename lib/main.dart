@@ -12,7 +12,7 @@ import 'package:flutter_single_instance/flutter_single_instance.dart';
 // import 'package:fortnite_ranked_tracker/core/tournament_data_provider.dart';
 import 'package:fortnite_ranked_tracker/screens/login_screen.dart';
 import 'package:fortnite_ranked_tracker/screens/no_connection_screen.dart';
-import 'package:internet_connection_checker/internet_connection_checker.dart';
+import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
 import 'package:path_provider/path_provider.dart';
 // import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -27,17 +27,20 @@ void main() async {
   final talker =
       TalkerFlutter.init(settings: TalkerSettings(useConsoleLogs: false));
   talker.verbose("Talker initialization completed");
+
   await runZonedGuarded(
     () async {
       WidgetsFlutterBinding.ensureInitialized();
       await Firebase.initializeApp(
           options: DefaultFirebaseOptions.currentPlatform);
       SharedPreferences prefs = await SharedPreferences.getInstance();
-      if (Platform.isAndroid || Platform.isIOS) {
+
+      if (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) {
         await initializeService();
       }
 
-      if (Platform.isLinux || Platform.isWindows || Platform.isMacOS) {
+      if (!kIsWeb &&
+          (Platform.isLinux || Platform.isWindows || Platform.isMacOS)) {
         if (!(await FlutterSingleInstance.platform.isFirstInstance())) {
           await setShowInstance(true);
           exit(0);
@@ -67,6 +70,7 @@ void main() async {
       runApp(MyApp(talker: talker));
     },
     (Object error, StackTrace stack) {
+      print(error);
       talker.handle(error, stack, 'Uncaught app exception');
     },
   );
@@ -147,22 +151,22 @@ class _MyAppState extends State<MyApp>
     with TrayListener, WindowListener, WidgetsBindingObserver {
   late Timer timer;
   late Dio dio;
-  final connectionChecker = InternetConnectionChecker();
-  late StreamSubscription<InternetConnectionChecker> subscription;
+  final connectionChecker = InternetConnection();
+  late StreamSubscription<InternetConnection> subscription;
   bool _isOffline = false;
 
   @override
   void initState() {
     dio = Dio();
-    if (Platform.isAndroid || Platform.isIOS) {
+    if (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) {
       FlutterBackgroundService().invoke("setAsForeground");
     }
 
     trayManager.addListener(this);
     windowManager.addListener(this);
     WidgetsBinding.instance.addObserver(this);
-    connectionChecker.onStatusChange.listen((InternetConnectionStatus status) {
-      if (status == InternetConnectionStatus.connected) {
+    connectionChecker.onStatusChange.listen((InternetStatus status) {
+      if (status == InternetStatus.connected) {
         setState(() {
           _isOffline = false;
         });
@@ -173,11 +177,13 @@ class _MyAppState extends State<MyApp>
       }
     });
     timer = Timer.periodic(const Duration(seconds: 1), (timer) async {
-      final result = await getShowInstance();
-      if (result) {
-        windowManager.show();
-        windowManager.focus();
-        await setShowInstance(false);
+      if (!kIsWeb) {
+        final result = await getShowInstance();
+        if (result) {
+          windowManager.show();
+          windowManager.focus();
+          await setShowInstance(false);
+        }
       }
     });
     _initSystemTray();
@@ -209,8 +215,9 @@ class _MyAppState extends State<MyApp>
   }
 
   void _initSystemTray() async {
-    String iconPath =
-        Platform.isWindows ? 'assets/tray-icon.ico' : 'assets/app-icon.png';
+    String iconPath = (!kIsWeb && Platform.isWindows)
+        ? 'assets/tray-icon.ico'
+        : 'assets/app-icon.png';
 
     Menu menu = Menu(
       items: [
@@ -220,7 +227,8 @@ class _MyAppState extends State<MyApp>
         ),
       ],
     );
-    if (Platform.isLinux || Platform.isWindows || Platform.isMacOS) {
+    if (!kIsWeb &&
+        (Platform.isLinux || Platform.isWindows || Platform.isMacOS)) {
       await trayManager.setIcon(iconPath);
       await trayManager.setContextMenu(menu);
     }
