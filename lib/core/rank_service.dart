@@ -288,6 +288,12 @@ class RankService {
     apiDatetime = DateTime(apiDatetime.year, apiDatetime.month, apiDatetime.day,
         apiDatetime.hour, apiDatetime.minute, apiDatetime.second);
 
+    final duration = databaseDatetime.difference(apiDatetime).inMinutes.abs();
+
+    if (duration < 1) {
+      return true;
+    }
+
     return databaseDatetime.isAfter(apiDatetime) ||
         databaseDatetime.isAtSameMomentAs(apiDatetime);
   }
