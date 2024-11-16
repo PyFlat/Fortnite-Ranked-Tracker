@@ -184,7 +184,7 @@ class RankCardState extends State<RankCard>
                 if (widget.accountAvatar != null)
                   CircleAvatar(
                     radius: 25,
-                    backgroundImage: NetworkImage(widget.accountAvatar!),
+                    backgroundImage: AssetImage(widget.accountAvatar!),
                   ),
                 const SizedBox(width: 24),
                 Expanded(

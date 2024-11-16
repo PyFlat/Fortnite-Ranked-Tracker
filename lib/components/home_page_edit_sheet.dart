@@ -314,9 +314,10 @@ class HomePageEditSheetState extends State<HomePageEditSheet> {
 
                 return ListTile(
                   key: ValueKey(index),
-                  // leading: CircleAvatar(
-                  //   backgroundImage: NetworkImage(item["AccountAvatar"]),
-                  // ),
+                  leading: item["AccountAvatar"] != null
+                      ? CircleAvatar(
+                          backgroundImage: AssetImage(item["AccountAvatar"]))
+                      : null,
                   title: Text(
                     displayText,
                     style: const TextStyle(

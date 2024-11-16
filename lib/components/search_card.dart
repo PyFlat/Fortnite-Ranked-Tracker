@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fortnite_ranked_tracker/components/rank_card.dart';
 import 'package:fortnite_ranked_tracker/constants/constants.dart';
+import 'package:fortnite_ranked_tracker/core/avatar_manager.dart';
 import 'package:fortnite_ranked_tracker/core/utils.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 
@@ -30,7 +31,6 @@ class SearchCardState extends State<SearchCard> {
   }
 
   String? nickName;
-  String? accountAvatar;
 
   void refresh() async {
     String? newNickName =
@@ -125,7 +125,7 @@ class SearchCardState extends State<SearchCard> {
             child: RankCard(
               displayName: widget.displayName,
               accountId: widget.accountId,
-              // accountAvatar: accountAvatar,
+              accountAvatar: AvatarManager().getAvatar(widget.accountId),
               nickName: nickName,
               searchCardKey: widget.key as GlobalKey,
               showMenu: false,

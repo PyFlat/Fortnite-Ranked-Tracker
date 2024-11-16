@@ -20,6 +20,8 @@ import 'package:talker_flutter/talker_flutter.dart';
 import 'package:tray_manager/tray_manager.dart';
 import 'package:window_manager/window_manager.dart';
 
+import 'core/api_service.dart';
+import 'core/avatar_manager.dart';
 import 'firebase_options.dart';
 import 'screens/main_screen.dart';
 
@@ -158,6 +160,8 @@ class _MyAppState extends State<MyApp>
   @override
   void initState() {
     dio = Dio();
+    ApiService().init(widget.talker, dio);
+    AvatarManager().initialize("assets/avatar-images");
     if (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) {
       FlutterBackgroundService().invoke("setAsForeground");
     }

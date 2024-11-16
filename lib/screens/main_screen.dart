@@ -1,5 +1,5 @@
 import 'package:dio/dio.dart';
-import 'package:fortnite_ranked_tracker/core/api_service.dart';
+import 'package:fortnite_ranked_tracker/core/avatar_manager.dart';
 import 'package:fortnite_ranked_tracker/screens/database_screen.dart';
 import 'package:fortnite_ranked_tracker/screens/graph_screen.dart';
 import 'package:talker_flutter/talker_flutter.dart';
@@ -42,7 +42,6 @@ class MainScreenState extends State<MainScreen> {
   }
 
   Future<void> _initializeRankService() async {
-    await ApiService().init(widget.talker, widget.dio);
     await RankService().init(widget.talker);
   }
 
@@ -101,42 +100,18 @@ class MainScreenState extends State<MainScreen> {
                       ),
                       child: Row(
                         children: [
-                          // StreamBuilder(
-                          //   stream: RankService().getAccountAvatar(),
-                          //   builder: (context, snapshot) {
-                          //     if (snapshot.connectionState ==
-                          //         ConnectionState.waiting) {
-                          //       return const CircleAvatar(
-                          //           radius: 40,
-                          //           child: CircularProgressIndicator());
-                          //     } else if (snapshot.hasError) {
-                          //       return const Icon(Icons.error,
-                          //           color: Colors.red);
-                          //     } else if (snapshot.hasData &&
-                          //         snapshot.data!.isNotEmpty) {
-                          //       return CircleAvatar(
-                          //         radius: 40,
-                          //         backgroundImage: NetworkImage(snapshot.data!),
-                          //       );
-                          //     } else {
-                          //       return const CircleAvatar(
-                          //         radius: 40,
-                          //         child: Icon(
-                          //           Icons.person_rounded,
-                          //           color: Colors.grey,
-                          //           size: 50,
-                          //         ),
-                          //       );
-                          //     }
-                          //   },
-                          // ),
+                          CircleAvatar(
+                            radius: 40,
+                            backgroundImage: AssetImage(
+                                AvatarManager().getAvatar("default")),
+                          ),
                           const SizedBox(width: 16),
                           Expanded(
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Text(
-                                  "",
+                                  "Johannes",
                                   textAlign: TextAlign.center,
                                   style: const TextStyle(
                                     color: Colors.white,
@@ -332,11 +307,10 @@ class AccountListTile extends StatelessWidget {
                               builder: (context) =>
                                   GraphScreen(talker: talker)));
                     },
-                    // leading: CircleAvatar(
-                    //   backgroundImage: NetworkImage(ApiService().addPathParams(
-                    //       Endpoints.skinIcon,
-                    //       {"skinId": Constants.defaultSkinId})),
-                    // ),
+                    leading: CircleAvatar(
+                      backgroundImage:
+                          AssetImage(AvatarManager().getAvatar("default")),
+                    ),
                     title: const Text("[All Users]"),
                     subtitle: Text(
                         "All tracked seasons: ${suggestions.map((element) => element["trackedSeasons"]).toList().reduce((a, b) => a + b)}"),
@@ -360,10 +334,9 @@ class AccountListTile extends StatelessWidget {
                           }),
                         );
                       },
-                      // leading: CircleAvatar(
-                      //   backgroundImage:
-                      //       NetworkImage(account["accountAvatar"]),
-                      // ),
+                      leading: CircleAvatar(
+                          backgroundImage:
+                              AssetImage(account["accountAvatar"])),
                       title: Text(account['displayName'] ?? ''),
                       subtitle:
                           Text("Tracked seasons: ${account["trackedSeasons"]}"),

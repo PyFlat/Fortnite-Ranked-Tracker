@@ -95,6 +95,7 @@ flutter_launcher_icons:
 flutter:
   assets:
     - assets/ranked-images/
+    - assets/avatar-images/
     - assets/icons/
     - assets/
 

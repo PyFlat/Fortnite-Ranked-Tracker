@@ -1,4 +1,5 @@
 import 'package:fortnite_ranked_tracker/components/home_page_edit_sheet.dart';
+import 'package:fortnite_ranked_tracker/core/avatar_manager.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 
 import '../core/rank_service.dart';
@@ -127,7 +128,6 @@ class HomeScreenState extends State<HomeScreen>
   ) async {
     List<Map<String, dynamic>> deepCopiedData =
         data.map((item) => Map<String, dynamic>.from(item)).toList();
-
     await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -180,7 +180,7 @@ class HomeScreenState extends State<HomeScreen>
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting &&
                   _firstIteration) {
-                return Center(child: CircularProgressIndicator());
+                return const Center(child: CircularProgressIndicator());
               } else if (snapshot.hasError) {
                 return Center(child: Text('Error: ${snapshot.error}'));
               } else if (snapshot.hasData) {
@@ -251,6 +251,9 @@ class HomeScreenState extends State<HomeScreen>
                   }
                   _currentCardColors[i] = cardColor;
                   _currentScales[i] = cardScale;
+
+                  data[i]["AccountAvatar"] =
+                      AvatarManager().getAvatar(item["AccountId"]);
 
                   if (!item["Visible"]) {
                     continue;
@@ -324,11 +327,6 @@ class HomeScreenState extends State<HomeScreen>
             },
           ),
         ));
-  }
-
-  Widget buildCard(
-      List candidateData, int i, int index, Color cardColor, Map item) {
-    return _buildAnimatedCard(item, i, index);
   }
 
   Widget _buildAnimatedCard(dynamic item, int i, int index) {

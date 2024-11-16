@@ -243,22 +243,12 @@ class GraphBottomSheetContentState extends State<GraphBottomSheetContent> {
 
     data = List.from(data);
 
-    Map<String, String> avatarImages = {};
-    // List<String> accountIds =
-    //     data.map((item) => item['accountId'] as String).toList();
-    // String joinedAccountIds = accountIds.join(',');
-
-    // if (accountIds.isNotEmpty) {
-    //   avatarImages = await RankService().getAccountAvatarById(joinedAccountIds);
-    // }
-
     Map<String, String> accountDetails = {
       for (var item in data) item['accountId']: item['displayName']
     };
 
     return {
       'data': data,
-      'avatarImages': avatarImages,
       'accountDetails': accountDetails,
       'selectedAccountId': accountId.isNotEmpty ? accountId : null,
       'selectedSeason': season.isNotEmpty ? season : null,
@@ -292,8 +282,6 @@ class GraphBottomSheetContentState extends State<GraphBottomSheetContent> {
 
             final data = snapshot.data!;
             final List<Map<String, dynamic>> dataList = data['data'];
-            // final Map<String, String> avatarImages = data['avatarImages'];
-            // final List<Map<String, dynamic>> allSeasons = data['allSeasons'];
             final Map<String, String> accountDetails = data['accountDetails'];
             String? selectedAccountId = data['selectedAccountId'];
             Map<String, dynamic>? selectedSeason = data['selectedSeason'];
@@ -363,15 +351,9 @@ class GraphBottomSheetContentState extends State<GraphBottomSheetContent> {
                                     title: Text(item["displayName"]),
                                     subtitle: Text(
                                         "Tracked Seasons: ${filteredSeasons.length}"),
-                                    // leading: CircleAvatar(
-                                    //   backgroundImage: NetworkImage(
-                                    //       avatarImages[item["accountId"]] ??
-                                    //           ApiService().addPathParams(
-                                    //               Endpoints.skinIcon, {
-                                    //             "skinId":
-                                    //                 Constants.defaultSkinId
-                                    //           })),
-                                    // ),
+                                    leading: CircleAvatar(
+                                        backgroundImage:
+                                            AssetImage(item["accountAvatar"])),
                                   );
                                 },
                                 body: Column(

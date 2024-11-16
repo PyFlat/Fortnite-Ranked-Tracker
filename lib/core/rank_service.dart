@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_client_sse/constants/sse_request_type_enum.dart';
 import 'package:flutter_client_sse/flutter_client_sse.dart';
+import 'package:fortnite_ranked_tracker/core/avatar_manager.dart';
 import 'package:http/http.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 
@@ -46,7 +47,12 @@ class RankService {
   }
 
   Future<String> getBasicAuthHeader() async {
-    return "bearer ${await FirebaseAuth.instance.currentUser?.getIdToken(true)}";
+    try {
+      return "bearer ${await FirebaseAuth.instance.currentUser?.getIdToken(true)}";
+    } catch (e) {
+      talker.error('Failed to get FirebaseAuth Token');
+      return "";
+    }
   }
 
   Future<void> afterRegister(UserCredential userCredential) async {
@@ -196,6 +202,15 @@ class RankService {
     List<Map<String, dynamic>> resultCasted =
         result.cast<Map<String, dynamic>>();
 
+    final avatarManager = AvatarManager();
+
+    for (var element in resultCasted) {
+      if (!element.containsKey("accountAvatar")) {
+        element["accountAvatar"] =
+            avatarManager.getAvatar(element["accountId"]);
+      }
+    }
+
     resultCasted.sort(
         (a, b) => (a['displayName'] as String).compareTo(b['displayName']));
 
@@ -239,8 +254,6 @@ class RankService {
     _rankUpdateController.add(data);
   }
 }
-
-
 
 //   String getBasicAuthHeader() {
 //     return "";
