@@ -183,7 +183,8 @@ class LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                                     const EdgeInsets.symmetric(horizontal: 25),
                                 child: Container(
                                   decoration: BoxDecoration(
-                                      color: Colors.black.withOpacity(0.2),
+                                      color:
+                                          Colors.black.withValues(alpha: 0.2),
                                       borderRadius: BorderRadius.circular(14)),
                                 ),
                               ),

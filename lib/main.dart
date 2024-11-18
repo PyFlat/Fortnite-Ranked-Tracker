@@ -72,7 +72,6 @@ void main() async {
       runApp(MyApp(talker: talker));
     },
     (Object error, StackTrace stack) {
-      print(error);
       talker.handle(error, stack, 'Uncaught app exception');
     },
   );

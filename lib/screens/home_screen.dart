@@ -214,16 +214,16 @@ class HomeScreenState extends State<HomeScreen>
 
                   if (hasChanged) {
                     if (progressionDifference > 0) {
-                      cardColor = Colors.green.withOpacity(0.75);
+                      cardColor = Colors.green.withValues(alpha: 0.75);
                     } else if (progressionDifference < 0) {
-                      cardColor = Colors.red.withOpacity(0.75);
+                      cardColor = Colors.red.withValues(alpha: 0.75);
                     } else if (progressionDifference == 0) {
-                      cardColor = Colors.yellow.withOpacity(0.75);
+                      cardColor = Colors.yellow.withValues(alpha: 0.75);
                     }
                     if (_previousData[i][_rankedModes[dataChanged]] != null &&
                         _previousData[i][_rankedModes[dataChanged]]["Rank"] ==
                             "Unranked") {
-                      cardColor = Colors.blue.withOpacity(0.75);
+                      cardColor = Colors.blue.withValues(alpha: 0.75);
                     }
                     cardScale = 1.05;
                     Future.delayed(
@@ -322,7 +322,7 @@ class HomeScreenState extends State<HomeScreen>
                   ),
                 );
               } else {
-                return Center(child: Text('No data'));
+                return const Center(child: Text('No data'));
               }
             },
           ),

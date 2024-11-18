@@ -231,11 +231,11 @@ class RankCardState extends State<RankCard>
                 const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
             child: Container(
               decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.9),
+                color: Colors.black.withValues(alpha: 0.9),
                 borderRadius: BorderRadius.circular(10.0),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.white.withOpacity(0.3),
+                    color: Colors.white.withValues(alpha: 0.3),
                     spreadRadius: 4,
                     blurRadius: 7.5,
                   ),
@@ -296,7 +296,7 @@ class RankCardState extends State<RankCard>
                                     ? [
                                         BoxShadow(
                                             color: Colors.deepPurple
-                                                .withOpacity(0.5),
+                                                .withValues(alpha: 0.5),
                                             blurRadius: 6.0)
                                       ]
                                     : [],
@@ -511,7 +511,8 @@ class RankCardState extends State<RankCard>
                 lineWidth: 6,
                 percent: progress,
                 circularStrokeCap: CircularStrokeCap.round,
-                progressColor: _getProgressColor(progress).withOpacity(0.75),
+                progressColor:
+                    _getProgressColor(progress).withValues(alpha: 0.75),
                 backgroundColor: Colors.transparent,
                 header: Padding(
                   padding: const EdgeInsets.only(bottom: 8.0),

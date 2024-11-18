@@ -344,7 +344,7 @@ class GraphBottomSheetContentState extends State<GraphBottomSheetContent> {
                               return ExpansionPanel(
                                 backgroundColor:
                                     selectedAccountId == item["accountId"]
-                                        ? Colors.blue.withOpacity(0.1)
+                                        ? Colors.blue.withValues(alpha: 0.1)
                                         : Colors.transparent,
                                 headerBuilder: (context, isExpanded) {
                                   return ListTile(
@@ -371,7 +371,7 @@ class GraphBottomSheetContentState extends State<GraphBottomSheetContent> {
                                               color: Colors.blue)
                                           : null,
                                       tileColor: isSelectedSeason
-                                          ? Colors.blue.withOpacity(0.1)
+                                          ? Colors.blue.withValues(alpha: 0.1)
                                           : Colors.transparent,
                                       onTap: () {
                                         setState(() {
@@ -426,7 +426,7 @@ class GraphBottomSheetContentState extends State<GraphBottomSheetContent> {
                                               (math.Random().nextDouble() *
                                                       0xFFFFFF)
                                                   .toInt())
-                                          .withOpacity(1.0),
+                                          .withValues(alpha: 1.0),
                                     });
                                   }
                                 : null,
