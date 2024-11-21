@@ -1,20 +1,14 @@
 import 'dart:async';
 import 'dart:io';
-import 'dart:ui';
 
 import 'package:dio/dio.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:flutter_single_instance/flutter_single_instance.dart';
-// import 'package:fortnite_ranked_tracker/core/tournament_data_provider.dart';
-import 'package:fortnite_ranked_tracker/screens/login_screen.dart';
-import 'package:fortnite_ranked_tracker/screens/no_connection_screen.dart';
 import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
 import 'package:path_provider/path_provider.dart';
-// import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 import 'package:tray_manager/tray_manager.dart';
@@ -23,7 +17,9 @@ import 'package:window_manager/window_manager.dart';
 import 'core/api_service.dart';
 import 'core/avatar_manager.dart';
 import 'firebase_options.dart';
+import 'screens/login_screen.dart';
 import 'screens/main_screen.dart';
+import 'screens/no_connection_screen.dart';
 
 void main() async {
   final talker =
@@ -36,10 +32,6 @@ void main() async {
       await Firebase.initializeApp(
           options: DefaultFirebaseOptions.currentPlatform);
       SharedPreferences prefs = await SharedPreferences.getInstance();
-
-      if (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) {
-        await initializeService();
-      }
 
       if (!kIsWeb &&
           (Platform.isLinux || Platform.isWindows || Platform.isMacOS)) {
@@ -75,45 +67,6 @@ void main() async {
       talker.handle(error, stack, 'Uncaught app exception');
     },
   );
-}
-
-Future<void> initializeService() async {
-  final service = FlutterBackgroundService();
-
-  await service.configure(
-    androidConfiguration: AndroidConfiguration(
-      onStart: onStart,
-      autoStart: true,
-      isForegroundMode: false,
-    ),
-    iosConfiguration: IosConfiguration(
-      autoStart: true,
-      onForeground: onStart,
-    ),
-  );
-}
-
-@pragma('vm:entry-point')
-void onStart(ServiceInstance service) async {
-  DartPluginRegistrant.ensureInitialized();
-
-  if (service is AndroidServiceInstance) {
-    service.on('setAsForeground').listen((event) {
-      service.setAsForegroundService();
-    });
-
-    service.on('setAsBackground').listen((event) {
-      service.setAsBackgroundService();
-    });
-  }
-
-  service.on('stopService').listen((event) {
-    service.stopSelf();
-  });
-
-  Timer.periodic(const Duration(seconds: 1), (timer) async {
-    debugPrint('App successfully running in background: ${DateTime.now()}');
-  });
 }
 
 Future<String> getFilePath() async {
@@ -161,9 +114,6 @@ class _MyAppState extends State<MyApp>
     dio = Dio();
     ApiService().init(widget.talker, dio);
     AvatarManager().initialize("assets/avatar-images");
-    if (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) {
-      FlutterBackgroundService().invoke("setAsForeground");
-    }
 
     trayManager.addListener(this);
     windowManager.addListener(this);
@@ -201,15 +151,6 @@ class _MyAppState extends State<MyApp>
     WidgetsBinding.instance.removeObserver(this);
     subscription.cancel();
     super.dispose();
-  }
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    super.didChangeAppLifecycleState(state);
-
-    if (state == AppLifecycleState.detached) {
-      FlutterBackgroundService().invoke("stopService");
-    }
   }
 
   @override

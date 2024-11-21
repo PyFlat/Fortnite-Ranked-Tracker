@@ -6,9 +6,8 @@ list(APPEND FLUTTER_PLUGIN_LIST
   connectivity_plus
   firebase_auth
   firebase_core
-  screen_retriever
+  screen_retriever_windows
   share_plus
-  sqlite3_flutter_libs
   tray_manager
   url_launcher_windows
   window_manager
