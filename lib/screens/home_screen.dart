@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:fortnite_ranked_tracker/components/home_page_edit_sheet.dart';
 import 'package:fortnite_ranked_tracker/core/avatar_manager.dart';
+import 'package:fortnite_ranked_tracker/core/socket_service.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 
 import '../core/rank_service.dart';
@@ -20,7 +23,6 @@ class HomeScreen extends StatefulWidget {
 class HomeScreenState extends State<HomeScreen>
     with SingleTickerProviderStateMixin {
   final RankService _rankService = RankService();
-  List<Map<String, dynamic>> _previousData = [];
   final List<Color?> _currentCardColors = [];
   final List<double> _currentScales = [];
   final List _rankedModes = [
@@ -32,95 +34,48 @@ class HomeScreenState extends State<HomeScreen>
   ];
   bool _firstIteration = true;
 
-  List<Map<String, dynamic>> data = [];
+  late Future<List<Map<String, dynamic>>> dataFuture;
 
-  late Stream<List<Map<String, dynamic>>> subscriptionStream;
+  List<Map<String, dynamic>> data = [];
 
   List? rankUpdateData;
 
   @override
   void initState() {
     super.initState();
-    subscriptionStream = RankService().subscribeToDB();
-    _rankService.rankUpdates.listen((List? data) {
-      rankUpdateData = data;
-      if (mounted) {
+    dataFuture = _rankService.getDashboardData();
+    _listenToRankUpdates();
+  }
+
+  void _listenToRankUpdates() {
+    _rankService.rankUpdates.listen(
+      (List? data) {
         setState(() {
-          subscriptionStream = RankService().subscribeToDB();
+          rankUpdateData = data;
+          dataFuture = _rankService.getDashboardData();
         });
-      }
-    });
+      },
+      onDone: () => widget.talker.info("Rank updates stream closed."),
+      onError: (e) => widget.talker.error("Error in rank updates stream: $e"),
+    );
   }
 
-  String calculatePercentageDifference(int currentProgress,
-      int previousProgress, String currentRank, String previousRank) {
-    String percentageDifference = "-";
-    if (currentRank == "Unreal") {
-      if (previousRank != "Champion") {
-        percentageDifference = (previousProgress - currentProgress).toString();
-      } else {
-        percentageDifference = "${1700 - previousProgress}%";
-      }
-    } else {
-      percentageDifference = "${currentProgress - previousProgress}%";
-    }
-
-    return percentageDifference;
-  }
-
-  int _hasDataChanged(
-      Map<String, dynamic> newData, Map<String, dynamic> oldData) {
-    int dataChanged = -1;
-    if (newData["DisplayName"] != oldData["DisplayName"]) {
-      return -1;
-    }
-    bool dataChangedBool = newData.toString() != oldData.toString();
-    if (dataChangedBool) {
-      for (final (index, rankMode) in _rankedModes.indexed) {
-        if (newData[rankMode].toString() != oldData[rankMode].toString()) {
-          if (!newData.containsKey(rankMode) ||
-              newData[rankMode]["DailyMatches"] == 0 ||
-              newData[rankMode]["LastProgress"] == "-" ||
-              newData[rankMode]["LastProgress"] == null) {
-            if (oldData.containsKey(rankMode) &&
-                oldData[rankMode]["LastProgress"] == null &&
-                newData.containsKey(rankMode) &&
-                newData[rankMode]["Rank"] != "Unranked") {
-              dataChanged = index;
-              continue;
-            }
-            dataChanged = -1;
-          } else {
-            if (oldData.containsKey(rankMode) &&
-                oldData[rankMode]["Rank"] == "Unranked") {
-              return dataChanged = -2;
-            }
-            dataChanged = index;
-          }
-        }
-      }
-    }
-    return dataChanged;
-  }
-
-  int _getProgressionDifference(
-      Map<String, dynamic> newData, Map<String, dynamic> oldData, String key) {
+  int _getProgressionDifference(Map<String, dynamic> newData) {
     int newProgress1 =
-        int.parse((newData[key]['LastProgress'] as String).replaceAll("%", ""));
+        int.parse((newData['LastProgress'] as String).replaceAll("%", ""));
     return newProgress1;
   }
 
   void _resetCardState(int index) {
     if (index < _currentCardColors.length) {
-      setState(() {
-        _currentCardColors[index] = Colors.white;
-        _currentScales[index] = 1.0;
-      });
+      _currentCardColors[index] = Colors.black26;
+      _currentScales[index] = 1.0;
+      SocketService().addResponse(null);
     }
   }
 
   void _sortCardList() {
-    data.sort((a, b) => a["Position"].compareTo(b["Position"]));
+    data.sort((a, b) => (a["Position"] as int).compareTo(b["Position"]));
   }
 
   void showHomePageEditSheet(
@@ -175,8 +130,8 @@ class HomeScreenState extends State<HomeScreen>
         ),
         body: Padding(
           padding: const EdgeInsets.all(8.0),
-          child: StreamBuilder<List<Map<String, dynamic>>>(
-            stream: subscriptionStream,
+          child: FutureBuilder<List<Map<String, dynamic>>>(
+            future: dataFuture,
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting &&
                   _firstIteration) {
@@ -188,139 +143,148 @@ class HomeScreenState extends State<HomeScreen>
 
                 _sortCardList();
 
-                List<Widget> cards = [];
+                return StreamBuilder(
+                    stream: SocketService().getStream,
+                    builder: (context, socketSnapshot) {
+                      Map incomingData = {};
+                      String updatedField = "";
+                      if (socketSnapshot.data != null) {
+                        incomingData = socketSnapshot.data!;
+                        updatedField = incomingData.keys
+                            .firstWhere((key) => key != "AccountId");
+                      }
 
-                for (int i = 0; i < data.length; i++) {
-                  var item = data[i];
+                      List<Widget> cards = [];
 
-                  int dataChanged = -1;
-                  if (_previousData.isNotEmpty) {
-                    if (i >= _previousData.length) {
-                      dataChanged = -1;
-                    } else {
-                      dataChanged = _hasDataChanged(item, _previousData[i]);
-                    }
-                  }
+                      for (int i = 0; i < data.length; i++) {
+                        var oldItem = Map.from(data[i]);
 
-                  bool hasChanged = dataChanged >= 0;
+                        bool hasChanged =
+                            incomingData["AccountId"] == oldItem["AccountId"];
 
-                  int progressionDifference = hasChanged
-                      ? _getProgressionDifference(
-                          item, _previousData[i], _rankedModes[dataChanged])
-                      : 0;
-                  Color cardColor = Colors.black26;
-                  double cardScale = 1.0;
-                  int index = 0;
+                        int progressionDifference = 0;
+                        if (hasChanged) {
+                          var changedItem = incomingData[updatedField];
+                          data[i][updatedField] = changedItem;
+                          progressionDifference =
+                              _getProgressionDifference(changedItem);
+                        }
 
-                  if (hasChanged) {
-                    if (progressionDifference > 0) {
-                      cardColor = Colors.green.withValues(alpha: 0.75);
-                    } else if (progressionDifference < 0) {
-                      cardColor = Colors.red.withValues(alpha: 0.75);
-                    } else if (progressionDifference == 0) {
-                      cardColor = Colors.yellow.withValues(alpha: 0.75);
-                    }
-                    if (_previousData[i][_rankedModes[dataChanged]] != null &&
-                        _previousData[i][_rankedModes[dataChanged]]["Rank"] ==
-                            "Unranked") {
-                      cardColor = Colors.blue.withValues(alpha: 0.75);
-                    }
-                    cardScale = 1.05;
-                    Future.delayed(
-                        const Duration(seconds: 1, milliseconds: 250),
-                        () => _resetCardState(i));
-                    index = dataChanged;
-                  }
+                        var item = data[i];
 
-                  Map<String, int> rankingTypeToIndex = {
-                    "battleRoyale": 0,
-                    "zeroBuild": 1,
-                    "rocketRacing": 2,
-                    "reload": 3,
-                    "reloadZeroBuild": 4
-                  };
+                        int index = 0;
 
-                  if (rankUpdateData != null &&
-                      item["AccountId"] == rankUpdateData![0]) {
-                    index = rankingTypeToIndex[rankUpdateData![1]]!;
-                  }
+                        if (hasChanged) {
+                          Color cardColor = Colors.black26;
+                          if (progressionDifference > 0) {
+                            cardColor = Colors.green.withValues(alpha: 0.75);
+                          } else if (progressionDifference < 0) {
+                            cardColor = Colors.red.withValues(alpha: 0.75);
+                          } else if (progressionDifference == 0) {
+                            cardColor = Colors.yellow.withValues(alpha: 0.75);
+                          }
+                          if (oldItem[updatedField] != null &&
+                              oldItem[updatedField]["Rank"] == "Unranked") {
+                            cardColor = Colors.blue.withValues(alpha: 0.75);
+                          }
+                          double cardScale = 1.05;
+                          Future.delayed(
+                              const Duration(seconds: 1, milliseconds: 250),
+                              () {
+                            _resetCardState(i);
+                          });
+                          index = _rankedModes.indexOf(updatedField);
+                          _currentCardColors[i] = cardColor;
+                          _currentScales[i] = cardScale;
+                        }
 
-                  if (_currentCardColors.length <= i) {
-                    _currentCardColors.add(Colors.black26);
-                    _currentScales.add(1.0);
-                  }
-                  _currentCardColors[i] = cardColor;
-                  _currentScales[i] = cardScale;
+                        Map<String, int> rankingTypeToIndex = {
+                          "battleRoyale": 0,
+                          "zeroBuild": 1,
+                          "rocketRacing": 2,
+                          "reload": 3,
+                          "reloadZeroBuild": 4
+                        };
 
-                  data[i]["AccountAvatar"] =
-                      AvatarManager().getAvatar(item["AccountId"]);
+                        if (rankUpdateData != null &&
+                            item["AccountId"] == rankUpdateData![0]) {
+                          index = rankingTypeToIndex[rankUpdateData![1]]!;
+                        }
 
-                  if (!item["Visible"]) {
-                    continue;
-                  }
+                        if (_currentCardColors.length <= i) {
+                          _currentCardColors.add(Colors.black26);
+                          _currentScales.add(1.0);
+                        }
 
-                  cards.add(_buildAnimatedCard(item, i, index));
-                }
+                        data[i]["AccountAvatar"] =
+                            AvatarManager().getAvatar(item["AccountId"]);
 
-                _previousData = List.from(data);
+                        if (!item["Visible"]) {
+                          continue;
+                        }
 
-                if (!_firstIteration && cards.isEmpty) {
-                  bool hasData = data.isNotEmpty;
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          hasData
-                              ? Icons.visibility_off
-                              : Icons.dashboard_outlined,
-                          size: 100,
-                          color: Colors.grey,
+                        cards.add(_buildAnimatedCard(item, i, index));
+                      }
+
+                      if (cards.isEmpty) {
+                        bool hasData = data.isNotEmpty;
+                        return Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                hasData
+                                    ? Icons.visibility_off
+                                    : Icons.dashboard_outlined,
+                                size: 100,
+                                color: Colors.grey,
+                              ),
+                              const SizedBox(height: 20),
+                              Text(
+                                hasData
+                                    ? 'All cards are currently hidden'
+                                    : 'Welcome to your Dashboard',
+                                style: const TextStyle(
+                                    fontSize: 20, fontWeight: FontWeight.bold),
+                              ),
+                              const SizedBox(height: 10),
+                              Text(
+                                hasData
+                                    ? 'Toggle visibility to see your data.'
+                                    : 'Here’s how you can get started...',
+                                style: const TextStyle(
+                                    fontSize: 16, color: Colors.grey),
+                                textAlign: TextAlign.center,
+                              ),
+                              const SizedBox(height: 20),
+                              ElevatedButton(
+                                onPressed: () {
+                                  if (hasData) {
+                                    showHomePageEditSheet(context);
+                                  } else {
+                                    //TODO: Link tutorial video and/or Discord Server for help
+                                  }
+                                },
+                                child:
+                                    Text(hasData ? 'Edit Cards' : 'Learn More'),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+
+                      _firstIteration = false;
+
+                      return SingleChildScrollView(
+                        child: Center(
+                          child: Wrap(
+                            spacing: 10.0,
+                            runSpacing: 10.0,
+                            children: cards,
+                          ),
                         ),
-                        const SizedBox(height: 20),
-                        Text(
-                          hasData
-                              ? 'All cards are currently hidden'
-                              : 'Welcome to your Dashboard',
-                          style: const TextStyle(
-                              fontSize: 20, fontWeight: FontWeight.bold),
-                        ),
-                        const SizedBox(height: 10),
-                        Text(
-                          hasData
-                              ? 'Toggle visibility to see your data.'
-                              : 'Here’s how you can get started...',
-                          style:
-                              const TextStyle(fontSize: 16, color: Colors.grey),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 20),
-                        ElevatedButton(
-                          onPressed: () {
-                            if (hasData) {
-                              showHomePageEditSheet(context);
-                            } else {
-                              //TODO: Link tutorial video and/or Discord Server for help
-                            }
-                          },
-                          child: Text(hasData ? 'Edit Cards' : 'Learn More'),
-                        ),
-                      ],
-                    ),
-                  );
-                }
-
-                _firstIteration = false;
-
-                return SingleChildScrollView(
-                  child: Center(
-                    child: Wrap(
-                      spacing: 10.0,
-                      runSpacing: 10.0,
-                      children: cards,
-                    ),
-                  ),
-                );
+                      );
+                    });
               } else {
                 return const Center(child: Text('No data'));
               }

@@ -4,6 +4,7 @@ import 'package:fortnite_ranked_tracker/screens/database_screen.dart';
 import 'package:fortnite_ranked_tracker/screens/graph_screen.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 import '../core/rank_service.dart';
+import '../core/socket_service.dart';
 import '../screens/home_screen.dart';
 import 'package:flutter/material.dart';
 
@@ -28,21 +29,20 @@ class MainScreenState extends State<MainScreen> {
   final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
   int _selectedIndex = 0;
   Future<void>? _initializationFuture;
-
-  List<Widget> get _widgetOptions {
-    return <Widget>[
-      HomeScreen(talker: widget.talker),
-    ];
-  }
+  List<Widget> _widgetOptions = [];
 
   @override
   void initState() {
     super.initState();
     _initializationFuture = _initializeRankService();
+    _widgetOptions = [
+      HomeScreen(talker: widget.talker),
+    ];
   }
 
   Future<void> _initializeRankService() async {
     await RankService().init(widget.talker);
+    SocketService().connectToSocket();
   }
 
   void _onItemTapped(int index) {

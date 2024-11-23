@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_single_instance/flutter_single_instance.dart';
 import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 import 'package:tray_manager/tray_manager.dart';
@@ -223,23 +224,31 @@ class FirebaseAuthCheck extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<User?>(
-      stream: FirebaseAuth.instance.authStateChanges(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Scaffold(
-              body: Center(child: CircularProgressIndicator()));
-        } else if (snapshot.hasData) {
-          return MainScreen(
-            talker: talker,
-            dio: dio,
-          );
-        } else {
-          return LoginPage(
-            dio: dio,
-          );
-        }
-      },
+    return StreamProvider<User?>(
+      create: (_) => FirebaseAuth.instance.authStateChanges(),
+      initialData: null,
+      child: AuthWrapper(
+        talker: talker,
+        dio: dio,
+      ),
     );
+  }
+}
+
+class AuthWrapper extends StatelessWidget {
+  const AuthWrapper({super.key, required this.talker, required this.dio});
+
+  final Talker talker;
+  final Dio dio;
+
+  @override
+  Widget build(BuildContext context) {
+    final user = Provider.of<User?>(context);
+
+    if (user == null) {
+      return LoginPage(dio: dio);
+    } else {
+      return MainScreen(talker: talker, dio: dio);
+    }
   }
 }

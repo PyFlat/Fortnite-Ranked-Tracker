@@ -9,6 +9,8 @@ class Endpoints {
 
   static const subscribe = "$baseUrl/api/ranked/subscribe";
 
+  static const dashboardData = "$baseUrl/api/ranked/dashboard-data";
+
   static const playerTracking = "$baseUrl/api/database/player-tracking";
 
   static const playerExisting = "$baseUrl/api/database/player-existing";
