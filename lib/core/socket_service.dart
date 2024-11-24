@@ -12,7 +12,6 @@ class SocketService {
   Socket? _socket;
   static bool _isInitialized = false;
 
-  // Use broadcast for multiple listeners.
   final _socketResponse = StreamController<Map?>.broadcast();
 
   void Function(Map?) get addResponse => _socketResponse.sink.add;
@@ -56,6 +55,14 @@ class SocketService {
     _socket!.on('rankedProgress', (data) {
       addResponse(data);
     });
+
+    _socket!.on('dataChanged', (_) {
+      RankService().emitDataRefresh();
+    });
+  }
+
+  void sendDataChanged() {
+    _socket!.emit('refreshPage', "");
   }
 
   void dispose() {

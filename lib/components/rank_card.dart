@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:percent_indicator/circular_percent_indicator.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 import '../core/rank_service.dart';
+import '../core/socket_service.dart';
 import 'account_details_dialog.dart';
 import 'user_popup_menu.dart';
 
@@ -163,6 +164,7 @@ class RankCardState extends State<RankCard>
   Future<void> _updatePlayerTracking(bool value, String rankingType) async {
     await RankService()
         .setPlayerTracking(rankingType, value, widget.accountId!);
+    SocketService().sendDataChanged();
     RankService().emitDataRefresh(data: [widget.accountId!, rankingType]);
   }
 

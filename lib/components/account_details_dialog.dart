@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_svg/svg.dart';
 
 import '../core/rank_service.dart';
+import '../core/socket_service.dart';
 import 'search_card.dart';
 
 class AccountDetailsDialog extends StatefulWidget {
@@ -172,6 +173,7 @@ class _AccountDetailsDialogState extends State<AccountDetailsDialog> {
       actions: [
         TextButton(
           onPressed: () {
+            SocketService().sendDataChanged();
             RankService().emitDataRefresh();
             Navigator.of(context).pop();
           },
