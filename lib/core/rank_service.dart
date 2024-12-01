@@ -129,7 +129,7 @@ class RankService {
   }
 
   Future<String> _fetchCurrentSeason() async {
-    return "chapter_5_season_5";
+    return "chapter_6_season_1";
     //TODO The old endpoint is now deprecated and until we find a new one to get the current season the season is just hardcoded
   }
 
