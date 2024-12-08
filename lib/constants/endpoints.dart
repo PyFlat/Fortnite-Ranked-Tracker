@@ -1,5 +1,5 @@
 class Endpoints {
-  static const baseUrl = "http://192.168.2.157:3000";
+  static const baseUrl = "http://localhost:3000";
 
   static const afterRegister = "$baseUrl/auth/register";
 
@@ -24,4 +24,10 @@ class Endpoints {
   static const trackedSeasons = "$baseUrl/api/database/tracked-seasons";
 
   static const getSeason = "$baseUrl/api/database/season";
+
+  static const eventInfo = "$baseUrl/api/tournaments/eventInfo";
+
+  static const eventLeaderboard = "$baseUrl/api/tournaments/eventLeaderboard";
+
+  static const eventEntryInfo = "$baseUrl/api/tournaments/eventEntryInfo";
 }

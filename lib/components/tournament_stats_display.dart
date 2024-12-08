@@ -1,52 +1,88 @@
 import 'package:flutter/material.dart';
+import 'package:fortnite_ranked_tracker/core/rank_service.dart';
 import 'package:intl/intl.dart';
 
-class StatsDisplay extends StatelessWidget {
+class StatsDisplay extends StatefulWidget {
   final Map<String, dynamic> entry;
-  final List scoringRules;
   final Function(String, String) openUser;
+  final Map<String, dynamic> eventWindow;
 
   const StatsDisplay(
       {super.key,
       required this.entry,
-      required this.scoringRules,
+      required this.eventWindow,
       required this.openUser});
 
   @override
-  Widget build(BuildContext context) {
-    final sessionHistory = entry["sessionHistory"] as List;
+  State<StatsDisplay> createState() => _StatsDisplayState();
+}
 
-    return Expanded(
-      child: SingleChildScrollView(
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(child: _buildGeneralStats()),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
+class _StatsDisplayState extends State<StatsDisplay> {
+  Future<Map<String, dynamic>>? _initializationFuture;
+
+  @override
+  void initState() {
+    _initializationFuture = getLeaderboardEntryInfo();
+    super.initState();
+  }
+
+  Future<Map<String, dynamic>> getLeaderboardEntryInfo() async {
+    final data = await RankService().getLeadeboardEntryInfo(
+        widget.entry["rank"],
+        widget.eventWindow["eventId"],
+        widget.eventWindow["windowId"]);
+
+    return data;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder(
+      future: _initializationFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        } else if (snapshot.hasError) {
+          return Center(child: Text('Error: ${snapshot.error}'));
+        } else if (snapshot.hasData) {
+          final data = snapshot.data;
+          final sessionHistory = data!["sessions"] as List;
+          return Expanded(
+            child: SingleChildScrollView(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  ListView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: sessionHistory.length,
-                    itemBuilder: (context, index) {
-                      final round = sessionHistory[index];
-                      return _buildRoundCard(round, index + 1);
-                    },
+                  Expanded(child: _buildGeneralStats(data)),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      children: [
+                        ListView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: sessionHistory.length,
+                          itemBuilder: (context, index) {
+                            final round = sessionHistory[index];
+                            return _buildRoundCard(round, index + 1);
+                          },
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
             ),
-          ],
-        ),
-      ),
+          );
+        } else {
+          return SizedBox.shrink();
+        }
+      },
     );
   }
 
-  Widget _buildGeneralStats() {
+  Widget _buildGeneralStats(data) {
     Map<String, dynamic> teamAccounts =
-        Map<String, dynamic>.from(entry["teamAccounts"]);
+        Map<String, dynamic>.from(data["accounts"]);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -82,65 +118,63 @@ class StatsDisplay extends StatelessWidget {
                 icon: const Icon(Icons.open_in_new_rounded,
                     color: Colors.deepPurple),
                 onPressed: () {
-                  openUser(name, accountId);
+                  widget.openUser(name, accountId);
                 },
               ),
               onTap: () {
-                openUser(name, accountId);
+                widget.openUser(name, accountId);
               },
             ),
           );
         }),
         const Divider(),
         _buildStatRow(
-          text: 'Wins: ${_getSessionHistoryStat("VICTORY_ROYALE_STAT", entry)}',
+          text: 'Wins: ${widget.entry["victorys"]}',
           icon: Icons.emoji_events_rounded,
           iconColor: Colors.amber,
         ),
         _buildStatRow(
-          text: 'Rounds Played: ${(entry["sessionHistory"] as List).length}',
+          text: 'Rounds Played: ${widget.entry["matches"]}',
           icon: Icons.loop_rounded,
         ),
         _buildStatRow(
-          text:
-              'Kills Made: ${_getSessionHistoryStat("TEAM_ELIMS_STAT_INDEX", entry)}',
+          text: 'Kills Made: ${widget.entry["elims"]}',
           icon: Icons.clear,
           iconColor: Colors.redAccent,
         ),
         _buildStatRow(
           text:
-              'Avg Kills: ${(_getSessionHistoryStat("TEAM_ELIMS_STAT_INDEX", entry) / (entry["sessionHistory"] as List).length).toStringAsFixed(2)}',
+              'Avg Kills: ${(int.parse(widget.entry["elims"]) / int.parse(widget.entry["matches"])).toStringAsFixed(2)}',
           icon: Icons.hide_source_rounded,
         ),
         _buildStatRow(
           text:
-              'Avg Time Alive: ${formatDuration((_getSessionHistoryStat("TIME_ALIVE_STAT", entry) / (entry["sessionHistory"] as List).length))}',
+              'Avg Time Alive: ${formatDuration((_getSessionHistoryStat("TIME_ALIVE_STAT", data) / int.parse(widget.entry["matches"])))}',
           icon: Icons.hourglass_top_rounded,
         ),
         _buildStatRow(
           text:
-              'Avg Points: ${(entry["pointsEarned"] / (entry["sessionHistory"] as List).length).toStringAsFixed(2)}',
+              'Avg Points: ${(widget.entry["points"] / int.parse(widget.entry["matches"])).toStringAsFixed(2)}',
           icon: Icons.hotel_class_rounded,
         ),
         _buildStatRow(
           text:
-              'Avg Place: ${(_getSessionHistoryStat("PLACEMENT_STAT_INDEX", entry) / (entry["sessionHistory"] as List).length).toStringAsFixed(2)}',
+              'Avg Place: ${(_getSessionHistoryStat("PLACEMENT_STAT_INDEX", data) / int.parse(widget.entry["matches"])).toStringAsFixed(2)}',
           icon: Icons.leaderboard_rounded,
         ),
       ],
     );
   }
 
-  Widget _buildRoundCard(Map<String, dynamic> round, int roundNumber) {
+  Widget _buildRoundCard(Map<String, dynamic> session, int roundNumber) {
     final String placement =
-        '${round["trackedStats"]["PLACEMENT_STAT_INDEX"] ?? "N/A"}. Place';
-    final int elims = round["trackedStats"]["TEAM_ELIMS_STAT_INDEX"] ?? 0;
-    final String timeAlive =
-        formatDuration(round["trackedStats"]["TIME_ALIVE_STAT"]);
-    final int pointsEarned =
-        calculatePoints(scoringRules, round["trackedStats"]);
+        '${session["PLACEMENT_STAT_INDEX"] ?? "N/A"}. Place';
+    final int elims = session["TEAM_ELIMS_STAT_INDEX"] ?? 0;
+    final String timeAlive = formatDuration(session["TIME_ALIVE_STAT"]);
+    // final int pointsEarned =
+    //     calculatePoints(scoringRules, round["trackedStats"]);
     final String date =
-        "${DateFormat(DateFormat.YEAR_ABBR_MONTH_WEEKDAY_DAY).format(DateTime.parse(round["endTime"]))} ${DateFormat(DateFormat.HOUR24_MINUTE).format(DateTime.parse(round["endTime"]))}";
+        "${DateFormat(DateFormat.YEAR_ABBR_MONTH_WEEKDAY_DAY).format(DateTime.parse(session["endTime"]))} ${DateFormat(DateFormat.HOUR24_MINUTE).format(DateTime.parse(session["endTime"]))}";
 
     return Card(
       color: const Color(0xFF2C2F33),
@@ -217,7 +251,7 @@ class StatsDisplay extends StatelessWidget {
                   width: 8,
                 ),
                 Text(
-                  '$pointsEarned pts',
+                  '??? pts',
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
@@ -304,8 +338,8 @@ class StatsDisplay extends StatelessWidget {
   }
 
   int _getSessionHistoryStat(String key, Map<String, dynamic> entry) {
-    final total = (entry["sessionHistory"] as List)
-        .map((element) => element["trackedStats"][key] as int)
+    final total = (entry["sessions"] as List)
+        .map((element) => element[key] as int)
         .reduce((a, b) => a + b);
     return total;
   }

@@ -50,10 +50,12 @@ class HomeScreenState extends State<HomeScreen>
   void _listenToRankUpdates() {
     _rankService.rankUpdates.listen(
       (List? data) {
-        setState(() {
-          rankUpdateData = data;
-          dataFuture = _rankService.getDashboardData();
-        });
+        if (mounted) {
+          setState(() {
+            rankUpdateData = data;
+            dataFuture = _rankService.getDashboardData();
+          });
+        }
       },
       onDone: () => widget.talker.info("Rank updates stream closed."),
       onError: (e) => widget.talker.error("Error in rank updates stream: $e"),

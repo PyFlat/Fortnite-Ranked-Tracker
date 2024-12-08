@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:archive/archive.dart';
+import 'package:dio/dio.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fortnite_ranked_tracker/core/avatar_manager.dart';
 import 'package:talker_flutter/talker_flutter.dart';
@@ -180,5 +182,47 @@ class RankService {
 
   void emitDataRefresh({List? data}) {
     _rankUpdateController.sink.add(data);
+  }
+
+  Future<List<Map<String, dynamic>>> fetchEvents() async {
+    final List tournaments =
+        await ApiService().getData(Endpoints.eventInfo, "");
+
+    return tournaments.cast();
+  }
+
+  Future<List<Map<String, dynamic>>> getEventLeaderboard(
+      String eventId, String windowId) async {
+    try {
+      final List<int> leaderboardResponse = await ApiService().getData(
+          Endpoints.eventLeaderboard, "",
+          queryParams: {"eventId": eventId, "windowId": windowId},
+          responseType: ResponseType.bytes);
+
+      final List<int> decodedData =
+          BZip2Decoder().decodeBytes(leaderboardResponse);
+
+      final String decodedString = utf8.decode(decodedData);
+      final List<dynamic> jsonResponse = json.decode(decodedString);
+
+      return jsonResponse
+          .map<Map<String, dynamic>>((item) => item as Map<String, dynamic>)
+          .toList();
+    } catch (e) {
+      print('Error while getting event leaderboard: $e');
+      return [];
+    }
+  }
+
+  Future<Map<String, dynamic>> getLeadeboardEntryInfo(
+      int rank, String eventId, String windowId) async {
+    final Map<String, dynamic> response = await ApiService().getData(
+        Endpoints.eventEntryInfo, "", queryParams: {
+      "rank": rank.toString(),
+      "eventId": eventId,
+      "windowId": windowId
+    });
+
+    return response;
   }
 }

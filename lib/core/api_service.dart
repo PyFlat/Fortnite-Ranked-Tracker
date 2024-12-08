@@ -89,7 +89,8 @@ class ApiService {
 
   Future<dynamic> getData(String url, String headerAuthorization,
       {Map<String, String> pathParams = const {},
-      Map<String, dynamic> queryParams = const {}}) async {
+      Map<String, dynamic> queryParams = const {},
+      ResponseType responseType = ResponseType.json}) async {
     String urlEnd = pathParams.isEmpty ? url : addPathParams(url, pathParams);
     Response response;
     try {
@@ -98,7 +99,7 @@ class ApiService {
         uri,
         options: Options(
             headers: {"Authorization": headerAuthorization},
-            responseType: ResponseType.json),
+            responseType: responseType),
       );
       return response.data;
     } on DioException catch (e) {

@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:fortnite_ranked_tracker/core/avatar_manager.dart';
 import 'package:fortnite_ranked_tracker/screens/database_screen.dart';
 import 'package:fortnite_ranked_tracker/screens/graph_screen.dart';
+import 'package:fortnite_ranked_tracker/screens/tournament_screen.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 import '../core/rank_service.dart';
 import '../core/socket_service.dart';
@@ -37,6 +38,7 @@ class MainScreenState extends State<MainScreen> {
     _initializationFuture = _initializeRankService();
     _widgetOptions = [
       HomeScreen(talker: widget.talker),
+      TournamentScreen(talker: widget.talker)
     ];
   }
 

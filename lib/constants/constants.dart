@@ -31,8 +31,8 @@ class Constants {
   static const Map<String, String> regions = {
     "EU": "Europe",
     "NAC": "NA Central",
-    "NAE": "NA EAST",
-    "NAW": "NA WEST",
+    "NAE": "NA East",
+    "NAW": "NA West",
     "OCE": "Oceania",
     "ASIA": "Asia",
     "ME": "Middle East",

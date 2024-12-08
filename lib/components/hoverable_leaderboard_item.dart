@@ -83,23 +83,18 @@ class HoverableLeaderboardItemState extends State<HoverableLeaderboardItem> {
       spacing: 8.0,
       runSpacing: 4.0,
       children: [
-        _buildStatChip('Points', entry["pointsEarned"],
+        _buildStatChip('Points', entry["points"],
             const Icon(Icons.star_rounded, color: Colors.amber)),
-        _buildStatChip('Rounds', (entry["sessionHistory"] as List).length,
-            const Icon(Icons.loop_rounded)),
+        _buildStatChip(
+            'Rounds', entry["matches"], const Icon(Icons.loop_rounded)),
         _buildStatChip(
           'Wins',
-          (entry["sessionHistory"] as List)
-              .map((element) => element["trackedStats"]["VICTORY_ROYALE_STAT"])
-              .reduce((a, b) => a + b),
+          entry["victorys"],
           const Icon(Icons.emoji_events_rounded, color: Colors.amber),
         ),
         _buildStatChip(
             "Kills",
-            (entry["sessionHistory"] as List)
-                .map((element) =>
-                    element["trackedStats"]["TEAM_ELIMS_STAT_INDEX"])
-                .reduce((a, b) => a + b),
+            entry["elims"],
             const Icon(
               Icons.close_rounded,
               color: Colors.redAccent,
@@ -164,8 +159,7 @@ class HoverableLeaderboardItemState extends State<HoverableLeaderboardItem> {
     return Wrap(
       spacing: 8.0,
       runSpacing: 4.0,
-      children: (entry["teamAccounts"] as Map)
-          .values
+      children: (entry["accounts"] as List)
           .map((displayName) => _buildPillTag(displayName))
           .toList(),
     );

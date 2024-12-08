@@ -50,23 +50,31 @@ class _AccountDetailsDialogState extends State<AccountDetailsDialog> {
   }
 
   Future<Map<String, dynamic>> _getAllDisplayNames() async {
-    Map<String, dynamic> accountMap = (await RankService().searchByQuery(
-            widget.accountId,
-            onlyAccountId: true,
-            returnAll: true))
-        .first;
-    Set<String> seenDisplayNames = {};
+    try {
+      Map<String, dynamic> accountMap = (await RankService().searchByQuery(
+              widget.accountId,
+              onlyAccountId: true,
+              returnAll: true))
+          .first;
 
-    accountMap.removeWhere((key, value) {
-      String displayName = value['displayName']!;
-      if (seenDisplayNames.contains(displayName)) {
-        return true;
-      } else {
-        seenDisplayNames.add(displayName);
-        return false;
-      }
-    });
-    return accountMap;
+      Set seenDisplayNames = {};
+
+      accountMap.removeWhere((key, value) {
+        if (key == "accountId") return true;
+        String displayName = value['displayName']!;
+        if (seenDisplayNames.contains(displayName)) {
+          return true;
+        } else {
+          seenDisplayNames.add(displayName);
+          return false;
+        }
+      });
+      return accountMap;
+    } catch (error) {
+      print(error);
+
+      return {};
+    }
   }
 
   void _updateNickName() async {
@@ -117,6 +125,9 @@ class _AccountDetailsDialogState extends State<AccountDetailsDialog> {
                   ),
                 ],
               );
+            }
+            if (snapshot.hasError) {
+              print(snapshot.error);
             }
             if (snapshot.hasData) {
               return Column(
