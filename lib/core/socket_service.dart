@@ -5,6 +5,7 @@ import 'package:socket_io_client/socket_io_client.dart';
 
 import '../constants/endpoints.dart';
 import 'rank_service.dart';
+import 'talker_service.dart';
 
 class StreamSocket {}
 
@@ -45,11 +46,11 @@ class SocketService {
     _socket = io(Endpoints.baseUrl, optionBuilder.build());
 
     _socket!.onConnect((_) {
-      print("Connected to the server");
+      talker.info("Connected to the server");
     });
 
     _socket!.onError((error) {
-      print("Socket error: $error");
+      talker.error("Socket error: $error");
     });
 
     _socket!.on('rankedProgress', (data) {

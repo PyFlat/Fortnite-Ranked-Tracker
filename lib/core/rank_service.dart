@@ -4,34 +4,22 @@ import 'package:archive/archive.dart';
 import 'package:dio/dio.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fortnite_ranked_tracker/core/avatar_manager.dart';
-import 'package:talker_flutter/talker_flutter.dart';
 
 import '../constants/constants.dart';
 import '../constants/endpoints.dart';
 import '../core/api_service.dart';
+import 'talker_service.dart';
 
 class RankService {
-  bool _isInitialized = false;
-
   final _rankUpdateController = StreamController<List?>.broadcast();
 
   Stream<List?> get rankUpdates => _rankUpdateController.stream;
-
-  late Talker talker;
 
   RankService._();
 
   static final RankService _instance = RankService._();
 
   factory RankService() => _instance;
-
-  Future<void> init(Talker talker) async {
-    if (!_isInitialized) {
-      this.talker = talker;
-
-      _isInitialized = true;
-    }
-  }
 
   Future<String> getBasicAuthHeader() async {
     try {
@@ -209,7 +197,7 @@ class RankService {
           .map<Map<String, dynamic>>((item) => item as Map<String, dynamic>)
           .toList();
     } catch (e) {
-      print('Error while getting event leaderboard: $e');
+      talker.error('Error while getting event leaderboard: $e');
       return [];
     }
   }

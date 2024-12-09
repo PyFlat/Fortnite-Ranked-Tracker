@@ -1,24 +1,22 @@
 import 'package:dio/dio.dart';
-import 'package:fortnite_ranked_tracker/core/avatar_manager.dart';
-import 'package:fortnite_ranked_tracker/screens/database_screen.dart';
-import 'package:fortnite_ranked_tracker/screens/graph_screen.dart';
-import 'package:fortnite_ranked_tracker/screens/tournament_screen.dart';
 import 'package:talker_flutter/talker_flutter.dart';
+import '../core/avatar_manager.dart';
 import '../core/rank_service.dart';
 import '../core/socket_service.dart';
-import '../screens/home_screen.dart';
+import '../core/talker_service.dart';
 import 'package:flutter/material.dart';
 
+import 'database_screen.dart';
+import 'graph_screen.dart';
+import 'home_screen.dart';
 import 'settings_screen.dart';
-// import 'tournament_screen.dart';
+import 'tournament_screen.dart';
 
 class MainScreen extends StatefulWidget {
-  final Talker talker;
   final Dio dio;
 
   const MainScreen({
     super.key,
-    required this.talker,
     required this.dio,
   });
 
@@ -36,14 +34,10 @@ class MainScreenState extends State<MainScreen> {
   void initState() {
     super.initState();
     _initializationFuture = _initializeRankService();
-    _widgetOptions = [
-      HomeScreen(talker: widget.talker),
-      TournamentScreen(talker: widget.talker)
-    ];
+    _widgetOptions = [HomeScreen(), TournamentScreen()];
   }
 
   Future<void> _initializeRankService() async {
-    await RankService().init(widget.talker);
     SocketService().connectToSocket();
   }
 
@@ -57,7 +51,7 @@ class MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     return TalkerWrapper(
-      talker: widget.talker,
+      talker: talker,
       options: const TalkerWrapperOptions(
         enableErrorAlerts: true,
         enableExceptionAlerts: true,
@@ -175,16 +169,14 @@ class MainScreenState extends State<MainScreen> {
                         icon: const Icon(Icons.storage_rounded,
                             color: Colors.blueGrey),
                         accountsFuture: RankService().getAccountsWithSeasons(),
-                        scaffoldKey: scaffoldKey,
-                        talker: widget.talker),
+                        scaffoldKey: scaffoldKey),
                     AccountListTile(
                         name: 'Graph',
                         icon: const Icon(Icons.trending_up_rounded,
                             color: Colors.blueGrey),
                         accountsFuture:
                             RankService().getAccountsWithSeasons(limit: 6),
-                        scaffoldKey: scaffoldKey,
-                        talker: widget.talker),
+                        scaffoldKey: scaffoldKey),
                     ListTile(
                       leading: const Icon(
                         Icons.emoji_events_rounded,
@@ -205,8 +197,7 @@ class MainScreenState extends State<MainScreen> {
                   Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (context) =>
-                              TalkerScreen(talker: widget.talker)));
+                          builder: (context) => TalkerScreen(talker: talker)));
                 },
               ),
               ListTile(
@@ -233,15 +224,13 @@ class AccountListTile extends StatelessWidget {
   final Future<List<Map<String, dynamic>>> accountsFuture;
   final SearchController searchController = SearchController();
   final GlobalKey<ScaffoldState> scaffoldKey;
-  final Talker talker;
 
   AccountListTile(
       {super.key,
       required this.name,
       required this.icon,
       required this.accountsFuture,
-      required this.scaffoldKey,
-      required this.talker});
+      required this.scaffoldKey});
 
   List<Map<String, dynamic>> _filterAccounts(
       String query, List<Map<String, dynamic>> accounts) {
@@ -306,8 +295,7 @@ class AccountListTile extends StatelessWidget {
                       Navigator.push(
                           context,
                           MaterialPageRoute(
-                              builder: (context) =>
-                                  GraphScreen(talker: talker)));
+                              builder: (context) => GraphScreen()));
                     },
                     leading: CircleAvatar(
                       backgroundImage:
@@ -331,7 +319,6 @@ class AccountListTile extends StatelessWidget {
                                 ? DatabaseScreen(account: account)
                                 : GraphScreen(
                                     account: account,
-                                    talker: talker,
                                   );
                           }),
                         );

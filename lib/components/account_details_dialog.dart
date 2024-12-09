@@ -4,6 +4,7 @@ import 'package:flutter_svg/svg.dart';
 
 import '../core/rank_service.dart';
 import '../core/socket_service.dart';
+import '../core/talker_service.dart';
 import 'search_card.dart';
 
 class AccountDetailsDialog extends StatefulWidget {
@@ -71,7 +72,7 @@ class _AccountDetailsDialogState extends State<AccountDetailsDialog> {
       });
       return accountMap;
     } catch (error) {
-      print(error);
+      talker.error(error);
 
       return {};
     }
@@ -127,7 +128,7 @@ class _AccountDetailsDialogState extends State<AccountDetailsDialog> {
               );
             }
             if (snapshot.hasError) {
-              print(snapshot.error);
+              talker.error(snapshot.error);
             }
             if (snapshot.hasData) {
               return Column(

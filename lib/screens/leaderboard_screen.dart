@@ -5,16 +5,12 @@ import 'package:fortnite_ranked_tracker/constants/constants.dart';
 import 'package:fortnite_ranked_tracker/components/tournament_stats_display.dart';
 import 'package:fortnite_ranked_tracker/core/rank_service.dart';
 import 'package:fortnite_ranked_tracker/core/utils.dart';
-import 'package:talker_flutter/talker_flutter.dart';
 
 import '../components/hoverable_leaderboard_item.dart';
 import 'search_screen.dart';
 
 class LeaderboardScreen extends StatefulWidget {
-  const LeaderboardScreen(
-      {super.key, required this.talker, required this.tournamentWindow});
-
-  final Talker talker;
+  const LeaderboardScreen({super.key, required this.tournamentWindow});
 
   final Map<String, dynamic> tournamentWindow;
 
@@ -77,7 +73,6 @@ class LeaderboardScreenState extends State<LeaderboardScreen> {
           builder: (context) => SearchScreen(
                 accountId: accountId,
                 displayName: displayName,
-                talker: widget.talker,
               )),
     );
   }

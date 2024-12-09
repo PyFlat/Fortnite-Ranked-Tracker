@@ -5,16 +5,13 @@ import 'package:flutter/material.dart';
 import 'package:fortnite_ranked_tracker/constants/constants.dart';
 import 'package:fortnite_ranked_tracker/screens/leaderboard_screen.dart';
 import 'package:intl/intl.dart';
-import 'package:talker_flutter/talker_flutter.dart';
 
 import 'hoverable_region_item.dart';
 
 class TournamentInfoContainer extends StatefulWidget {
   final Map<String, dynamic> item;
-  final Talker talker;
 
-  const TournamentInfoContainer(
-      {super.key, required this.talker, required this.item});
+  const TournamentInfoContainer({super.key, required this.item});
 
   @override
   TournamentInfoContainerState createState() => TournamentInfoContainerState();
@@ -219,7 +216,6 @@ class TournamentInfoContainerState extends State<TournamentInfoContainer> {
         Navigator.of(context).push(
           MaterialPageRoute(
             builder: (context) => LeaderboardScreen(
-              talker: widget.talker,
               tournamentWindow: selectedTemplate,
             ),
           ),

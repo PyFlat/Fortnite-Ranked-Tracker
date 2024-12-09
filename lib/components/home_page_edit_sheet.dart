@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fortnite_ranked_tracker/components/user_popup_menu.dart';
 import 'package:fortnite_ranked_tracker/core/socket_service.dart';
-import 'package:talker_flutter/talker_flutter.dart';
 
 import '../core/rank_service.dart';
 
@@ -350,7 +349,6 @@ class HomePageEditSheetState extends State<HomePageEditSheet> {
                           displayName: item["DisplayName"],
                           accountId: item["AccountId"],
                           nickName: item["NickName"],
-                          talker: Talker(),
                           nickNameChanged: _nickNameChanged),
                       const SizedBox(width: 8),
                       ReorderableDragStartListener(

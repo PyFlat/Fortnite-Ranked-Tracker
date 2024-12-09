@@ -17,14 +17,13 @@ import 'package:window_manager/window_manager.dart';
 
 import 'core/api_service.dart';
 import 'core/avatar_manager.dart';
+import 'core/talker_service.dart';
 import 'firebase_options.dart';
 import 'screens/login_screen.dart';
 import 'screens/main_screen.dart';
 import 'screens/no_connection_screen.dart';
 
 void main() async {
-  final talker =
-      TalkerFlutter.init(settings: TalkerSettings(useConsoleLogs: false));
   talker.verbose("Talker initialization completed");
 
   await runZonedGuarded(
@@ -62,7 +61,7 @@ void main() async {
           await windowManager.focus();
         });
       }
-      runApp(MyApp(talker: talker));
+      runApp(MyApp());
     },
     (Object error, StackTrace stack) {
       talker.handle(error, stack, 'Uncaught app exception');
@@ -94,9 +93,7 @@ Future<bool> getShowInstance() async {
 }
 
 class MyApp extends StatefulWidget {
-  const MyApp({super.key, required this.talker});
-
-  final Talker talker;
+  const MyApp({super.key});
 
   @override
   State<MyApp> createState() => _MyAppState();
@@ -113,7 +110,7 @@ class _MyAppState extends State<MyApp>
   @override
   void initState() {
     dio = Dio();
-    ApiService().init(widget.talker, dio);
+    ApiService().init(dio);
     AvatarManager().initialize("assets/avatar-images");
 
     trayManager.addListener(this);
@@ -201,7 +198,7 @@ class _MyAppState extends State<MyApp>
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      navigatorObservers: [TalkerRouteObserver(widget.talker)],
+      navigatorObservers: [TalkerRouteObserver(talker)],
       theme: ThemeData.dark(),
       debugShowCheckedModeBanner: false,
       title: 'Fortnite Ranked Tracker',
@@ -209,7 +206,6 @@ class _MyAppState extends State<MyApp>
           child: _isOffline
               ? const NoConnectionScreen()
               : FirebaseAuthCheck(
-                  talker: widget.talker,
                   dio: dio,
                 )),
     );
@@ -217,9 +213,8 @@ class _MyAppState extends State<MyApp>
 }
 
 class FirebaseAuthCheck extends StatelessWidget {
-  const FirebaseAuthCheck({super.key, required this.talker, required this.dio});
+  const FirebaseAuthCheck({super.key, required this.dio});
 
-  final Talker talker;
   final Dio dio;
 
   @override
@@ -228,7 +223,6 @@ class FirebaseAuthCheck extends StatelessWidget {
       create: (_) => FirebaseAuth.instance.authStateChanges(),
       initialData: null,
       child: AuthWrapper(
-        talker: talker,
         dio: dio,
       ),
     );
@@ -236,9 +230,8 @@ class FirebaseAuthCheck extends StatelessWidget {
 }
 
 class AuthWrapper extends StatelessWidget {
-  const AuthWrapper({super.key, required this.talker, required this.dio});
+  const AuthWrapper({super.key, required this.dio});
 
-  final Talker talker;
   final Dio dio;
 
   @override
@@ -248,7 +241,7 @@ class AuthWrapper extends StatelessWidget {
     if (user == null) {
       return LoginPage(dio: dio);
     } else {
-      return MainScreen(talker: talker, dio: dio);
+      return MainScreen(dio: dio);
     }
   }
 }

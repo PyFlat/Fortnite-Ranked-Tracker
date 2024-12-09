@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:talker_flutter/talker_flutter.dart';
 
 import '../screens/database_screen.dart';
 import '../screens/graph_screen.dart';
@@ -10,7 +9,6 @@ class UserPopupMenu extends StatelessWidget {
   final String displayName;
   final String accountId;
   final String? nickName;
-  final Talker talker;
   final Function(String accountId, String newNickName)? nickNameChanged;
   const UserPopupMenu(
       {super.key,
@@ -18,7 +16,6 @@ class UserPopupMenu extends StatelessWidget {
       required this.displayName,
       required this.accountId,
       required this.nickName,
-      required this.talker,
       this.nickNameChanged});
 
   final BuildContext context;
@@ -39,7 +36,6 @@ class UserPopupMenu extends StatelessWidget {
                 builder: (context) => SearchScreen(
                       accountId: accountId,
                       displayName: displayName,
-                      talker: talker,
                     )),
           );
         } else if (value == "open_database") {
@@ -59,7 +55,6 @@ class UserPopupMenu extends StatelessWidget {
                           "displayName": displayName,
                           "accountId": accountId
                         },
-                        talker: talker,
                       )));
         }
       },

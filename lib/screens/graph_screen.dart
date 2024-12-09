@@ -7,16 +7,16 @@ import 'package:fortnite_ranked_tracker/constants/constants.dart';
 import 'package:fortnite_ranked_tracker/core/rank_service.dart';
 import 'package:fortnite_ranked_tracker/core/utils.dart';
 import 'package:syncfusion_flutter_sliders/sliders.dart';
-import 'package:talker_flutter/talker_flutter.dart';
 
 import '../components/graph_bottom_sheet.dart';
 import 'dart:math' as math;
 
+import '../core/talker_service.dart';
+
 class GraphScreen extends StatefulWidget {
   final Map<String, dynamic>? account;
-  final Talker talker;
 
-  const GraphScreen({super.key, this.account, required this.talker});
+  const GraphScreen({super.key, this.account});
   @override
   State<GraphScreen> createState() => _GraphScreenState();
 }
@@ -276,7 +276,7 @@ class _GraphScreenState extends State<GraphScreen> {
                       if (snapshot.connectionState == ConnectionState.waiting) {
                         return const CircularProgressIndicator();
                       } else if (snapshot.hasError) {
-                        widget.talker.error(snapshot.error);
+                        talker.error(snapshot.error);
                         return Container();
                       } else if (snapshot.hasData) {
                         return _buildGraph(snapshot.data!);

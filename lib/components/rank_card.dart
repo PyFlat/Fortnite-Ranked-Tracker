@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:percent_indicator/circular_percent_indicator.dart';
-import 'package:talker_flutter/talker_flutter.dart';
 import '../core/rank_service.dart';
 import '../core/socket_service.dart';
 import 'account_details_dialog.dart';
@@ -69,8 +68,6 @@ class RankCard extends StatefulWidget {
 
   final int? initialIndex;
 
-  final Talker talker;
-
   const RankCard(
       {this.color = Colors.black26,
       this.initialIndex = 0,
@@ -126,8 +123,7 @@ class RankCard extends StatefulWidget {
       this.reloadZeroBuildRankImagePath,
       this.reloadZeroBuildRank,
       required this.reloadZeroBuildActive,
-      this.reloadZeroBuildTracking,
-      required this.talker});
+      this.reloadZeroBuildTracking});
 
   @override
   RankCardState createState() => RankCardState();
@@ -222,7 +218,6 @@ class RankCardState extends State<RankCard>
                     displayName: widget.displayName,
                     accountId: widget.accountId!,
                     nickName: widget.nickName,
-                    talker: widget.talker,
                   ),
                 if (!widget.showMenu) _buildShowIcon(),
               ],

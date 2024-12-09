@@ -3,19 +3,14 @@ import 'package:fortnite_ranked_tracker/components/rank_card.dart';
 import 'package:fortnite_ranked_tracker/constants/constants.dart';
 import 'package:fortnite_ranked_tracker/core/avatar_manager.dart';
 import 'package:fortnite_ranked_tracker/core/utils.dart';
-import 'package:talker_flutter/talker_flutter.dart';
 
 import '../core/rank_service.dart';
 
 class SearchCard extends StatefulWidget {
   final String accountId;
   final String displayName;
-  final Talker talker;
   const SearchCard(
-      {super.key,
-      required this.accountId,
-      required this.displayName,
-      required this.talker});
+      {super.key, required this.accountId, required this.displayName});
 
   @override
   SearchCardState createState() => SearchCardState();
@@ -171,7 +166,6 @@ class SearchCardState extends State<SearchCard> {
               reloadZeroBuildRankImagePath: getImageAssetPath(rlzbData),
               reloadZeroBuildRank: getStringValue(rlzbData, "Rank"),
               reloadZeroBuildTracking: active[4],
-              talker: widget.talker,
             ),
           );
         } else {

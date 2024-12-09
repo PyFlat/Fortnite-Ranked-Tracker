@@ -2,12 +2,10 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:fortnite_ranked_tracker/core/rank_service.dart';
-import 'package:talker_flutter/talker_flutter.dart';
 import '../components/tournament_info_container.dart';
 
 class TournamentScreen extends StatefulWidget {
-  final Talker talker;
-  const TournamentScreen({super.key, required this.talker});
+  const TournamentScreen({super.key});
 
   @override
   TournamentScreenState createState() => TournamentScreenState();
@@ -83,8 +81,7 @@ class TournamentScreenState extends State<TournamentScreen> {
                             snapshot.data!.map((Map<String, dynamic> item) {
                   return Padding(
                     padding: const EdgeInsets.all(12),
-                    child: TournamentInfoContainer(
-                        talker: widget.talker, item: item),
+                    child: TournamentInfoContainer(item: item),
                   );
                 }).toList())),
               );

@@ -3,18 +3,17 @@ import 'dart:async';
 import 'package:fortnite_ranked_tracker/components/home_page_edit_sheet.dart';
 import 'package:fortnite_ranked_tracker/core/avatar_manager.dart';
 import 'package:fortnite_ranked_tracker/core/socket_service.dart';
-import 'package:talker_flutter/talker_flutter.dart';
 
 import '../core/rank_service.dart';
 
 import '../components/dashboard_card.dart';
 import 'package:flutter/material.dart';
 
+import '../core/talker_service.dart';
 import 'search_screen.dart';
 
 class HomeScreen extends StatefulWidget {
-  final Talker talker;
-  const HomeScreen({super.key, required this.talker});
+  const HomeScreen({super.key});
 
   @override
   HomeScreenState createState() => HomeScreenState();
@@ -57,8 +56,8 @@ class HomeScreenState extends State<HomeScreen>
           });
         }
       },
-      onDone: () => widget.talker.info("Rank updates stream closed."),
-      onError: (e) => widget.talker.error("Error in rank updates stream: $e"),
+      onDone: () => talker.info("Rank updates stream closed."),
+      onError: (e) => talker.error("Error in rank updates stream: $e"),
     );
   }
 
@@ -119,10 +118,7 @@ class HomeScreenState extends State<HomeScreen>
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(
-                      builder: (context) => SearchScreen(
-                            talker: widget.talker,
-                          )),
+                  MaterialPageRoute(builder: (context) => SearchScreen()),
                 );
               },
               label: const Text("Search"),
@@ -325,7 +321,6 @@ class HomeScreenState extends State<HomeScreen>
           item: item,
           color: color,
           index: index,
-          talker: widget.talker,
         ),
       ),
     );

@@ -1,12 +1,12 @@
 import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:talker_dio_logger/talker_dio_logger.dart';
-import 'package:talker_flutter/talker_flutter.dart';
+
+import 'talker_service.dart';
 
 class ApiService {
   bool _isInitialized = false;
   late Dio _dio;
-  late Talker _talker;
 
   ApiService._();
   static final ApiService _instance = ApiService._();
@@ -14,9 +14,8 @@ class ApiService {
 
   Dio get dio => _dio;
 
-  Future<void> init(Talker talker, Dio dio) async {
+  Future<void> init(Dio dio) async {
     if (!_isInitialized) {
-      _talker = talker;
       _dio = dio;
       _dio.interceptors.add(
         TalkerDioLogger(
@@ -80,7 +79,7 @@ class ApiService {
       if (e.response != null) {
       } else {
         if (e.type != DioExceptionType.connectionError) {
-          _talker.error(e.message);
+          talker.error(e.message);
         }
       }
       return [];
@@ -106,7 +105,7 @@ class ApiService {
       if (e.response != null) {
       } else {
         if (e.type != DioExceptionType.connectionError) {
-          _talker.error(e.message);
+          talker.error(e.message);
         }
       }
       return [];
