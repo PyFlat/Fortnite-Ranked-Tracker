@@ -27,7 +27,11 @@ class Endpoints {
 
   static const eventInfo = "$baseUrl/api/tournaments/eventInfo";
 
+  static const eventInfoHistory = "$baseUrl/api/tournaments/eventInfoHistory";
+
   static const eventLeaderboard = "$baseUrl/api/tournaments/eventLeaderboard";
+
+  static const fetchLeaderboard = "$baseUrl/api/tournaments/fetchLeaderboard";
 
   static const eventEntryInfo = "$baseUrl/api/tournaments/eventEntryInfo";
 }

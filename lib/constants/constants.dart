@@ -33,10 +33,10 @@ class Constants {
     "NAC": "NA Central",
     "NAE": "NA East",
     "NAW": "NA West",
-    "OCE": "Oceania",
     "ASIA": "Asia",
     "ME": "Middle East",
-    "BR": "Brazil"
+    "BR": "Brazil",
+    "OCE": "Oceania",
   };
 
   static const String defaultSkinId =

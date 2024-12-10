@@ -4,15 +4,23 @@ import 'package:fortnite_ranked_tracker/components/custom_search_bar.dart';
 import 'package:fortnite_ranked_tracker/constants/constants.dart';
 import 'package:fortnite_ranked_tracker/components/tournament_stats_display.dart';
 import 'package:fortnite_ranked_tracker/core/rank_service.dart';
-import 'package:fortnite_ranked_tracker/core/utils.dart';
+import 'package:intl/intl.dart';
 
 import '../components/hoverable_leaderboard_item.dart';
 import 'search_screen.dart';
 
 class LeaderboardScreen extends StatefulWidget {
-  const LeaderboardScreen({super.key, required this.tournamentWindow});
+  const LeaderboardScreen(
+      {super.key,
+      required this.tournamentWindow,
+      required this.metadata,
+      required this.region});
 
   final Map<String, dynamic> tournamentWindow;
+
+  final Map<String, dynamic> metadata;
+
+  final String region;
 
   @override
   LeaderboardScreenState createState() => LeaderboardScreenState();
@@ -24,6 +32,8 @@ class LeaderboardScreenState extends State<LeaderboardScreen> {
   String _searchQuery = '';
   final SearchController _searchController = SearchController();
   Future<void>? _initialData;
+
+  bool _showCheckmark = false;
 
   @override
   void initState() {
@@ -52,9 +62,24 @@ class LeaderboardScreenState extends State<LeaderboardScreen> {
     _updateSearchQuery('');
   }
 
+  Future<void> _fetchLeaderboardData() async {
+    _allLeaderboardData = await RankService().fetchEventLeaderboard(
+        widget.tournamentWindow["eventId"],
+        widget.tournamentWindow["windowId"]);
+
+    _updateSearchQuery('');
+  }
+
   void _updateSearchQuery(String query) {
     setState(() {
       _searchQuery = query.toLowerCase();
+
+      if ((_searchQuery.trim().isEmpty && _searchQuery.isNotEmpty) ||
+          _searchQuery.trim() == '+') {
+        _searchResults = [];
+        return;
+      }
+
       _searchResults = _allLeaderboardData.where((entry) {
         if (entry.isEmpty) {
           return false;
@@ -147,28 +172,37 @@ class LeaderboardScreenState extends State<LeaderboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    String regionName =
-        getRegionNameByEventId(widget.tournamentWindow["eventId"])!;
-    regionName = Constants.regions[regionName]!;
+    String regionName = Constants.regions[widget.region]!;
+    DateTime beginTime = DateTime.parse(widget.tournamentWindow["beginTime"]);
     return Scaffold(
       appBar: AppBar(
-          // title: Text(
-          //   // '${widget.tournamentWindow["title"]} - Session ${widget.tournamentWindow["session"]}${widget.tournamentWindow["round"] > 0 ? " Round ${widget.tournamentWindow["round"]}" : ""} (${DateFormat("dd.MM.yyyy").format(DateTime.parse(widget.tournamentWindow["beginTime"]).toLocal())}) - $regionName',
-          // ),
-          ),
+        title: Text(
+          '${widget.metadata["longTitle"]} - ${widget.tournamentWindow["windowName"]} (${DateFormat("dd.MM.yyyy").format(DateTime.parse(widget.tournamentWindow["beginTime"]).toLocal())}) - $regionName',
+        ),
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+          onPressed: () {
+            setState(() {
+              _initialData = _fetchLeaderboardData();
+            });
+          },
+          icon: Icon(Icons.refresh_rounded),
+          label: Text("Refresh")),
       body: FutureBuilder(
           future: _initialData,
           builder: (context, snapshot) {
+            if (beginTime.isAfter(DateTime.now())) {
+              return _buildCenteredMessage(
+                message: 'Event has not started yet...',
+                icon: Icons.event,
+              );
+            }
+
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(
-                  child: Text(
-                'Searching For Event Data...',
-                style: TextStyle(
-                  fontSize: 36,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ));
+              return _buildCenteredMessage(
+                message: 'Searching For Event Data...',
+                icon: Icons.search,
+              );
             }
 
             return Column(
@@ -187,15 +221,51 @@ class LeaderboardScreenState extends State<LeaderboardScreen> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Padding(
-                    padding: const EdgeInsets.all(12.0),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16.0, vertical: 8.0),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
+                        Text(
+                          'Loaded: ${_allLeaderboardData.length}',
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
                         Row(
                           children: [
-                            const SizedBox(width: 12),
-                            Text('Loaded: ${_allLeaderboardData.length}',
-                                style: const TextStyle(fontSize: 14)),
+                            Text(
+                              "ID: ${widget.tournamentWindow["id"]}",
+                              style: TextStyle(
+                                fontWeight: FontWeight.w400,
+                                color: Colors.grey.shade400,
+                                fontSize: 14,
+                              ),
+                            ),
+                            IconButton(
+                              icon: _showCheckmark
+                                  ? const Icon(Icons.check_circle,
+                                      color: Colors.green)
+                                  : Icon(Icons.copy,
+                                      size: 20, color: Colors.grey),
+                              onPressed: () async {
+                                Clipboard.setData(ClipboardData(
+                                    text: widget.tournamentWindow["id"]));
+                                setState(() {
+                                  _showCheckmark = true;
+                                  Future.delayed(const Duration(seconds: 1),
+                                      () {
+                                    if (mounted) {
+                                      setState(() {
+                                        _showCheckmark = false;
+                                      });
+                                    }
+                                  });
+                                });
+                              },
+                              tooltip: 'Copy ID',
+                            ),
                           ],
                         ),
                       ],
@@ -216,6 +286,32 @@ class LeaderboardScreenState extends State<LeaderboardScreen> {
               ],
             );
           }),
+    );
+  }
+
+  Widget _buildCenteredMessage(
+      {required String message, required IconData icon}) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, size: 48, color: Colors.grey[400]),
+          const SizedBox(height: 16),
+          Text(
+            message,
+            style: TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.w600,
+              color: Colors.grey[300],
+              shadows: [
+                Shadow(
+                    offset: Offset(0, 2), blurRadius: 4, color: Colors.black38)
+              ],
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
     );
   }
 

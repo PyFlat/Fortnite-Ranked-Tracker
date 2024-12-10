@@ -129,8 +129,7 @@ class TournamentInfoContainerState extends State<TournamentInfoContainer> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          // 'Session ${eventWindow["session"]}${eventWindow["round"] > 0 ? " Round ${eventWindow["round"]}" : ""}',
-                          eventWindow["windowId"],
+                          eventWindow["windowName"],
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             color: isLive
@@ -216,8 +215,9 @@ class TournamentInfoContainerState extends State<TournamentInfoContainer> {
         Navigator.of(context).push(
           MaterialPageRoute(
             builder: (context) => LeaderboardScreen(
-              tournamentWindow: selectedTemplate,
-            ),
+                tournamentWindow: selectedTemplate,
+                metadata: widget.item,
+                region: region),
           ),
         );
       }
@@ -399,8 +399,9 @@ class TournamentInfoContainerState extends State<TournamentInfoContainer> {
                         alignment: Alignment.topCenter,
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
-                          children: (widget.item["windows"] as Map)
-                              .keys
+                          children: (Constants.regions.keys.toList())
+                              .where((region) =>
+                                  widget.item["windows"].containsKey(region))
                               .map((region) {
                             List<Map<String, dynamic>> filteredSessions =
                                 (widget.item["windows"][region] as List).cast();

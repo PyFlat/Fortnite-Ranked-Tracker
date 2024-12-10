@@ -179,6 +179,14 @@ class RankService {
     return tournaments.cast();
   }
 
+  Future<List<Map<String, dynamic>>> fetchEventsHistory({int? days}) async {
+    final List tournaments = await ApiService().getData(
+        Endpoints.eventInfoHistory, "",
+        queryParams: days != null ? {"days": days.toString()} : {});
+
+    return tournaments.cast();
+  }
+
   Future<List<Map<String, dynamic>>> getEventLeaderboard(
       String eventId, String windowId) async {
     try {
@@ -197,7 +205,22 @@ class RankService {
           .map<Map<String, dynamic>>((item) => item as Map<String, dynamic>)
           .toList();
     } catch (e) {
-      talker.error('Error while getting event leaderboard: $e');
+      if (e.runtimeType != ArchiveException) {
+        talker.error('Error while getting event leaderboard: $e');
+      }
+      return [];
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> fetchEventLeaderboard(
+      String eventId, String windowId) async {
+    try {
+      await ApiService().getData(Endpoints.fetchLeaderboard, "",
+          queryParams: {"eventId": eventId, "windowId": windowId});
+
+      return await getEventLeaderboard(eventId, windowId);
+    } catch (error) {
+      print(error);
       return [];
     }
   }
