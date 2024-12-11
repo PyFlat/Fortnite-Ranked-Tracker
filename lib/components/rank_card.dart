@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:percent_indicator/circular_percent_indicator.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 import '../core/database.dart';
+import '../core/rank_data.dart';
 import '../core/rank_service.dart';
 import 'account_details_dialog.dart';
 import 'user_popup_menu.dart';
@@ -15,55 +16,12 @@ class RankCard extends StatefulWidget {
   final bool showSwitches;
   final String? accountAvatar;
 
-  final String? battleRoyaleProgressText;
-  final double? battleRoyaleProgress;
-  final String? battleRoyaleLastProgress;
-  final String? battleRoyaleLastChanged;
-  final int? battleRoyaleDailyMatches;
-  final String? battleRoyaleRankImagePath;
-  final String? battleRoyaleRank;
-  final bool battleRoyaleActive;
-  final bool? battleRoyaleTracking;
-
-  final String? zeroBuildProgressText;
-  final double? zeroBuildProgress;
-  final String? zeroBuildLastProgress;
-  final String? zeroBuildLastChanged;
-  final int? zeroBuildDailyMatches;
-  final String? zeroBuildRankImagePath;
-  final String? zeroBuildRank;
-  final bool zeroBuildActive;
-  final bool? zeroBuildTracking;
-
-  final String? rocketRacingProgressText;
-  final double? rocketRacingProgress;
-  final String? rocketRacingLastProgress;
-  final String? rocketRacingLastChanged;
-  final int? rocketRacingDailyMatches;
-  final String? rocketRacingRankImagePath;
-  final String? rocketRacingRank;
-  final bool rocketRacingActive;
-  final bool? rocketRacingTracking;
-
-  final String? reloadProgressText;
-  final double? reloadProgress;
-  final String? reloadLastProgress;
-  final String? reloadLastChanged;
-  final int? reloadDailyMatches;
-  final String? reloadRankImagePath;
-  final String? reloadRank;
-  final bool reloadActive;
-  final bool? reloadTracking;
-
-  final String? reloadZeroBuildProgressText;
-  final double? reloadZeroBuildProgress;
-  final String? reloadZeroBuildLastProgress;
-  final String? reloadZeroBuildLastChanged;
-  final int? reloadZeroBuildDailyMatches;
-  final String? reloadZeroBuildRankImagePath;
-  final String? reloadZeroBuildRank;
-  final bool reloadZeroBuildActive;
-  final bool? reloadZeroBuildTracking;
+  final RankData battleRoyale;
+  final RankData zeroBuild;
+  final RankData rocketRacing;
+  final RankData reload;
+  final RankData reloadZeroBuild;
+  final RankData ballistics;
 
   final Color? color;
 
@@ -82,51 +40,12 @@ class RankCard extends StatefulWidget {
       this.accountAvatar,
       required this.showMenu,
       required this.showSwitches,
-      this.battleRoyaleProgressText,
-      this.battleRoyaleProgress,
-      this.battleRoyaleLastProgress,
-      this.battleRoyaleLastChanged,
-      this.battleRoyaleDailyMatches,
-      this.battleRoyaleRankImagePath,
-      this.battleRoyaleRank,
-      required this.battleRoyaleActive,
-      this.battleRoyaleTracking,
-      this.zeroBuildProgressText,
-      this.zeroBuildProgress,
-      this.zeroBuildLastProgress,
-      this.zeroBuildLastChanged,
-      this.zeroBuildDailyMatches,
-      this.zeroBuildRankImagePath,
-      this.zeroBuildRank,
-      required this.zeroBuildActive,
-      this.zeroBuildTracking,
-      this.rocketRacingProgressText,
-      this.rocketRacingProgress,
-      this.rocketRacingLastProgress,
-      this.rocketRacingLastChanged,
-      this.rocketRacingDailyMatches,
-      this.rocketRacingRankImagePath,
-      this.rocketRacingRank,
-      required this.rocketRacingActive,
-      this.rocketRacingTracking,
-      this.reloadProgressText,
-      this.reloadProgress,
-      this.reloadLastProgress,
-      this.reloadLastChanged,
-      this.reloadDailyMatches,
-      this.reloadRankImagePath,
-      this.reloadRank,
-      required this.reloadActive,
-      this.reloadTracking,
-      this.reloadZeroBuildProgressText,
-      this.reloadZeroBuildProgress,
-      this.reloadZeroBuildLastProgress,
-      this.reloadZeroBuildLastChanged,
-      this.reloadZeroBuildDailyMatches,
-      this.reloadZeroBuildRankImagePath,
-      this.reloadZeroBuildRank,
-      required this.reloadZeroBuildActive,
-      this.reloadZeroBuildTracking,
+      required this.battleRoyale,
+      required this.zeroBuild,
+      required this.rocketRacing,
+      required this.reload,
+      required this.reloadZeroBuild,
+      required this.ballistics,
       required this.talker});
 
   @override
@@ -140,6 +59,7 @@ class RankCardState extends State<RankCard>
   late bool _rocketRacingTracking;
   late bool _reloadTracking;
   late bool _reloadZeroBuildTracking;
+  late bool _ballisticsTracking;
 
   int _currentIndex = 0;
   final List<String> _tabNames = [
@@ -147,17 +67,19 @@ class RankCardState extends State<RankCard>
     "Zero Build",
     "Rocket Racing",
     "Reload",
-    "Reload Zero Build"
+    "Reload Zero Build",
+    "Ballistics"
   ];
 
   @override
   void initState() {
     super.initState();
-    _battleRoyaleTracking = widget.battleRoyaleTracking ?? false;
-    _zeroBuildTracking = widget.zeroBuildTracking ?? false;
-    _rocketRacingTracking = widget.rocketRacingTracking ?? false;
-    _reloadTracking = widget.reloadTracking ?? false;
-    _reloadZeroBuildTracking = widget.reloadZeroBuildTracking ?? false;
+    _battleRoyaleTracking = widget.battleRoyale.tracking ?? false;
+    _zeroBuildTracking = widget.zeroBuild.tracking ?? false;
+    _rocketRacingTracking = widget.rocketRacing.tracking ?? false;
+    _reloadTracking = widget.reload.tracking ?? false;
+    _reloadZeroBuildTracking = widget.reloadZeroBuild.tracking ?? false;
+    _ballisticsTracking = widget.ballistics.tracking ?? false;
     _currentIndex = widget.initialIndex ?? 0;
   }
 
@@ -232,11 +154,11 @@ class RankCardState extends State<RankCard>
                 const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
             child: Container(
               decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.9),
+                color: Colors.black.withValues(alpha: .9),
                 borderRadius: BorderRadius.circular(10.0),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.white.withOpacity(0.3),
+                    color: Colors.white.withValues(alpha: .3),
                     spreadRadius: 4,
                     blurRadius: 7.5,
                   ),
@@ -284,7 +206,7 @@ class RankCardState extends State<RankCard>
                             _tabNames.length,
                             (index) => AnimatedContainer(
                               duration: const Duration(milliseconds: 300),
-                              width: _currentIndex == index ? 24.0 : 12.0,
+                              width: _currentIndex == index ? 24.0 : 8.0,
                               height: 4.0,
                               margin:
                                   const EdgeInsets.symmetric(horizontal: 4.0),
@@ -297,7 +219,7 @@ class RankCardState extends State<RankCard>
                                     ? [
                                         BoxShadow(
                                             color: Colors.deepPurple
-                                                .withOpacity(0.5),
+                                                .withValues(alpha: .5),
                                             blurRadius: 6.0)
                                       ]
                                     : [],
@@ -348,14 +270,7 @@ class RankCardState extends State<RankCard>
     switch (_currentIndex) {
       case 0:
         return _buildContent(
-          widget.battleRoyaleProgressText,
-          widget.battleRoyaleProgress,
-          widget.battleRoyaleLastProgress,
-          widget.battleRoyaleLastChanged,
-          widget.battleRoyaleDailyMatches,
-          widget.battleRoyaleRankImagePath,
-          widget.battleRoyaleRank,
-          widget.battleRoyaleActive,
+          widget.battleRoyale,
           _battleRoyaleTracking,
           "Battle Royale",
           (bool value) async {
@@ -367,14 +282,7 @@ class RankCardState extends State<RankCard>
         );
       case 1:
         return _buildContent(
-          widget.zeroBuildProgressText,
-          widget.zeroBuildProgress,
-          widget.zeroBuildLastProgress,
-          widget.zeroBuildLastChanged,
-          widget.zeroBuildDailyMatches,
-          widget.zeroBuildRankImagePath,
-          widget.zeroBuildRank,
-          widget.zeroBuildActive,
+          widget.zeroBuild,
           _zeroBuildTracking,
           "Zero Build",
           (bool value) async {
@@ -386,14 +294,7 @@ class RankCardState extends State<RankCard>
         );
       case 2:
         return _buildContent(
-          widget.rocketRacingProgressText,
-          widget.rocketRacingProgress,
-          widget.rocketRacingLastProgress,
-          widget.rocketRacingLastChanged,
-          widget.rocketRacingDailyMatches,
-          widget.rocketRacingRankImagePath,
-          widget.rocketRacingRank,
-          widget.rocketRacingActive,
+          widget.rocketRacing,
           _rocketRacingTracking,
           "Rocket Racing",
           (bool value) async {
@@ -405,14 +306,7 @@ class RankCardState extends State<RankCard>
         );
       case 3:
         return _buildContent(
-          widget.reloadProgressText,
-          widget.reloadProgress,
-          widget.reloadLastProgress,
-          widget.reloadLastChanged,
-          widget.reloadDailyMatches,
-          widget.reloadRankImagePath,
-          widget.reloadRank,
-          widget.reloadActive,
+          widget.reload,
           _reloadTracking,
           "Reload",
           (bool value) async {
@@ -424,14 +318,7 @@ class RankCardState extends State<RankCard>
         );
       case 4:
         return _buildContent(
-          widget.reloadZeroBuildProgressText,
-          widget.reloadZeroBuildProgress,
-          widget.reloadZeroBuildLastProgress,
-          widget.reloadZeroBuildLastChanged,
-          widget.reloadZeroBuildDailyMatches,
-          widget.reloadZeroBuildRankImagePath,
-          widget.reloadZeroBuildRank,
-          widget.reloadZeroBuildActive,
+          widget.reloadZeroBuild,
           _reloadZeroBuildTracking,
           "Reload Zero Build",
           (bool value) async {
@@ -439,6 +326,18 @@ class RankCardState extends State<RankCard>
               _reloadZeroBuildTracking = value;
             });
             await _updatePlayerTracking(value, 4);
+          },
+        );
+      case 5:
+        return _buildContent(
+          widget.ballistics,
+          _ballisticsTracking,
+          "Ballistics",
+          (bool value) async {
+            setState(() {
+              _ballisticsTracking = value;
+            });
+            await _updatePlayerTracking(value, 5);
           },
         );
       default:
@@ -466,19 +365,9 @@ class RankCardState extends State<RankCard>
     return color;
   }
 
-  Widget _buildContent(
-      String? progressText,
-      double? progress,
-      String? lastProgress,
-      String? lastChanged,
-      int? dailyMatches,
-      String? rankImagePath,
-      String? rank,
-      bool active,
-      bool? tracking,
-      String category,
+  Widget _buildContent(RankData data, bool? tracking, String category,
       Future<void> Function(bool) onTrackingChanged) {
-    if (!active) {
+    if (!data.active) {
       return Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -506,18 +395,19 @@ class RankCardState extends State<RankCard>
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            if (progress != null)
+            if (data.progress != null)
               CircularPercentIndicator(
                 radius: 50,
                 lineWidth: 6,
-                percent: progress,
+                percent: data.progress!,
                 circularStrokeCap: CircularStrokeCap.round,
-                progressColor: _getProgressColor(progress).withOpacity(0.75),
+                progressColor:
+                    _getProgressColor(data.progress!).withValues(alpha: .75),
                 backgroundColor: Colors.transparent,
                 header: Padding(
                   padding: const EdgeInsets.only(bottom: 8.0),
                   child: Text(
-                    lastChanged ?? "",
+                    data.lastChanged ?? "",
                     style: const TextStyle(
                       fontSize: 12,
                       color: Colors.grey,
@@ -526,14 +416,14 @@ class RankCardState extends State<RankCard>
                 ),
                 footer: Padding(
                   padding: const EdgeInsets.only(top: 8.0),
-                  child: (lastProgress != null)
+                  child: (data.lastProgress != null)
                       ? Text(
-                          "Last Progress: $lastProgress",
+                          "Last Progress: ${data.lastProgress}",
                         )
                       : const SizedBox.shrink(),
                 ),
                 center: Text(
-                  progressText ?? "",
+                  data.progressText ?? "",
                   style: const TextStyle(
                       fontWeight: FontWeight.w600, fontSize: 16),
                 ),
@@ -541,13 +431,14 @@ class RankCardState extends State<RankCard>
             Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                if (dailyMatches != null) Text("Daily Matches: $dailyMatches"),
+                if (data.dailyMatches != null)
+                  Text("Daily Matches: ${data.dailyMatches}"),
                 const SizedBox(
                   height: 15,
                 ),
-                if (rankImagePath != null)
+                if (data.rankImagePath != null)
                   Image.asset(
-                    rankImagePath,
+                    data.rankImagePath!,
                     width: 75,
                     height: 75,
                   ),
@@ -555,7 +446,7 @@ class RankCardState extends State<RankCard>
                   height: 15,
                 ),
                 Text(
-                  rank ?? "No Rank",
+                  data.rank ?? "No Rank",
                   style: const TextStyle(
                     fontSize: 16,
                   ),

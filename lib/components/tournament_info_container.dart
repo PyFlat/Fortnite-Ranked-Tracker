@@ -398,7 +398,7 @@ class TournamentInfoContainerState extends State<TournamentInfoContainer> {
                               borderRadius: BorderRadius.circular(12.0),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.2),
+                                  color: Colors.black.withValues(alpha: .2),
                                   spreadRadius: 2,
                                   blurRadius: 6,
                                   offset: const Offset(0, 4),
@@ -446,7 +446,7 @@ class TournamentInfoContainerState extends State<TournamentInfoContainer> {
                   if (_isHovered) ...[
                     Positioned.fill(
                       child: Container(
-                        color: Colors.black.withOpacity(0.5),
+                        color: Colors.black.withValues(alpha: .5),
                       ),
                     ),
                     Padding(

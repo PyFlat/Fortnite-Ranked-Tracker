@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:fortnite_ranked_tracker/components/rank_card.dart';
 import 'package:fortnite_ranked_tracker/constants/constants.dart';
 import 'package:fortnite_ranked_tracker/core/database.dart';
+import 'package:fortnite_ranked_tracker/core/rank_data.dart';
 import 'package:fortnite_ranked_tracker/core/utils.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 
@@ -46,6 +47,7 @@ class SearchCardState extends State<SearchCard> {
     final bool rrActive = activeRankingTypes[2];
     final bool rlActive = activeRankingTypes[3];
     final bool rlzbActive = activeRankingTypes[4];
+    final bool blActive = activeRankingTypes[5];
 
     List<dynamic> formattedResult = [
       null,
@@ -53,7 +55,8 @@ class SearchCardState extends State<SearchCard> {
       null,
       null,
       null,
-      [brActive, zbActive, rrActive, rlActive, rlzbActive]
+      null,
+      [brActive, zbActive, rrActive, rlActive, rlzbActive, blActive]
     ];
     for (dynamic item in result) {
       String progressText = item["currentDivision"] == 17
@@ -88,6 +91,8 @@ class SearchCardState extends State<SearchCard> {
         formattedResult[3] = formattedItem;
       } else if (item["rankingType"] == "ranked_blastberry_nobuild") {
         formattedResult[4] = formattedItem;
+      } else if (item["rankingType"] == "ranked-feral") {
+        formattedResult[5] = formattedItem;
       }
     }
     return formattedResult;
@@ -108,7 +113,8 @@ class SearchCardState extends State<SearchCard> {
           final rrData = snapshot.data?[2];
           final rlData = snapshot.data?[3];
           final rlzbData = snapshot.data?[4];
-          final active = snapshot.data?[5];
+          final blData = snapshot.data?[5];
+          final active = snapshot.data?[6];
           return SizedBox(
             width: 350,
             height: 350,
@@ -120,47 +126,60 @@ class SearchCardState extends State<SearchCard> {
               searchCardKey: widget.key as GlobalKey,
               showMenu: false,
               showSwitches: true,
-              battleRoyaleActive: true,
-              battleRoyaleProgressText:
-                  getStringValue(brData, 'RankProgressionText'),
-              battleRoyaleProgress: getDoubleValue(brData, 'RankProgression'),
-              battleRoyaleLastChanged: getStringValue(brData, 'LastChanged'),
-              battleRoyaleRankImagePath: getImageAssetPath(brData),
-              battleRoyaleRank: getStringValue(brData, "Rank"),
-              battleRoyaleTracking: active[0],
-              zeroBuildActive: true,
-              zeroBuildProgressText:
-                  getStringValue(zbData, 'RankProgressionText'),
-              zeroBuildProgress: getDoubleValue(zbData, 'RankProgression'),
-              zeroBuildLastChanged: getStringValue(zbData, 'LastChanged'),
-              zeroBuildRankImagePath: getImageAssetPath(zbData),
-              zeroBuildRank: getStringValue(zbData, "Rank"),
-              zeroBuildTracking: active[1],
-              rocketRacingActive: true,
-              rocketRacingProgressText:
-                  getStringValue(rrData, 'RankProgressionText'),
-              rocketRacingProgress: getDoubleValue(rrData, 'RankProgression'),
-              rocketRacingLastChanged: getStringValue(rrData, 'LastChanged'),
-              rocketRacingRankImagePath: getImageAssetPath(rrData),
-              rocketRacingRank: getStringValue(rrData, "Rank"),
-              rocketRacingTracking: active[2],
-              reloadActive: true,
-              reloadProgressText: getStringValue(rlData, 'RankProgressionText'),
-              reloadProgress: getDoubleValue(rlData, 'RankProgression'),
-              reloadLastChanged: getStringValue(rlData, 'LastChanged'),
-              reloadRankImagePath: getImageAssetPath(rlData),
-              reloadRank: getStringValue(rlData, "Rank"),
-              reloadTracking: active[3],
-              reloadZeroBuildActive: true,
-              reloadZeroBuildProgressText:
-                  getStringValue(rlzbData, 'RankProgressionText'),
-              reloadZeroBuildProgress:
-                  getDoubleValue(rlzbData, 'RankProgression'),
-              reloadZeroBuildLastChanged:
-                  getStringValue(rlzbData, 'LastChanged'),
-              reloadZeroBuildRankImagePath: getImageAssetPath(rlzbData),
-              reloadZeroBuildRank: getStringValue(rlzbData, "Rank"),
-              reloadZeroBuildTracking: active[4],
+              battleRoyale: RankData(
+                active: true,
+                progressText: getStringValue(brData, 'RankProgressionText'),
+                progress: getDoubleValue(brData, 'RankProgression'),
+                lastChanged: getStringValue(brData, 'LastChanged'),
+                rankImagePath: getImageAssetPath(brData),
+                rank: getStringValue(brData, "Rank"),
+                tracking: active[0],
+              ),
+              zeroBuild: RankData(
+                active: true,
+                progressText: getStringValue(zbData, 'RankProgressionText'),
+                progress: getDoubleValue(zbData, 'RankProgression'),
+                lastChanged: getStringValue(zbData, 'LastChanged'),
+                rankImagePath: getImageAssetPath(zbData),
+                rank: getStringValue(zbData, "Rank"),
+                tracking: active[1],
+              ),
+              rocketRacing: RankData(
+                active: true,
+                progressText: getStringValue(rrData, 'RankProgressionText'),
+                progress: getDoubleValue(rrData, 'RankProgression'),
+                lastChanged: getStringValue(rrData, 'LastChanged'),
+                rankImagePath: getImageAssetPath(rrData),
+                rank: getStringValue(rrData, "Rank"),
+                tracking: active[2],
+              ),
+              reload: RankData(
+                active: true,
+                progressText: getStringValue(rlData, 'RankProgressionText'),
+                progress: getDoubleValue(rlData, 'RankProgression'),
+                lastChanged: getStringValue(rlData, 'LastChanged'),
+                rankImagePath: getImageAssetPath(rlData),
+                rank: getStringValue(rlData, "Rank"),
+                tracking: active[3],
+              ),
+              reloadZeroBuild: RankData(
+                active: true,
+                progressText: getStringValue(rlzbData, 'RankProgressionText'),
+                progress: getDoubleValue(rlzbData, 'RankProgression'),
+                lastChanged: getStringValue(rlzbData, 'LastChanged'),
+                rankImagePath: getImageAssetPath(rlzbData),
+                rank: getStringValue(rlzbData, "Rank"),
+                tracking: active[4],
+              ),
+              ballistics: RankData(
+                active: true,
+                progressText: getStringValue(blData, 'RankProgressionText'),
+                progress: getDoubleValue(blData, 'RankProgression'),
+                lastChanged: getStringValue(blData, 'LastChanged'),
+                rankImagePath: getImageAssetPath(blData),
+                rank: getStringValue(blData, "Rank"),
+                tracking: active[5],
+              ),
               talker: widget.talker,
             ),
           );

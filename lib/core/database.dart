@@ -13,7 +13,8 @@ class DataBase {
     "zeroBuild",
     "rocketRacing",
     "reload",
-    "reloadZeroBuild"
+    "reloadZeroBuild",
+    "ballistics"
   ];
 
   DataBase._();
@@ -64,6 +65,7 @@ class DataBase {
           rocketRacing INTEGER DEFAULT 0,
           reload INTEGER DEFAULT 0,
           reloadZeroBuild INTEGER DEFAULT 0,
+          ballistics INTEGER DEFAULT 0,
           position INTEGER,
           visible INTEGER DEFAULT 1
         )
@@ -76,6 +78,8 @@ class DataBase {
     _addColumnIfNotExists(db, "reload", "INTEGER", defaultValue: 0);
 
     _addColumnIfNotExists(db, "reloadZeroBuild", "INTEGER", defaultValue: 0);
+
+    _addColumnIfNotExists(db, "ballistics", "INTEGER", defaultValue: 0);
   }
 
   Future<void> _addColumnIfNotExists(
@@ -114,7 +118,8 @@ class DataBase {
         'zeroBuild',
         'rocketRacing',
         'reload',
-        'reloadZeroBuild'
+        'reloadZeroBuild',
+        'ballistics'
       ],
       where: 'accountId = ?',
       whereArgs: [params['accountId']],
@@ -162,14 +167,15 @@ class DataBase {
         'zeroBuild',
         'rocketRacing',
         'reload',
-        'reloadZeroBuild'
+        'reloadZeroBuild',
+        'ballistics'
       ],
       where: 'accountId = ?',
       whereArgs: [accountId],
     );
 
     if (queryResult.isEmpty) {
-      return [false, false, false, false, false];
+      return [false, false, false, false, false, false];
     }
 
     final Map<String, dynamic> playerData = queryResult.first;
@@ -178,7 +184,8 @@ class DataBase {
       playerData['zeroBuild'] == 1,
       playerData['rocketRacing'] == 1,
       playerData['reload'] == 1,
-      playerData['reloadZeroBuild'] == 1
+      playerData['reloadZeroBuild'] == 1,
+      playerData['ballistics'] == 1
     ];
   }
 
@@ -256,6 +263,9 @@ class DataBase {
       if (account["reloadZeroBuild"] == 1) {
         accountData["Reload Zero Build"] = {};
       }
+      if (account["ballistics"] == 1) {
+        accountData["Ballistics"] = {};
+      }
 
       result.add(accountData);
     }
@@ -279,7 +289,8 @@ class DataBase {
               account["battleRoyale"] +
               account["zeroBuild"] +
               account["reload"] +
-              account["reloadZeroBuild"] ==
+              account["reloadZeroBuild"] +
+              account["ballistics"] ==
           0) {
         result.add(accountData);
       }

@@ -30,7 +30,8 @@ class HomeScreenState extends State<HomeScreen>
     "Zero Build",
     "Rocket Racing",
     "Reload",
-    "Reload Zero Build"
+    "Reload Zero Build",
+    "Ballistics"
   ];
   bool _firstIteration = true;
 
@@ -78,7 +79,8 @@ class HomeScreenState extends State<HomeScreen>
       "Zero Build": "zb",
       "Rocket Racing": "rr",
       "Reload": "rl",
-      "Reload Zero Build": "rlzb"
+      "Reload Zero Build": "rlzb",
+      "Ballistics": "bl"
     };
     List<String> accountIds =
         data.map((item) => item['AccountId'] as String).toList();
@@ -302,11 +304,11 @@ class HomeScreenState extends State<HomeScreen>
 
               if (hasChanged) {
                 if (progressionDifference > 0) {
-                  cardColor = Colors.green.withOpacity(0.75);
+                  cardColor = Colors.green.withValues(alpha: .75);
                 } else if (progressionDifference < 0) {
-                  cardColor = Colors.red.withOpacity(0.75);
+                  cardColor = Colors.red.withValues(alpha: .75);
                 } else if (progressionDifference == 0) {
-                  cardColor = Colors.yellow.withOpacity(0.75);
+                  cardColor = Colors.yellow.withValues(alpha: .75);
                 }
                 cardScale = 1.05;
                 Future.delayed(const Duration(seconds: 1, milliseconds: 250),

@@ -295,9 +295,9 @@ class SelectAccountsDialogState extends State<SelectAccountsDialog> {
                               borderRadius: BorderRadius.circular(12.0),
                             ),
                             splashColor:
-                                Colors.purple.shade600.withOpacity(0.3),
+                                Colors.purple.shade600.withValues(alpha: .3),
                             tileColor: isSelected
-                                ? Colors.purple.withOpacity(0.2)
+                                ? Colors.purple.withValues(alpha: .2)
                                 : Colors.transparent,
                           ),
                         );

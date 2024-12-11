@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:fortnite_ranked_tracker/core/utils.dart';
 import 'package:intl/intl.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 
@@ -52,7 +53,7 @@ class RankService {
       _currentSeason = await _fetchCurrentSeason();
       _activeTracks = await _fetchSeasonTracks();
 
-      _rankTypes = ['br', 'zb', 'rr', 'rl', 'rlzb'];
+      _rankTypes = ['br', 'zb', 'rr', 'rl', 'rlzb', 'bl'];
 
       await startRankBulkTrack();
       await checkDisplayNames();
@@ -134,40 +135,20 @@ class RankService {
   }
 
   Future<List<String>> _fetchSeasonTracks() async {
-    List<String> tracks = ["", "", "", "", ""];
+    List<String> tracks = ["", "", "", "", "", ""];
 
     dynamic jsonObject = await ApiService().getData(
         Endpoints.activeTracks, getBasicAuthHeader(),
         pathParams: {'activeBy': "${DateTime.now().toIso8601String()}Z"});
 
-    Map<String, int> rankingTypeToIndex = {
-      "ranked-br": 0,
-      "ranked-zb": 1,
-      "delmar-competitive": 2,
-      "ranked_blastberry_build": 3,
-      "ranked_blastberry_nobuild": 4
-    };
-
     for (var data in jsonObject) {
-      int? index = rankingTypeToIndex[data["rankingType"]];
+      int? index = modeKeys[data["rankingType"]];
       if (index != null) {
         tracks[index] = data["trackguid"];
       }
     }
 
     return tracks;
-  }
-
-  int remapKey(String key) {
-    return key == "ranked-br"
-        ? 0
-        : key == "ranked-zb"
-            ? 1
-            : key == "delmar-competitive"
-                ? 2
-                : key == "ranked_blastberry_build"
-                    ? 3
-                    : 4;
   }
 
   Future<Database> connectToDB(String accountId) async {
@@ -382,7 +363,7 @@ class RankService {
 
   Future<void> storeRankData(List<dynamic> data) async {
     for (var dat in data) {
-      int rankingType = remapKey(dat["rankingType"]);
+      int rankingType = modeKeys[dat["rankingType"]]!;
       Database db = await connectToDB(dat["accountId"]);
       await createNewSeasonTable(_rankTypes[rankingType], db);
 

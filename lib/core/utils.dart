@@ -54,7 +54,17 @@ Map<String, String> modeMappings = {
   'ZB': 'Zero Build',
   'RR': 'Rocket Racing',
   'RL': 'Reload',
-  'RLZB': 'Reload Zero Build'
+  'RLZB': 'Reload Zero Build',
+  'BL': 'Ballistics'
+};
+
+Map<String, int> modeKeys = {
+  "ranked-br": 0,
+  "ranked-zb": 1,
+  "delmar-competitive": 2,
+  "ranked_blastberry_build": 3,
+  "ranked_blastberry_nobuild": 4,
+  "ranked-feral": 5
 };
 
 Map<String, String> splitAndPrettifySeasonString(String inputStr) {
