@@ -55,7 +55,7 @@ Map<String, String> modeMappings = {
   'RR': 'Rocket Racing',
   'RL': 'Reload',
   'RLZB': 'Reload Zero Build',
-  'BL': 'Ballistics'
+  'BL': 'Ballistic'
 };
 
 Map<String, int> modeKeys = {

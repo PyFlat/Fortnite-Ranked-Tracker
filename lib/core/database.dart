@@ -14,7 +14,7 @@ class DataBase {
     "rocketRacing",
     "reload",
     "reloadZeroBuild",
-    "ballistics"
+    "ballistic"
   ];
 
   DataBase._();
@@ -65,7 +65,7 @@ class DataBase {
           rocketRacing INTEGER DEFAULT 0,
           reload INTEGER DEFAULT 0,
           reloadZeroBuild INTEGER DEFAULT 0,
-          ballistics INTEGER DEFAULT 0,
+          ballistic INTEGER DEFAULT 0,
           position INTEGER,
           visible INTEGER DEFAULT 1
         )
@@ -79,7 +79,7 @@ class DataBase {
 
     _addColumnIfNotExists(db, "reloadZeroBuild", "INTEGER", defaultValue: 0);
 
-    _addColumnIfNotExists(db, "ballistics", "INTEGER", defaultValue: 0);
+    _addColumnIfNotExists(db, "ballistic", "INTEGER", defaultValue: 0);
   }
 
   Future<void> _addColumnIfNotExists(
@@ -119,7 +119,7 @@ class DataBase {
         'rocketRacing',
         'reload',
         'reloadZeroBuild',
-        'ballistics'
+        'ballistic'
       ],
       where: 'accountId = ?',
       whereArgs: [params['accountId']],
@@ -168,7 +168,7 @@ class DataBase {
         'rocketRacing',
         'reload',
         'reloadZeroBuild',
-        'ballistics'
+        'ballistic'
       ],
       where: 'accountId = ?',
       whereArgs: [accountId],
@@ -185,7 +185,7 @@ class DataBase {
       playerData['rocketRacing'] == 1,
       playerData['reload'] == 1,
       playerData['reloadZeroBuild'] == 1,
-      playerData['ballistics'] == 1
+      playerData['ballistic'] == 1
     ];
   }
 
@@ -263,8 +263,8 @@ class DataBase {
       if (account["reloadZeroBuild"] == 1) {
         accountData["Reload Zero Build"] = {};
       }
-      if (account["ballistics"] == 1) {
-        accountData["Ballistics"] = {};
+      if (account["ballistic"] == 1) {
+        accountData["Ballistic"] = {};
       }
 
       result.add(accountData);
@@ -290,7 +290,7 @@ class DataBase {
               account["zeroBuild"] +
               account["reload"] +
               account["reloadZeroBuild"] +
-              account["ballistics"] ==
+              account["ballistic"] ==
           0) {
         result.add(accountData);
       }

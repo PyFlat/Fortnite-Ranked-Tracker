@@ -31,7 +31,7 @@ class HomeScreenState extends State<HomeScreen>
     "Rocket Racing",
     "Reload",
     "Reload Zero Build",
-    "Ballistics"
+    "Ballistic"
   ];
   bool _firstIteration = true;
 
@@ -80,7 +80,7 @@ class HomeScreenState extends State<HomeScreen>
       "Rocket Racing": "rr",
       "Reload": "rl",
       "Reload Zero Build": "rlzb",
-      "Ballistics": "bl"
+      "Ballistic": "bl"
     };
     List<String> accountIds =
         data.map((item) => item['AccountId'] as String).toList();

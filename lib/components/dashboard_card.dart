@@ -30,7 +30,7 @@ class DashboardCard extends StatelessWidget {
     final rocketRacingValues = getGameModeValues(item, 'Rocket Racing');
     final reloadValues = getGameModeValues(item, 'Reload');
     final reloadZeroBuildValues = getGameModeValues(item, 'Reload Zero Build');
-    final ballisticsValues = getGameModeValues(item, 'Ballistics');
+    final ballisticValues = getGameModeValues(item, 'Ballistic');
 
     return RankCard(
       displayName: displayName,
@@ -93,15 +93,15 @@ class DashboardCard extends StatelessWidget {
         rank: getStringValue(reloadZeroBuildValues, 'Rank'),
         active: reloadZeroBuildValues != null,
       ),
-      ballistics: RankData(
-        progressText: getStringValue(ballisticsValues, 'RankProgressionText'),
-        progress: getDoubleValue(ballisticsValues, 'RankProgression'),
-        lastProgress: getStringValue(ballisticsValues, 'LastProgress'),
-        lastChanged: getStringValue(ballisticsValues, 'LastChanged'),
-        dailyMatches: getIntValue(ballisticsValues, 'DailyMatches'),
-        rankImagePath: getImageAssetPath(ballisticsValues),
-        rank: getStringValue(ballisticsValues, 'Rank'),
-        active: ballisticsValues != null,
+      ballistic: RankData(
+        progressText: getStringValue(ballisticValues, 'RankProgressionText'),
+        progress: getDoubleValue(ballisticValues, 'RankProgression'),
+        lastProgress: getStringValue(ballisticValues, 'LastProgress'),
+        lastChanged: getStringValue(ballisticValues, 'LastChanged'),
+        dailyMatches: getIntValue(ballisticValues, 'DailyMatches'),
+        rankImagePath: getImageAssetPath(ballisticValues),
+        rank: getStringValue(ballisticValues, 'Rank'),
+        active: ballisticValues != null,
       ),
     );
   }

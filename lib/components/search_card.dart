@@ -171,7 +171,7 @@ class SearchCardState extends State<SearchCard> {
                 rank: getStringValue(rlzbData, "Rank"),
                 tracking: active[4],
               ),
-              ballistics: RankData(
+              ballistic: RankData(
                 active: true,
                 progressText: getStringValue(blData, 'RankProgressionText'),
                 progress: getDoubleValue(blData, 'RankProgression'),

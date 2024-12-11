@@ -21,7 +21,7 @@ class RankCard extends StatefulWidget {
   final RankData rocketRacing;
   final RankData reload;
   final RankData reloadZeroBuild;
-  final RankData ballistics;
+  final RankData ballistic;
 
   final Color? color;
 
@@ -45,7 +45,7 @@ class RankCard extends StatefulWidget {
       required this.rocketRacing,
       required this.reload,
       required this.reloadZeroBuild,
-      required this.ballistics,
+      required this.ballistic,
       required this.talker});
 
   @override
@@ -59,7 +59,7 @@ class RankCardState extends State<RankCard>
   late bool _rocketRacingTracking;
   late bool _reloadTracking;
   late bool _reloadZeroBuildTracking;
-  late bool _ballisticsTracking;
+  late bool _ballisticTracking;
 
   int _currentIndex = 0;
   final List<String> _tabNames = [
@@ -68,7 +68,7 @@ class RankCardState extends State<RankCard>
     "Rocket Racing",
     "Reload",
     "Reload Zero Build",
-    "Ballistics"
+    "Ballistic"
   ];
 
   @override
@@ -79,7 +79,7 @@ class RankCardState extends State<RankCard>
     _rocketRacingTracking = widget.rocketRacing.tracking ?? false;
     _reloadTracking = widget.reload.tracking ?? false;
     _reloadZeroBuildTracking = widget.reloadZeroBuild.tracking ?? false;
-    _ballisticsTracking = widget.ballistics.tracking ?? false;
+    _ballisticTracking = widget.ballistic.tracking ?? false;
     _currentIndex = widget.initialIndex ?? 0;
   }
 
@@ -330,12 +330,12 @@ class RankCardState extends State<RankCard>
         );
       case 5:
         return _buildContent(
-          widget.ballistics,
-          _ballisticsTracking,
-          "Ballistics",
+          widget.ballistic,
+          _ballisticTracking,
+          "Ballistic",
           (bool value) async {
             setState(() {
-              _ballisticsTracking = value;
+              _ballisticTracking = value;
             });
             await _updatePlayerTracking(value, 5);
           },
