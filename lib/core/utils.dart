@@ -36,6 +36,9 @@ int? getIntValue(Map<String, dynamic>? values, String key) {
 }
 
 String? getImageAssetPath(Map<String, dynamic>? values) {
+  if (getStringValue(values, 'Rank') == null) {
+    return null;
+  }
   return 'assets/ranked-images/${getStringValue(values, 'Rank')?.toLowerCase().replaceAll(" ", "")}.png';
 }
 
@@ -49,23 +52,51 @@ String prettifySeasonString(String inputStr) {
   return 'Chapter $chapter Season $season';
 }
 
-Map<String, String> modeMappings = {
-  'BR': 'Battle Royale',
-  'ZB': 'Zero Build',
-  'RR': 'Rocket Racing',
-  'RL': 'Reload',
-  'RLZB': 'Reload Zero Build',
-  'BL': 'Ballistic'
-};
-
-Map<String, int> modeKeys = {
-  "ranked-br": 0,
-  "ranked-zb": 1,
-  "delmar-competitive": 2,
-  "ranked_blastberry_build": 3,
-  "ranked_blastberry_nobuild": 4,
-  "ranked-feral": 5
-};
+const List<Map<String, String>> modes = [
+  {
+    'key': 'battleRoyale',
+    'label': 'Battle Royale',
+    'short': 'BR',
+    'type': 'ranked-br'
+  },
+  {
+    'key': 'zeroBuild',
+    'label': 'Zero Build',
+    'short': 'ZB',
+    'type': 'ranked-zb'
+  },
+  {
+    'key': 'rocketRacing',
+    'label': 'Rocket Racing',
+    'short': 'RR',
+    'type': 'delmar-competitive'
+  },
+  {
+    'key': 'reload',
+    'label': 'Reload',
+    'short': 'RL',
+    'type': 'ranked_blastberry_build'
+  },
+  {
+    'key': 'reloadZeroBuild',
+    'label': 'Reload Zero Build',
+    'short': 'RLZB',
+    'type': 'ranked_blastberry_nobuild'
+  },
+  {
+    'key': 'ballistic',
+    'label': 'Ballistic',
+    'short': 'BL',
+    'type': 'ranked-feral'
+  },
+  {'key': 'og', 'label': 'OG', 'short': 'OG', 'type': 'ranked-feral'},
+  {
+    'key': 'ogZeroBuild',
+    'label': 'OG Zero Build',
+    'short': 'OGZB',
+    'type': 'ranked-feral'
+  }
+];
 
 Map<String, String> splitAndPrettifySeasonString(String inputStr) {
   int lastUnderscoreIndex = inputStr.lastIndexOf("_");
@@ -75,7 +106,7 @@ Map<String, String> splitAndPrettifySeasonString(String inputStr) {
 
   return {
     "season": prettifySeasonString(firstPart),
-    "mode": modeMappings[secondPart]!
+    "mode": modes.firstWhere((mode) => mode['short'] == secondPart)['label']!
   };
 }
 

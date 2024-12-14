@@ -53,7 +53,7 @@ class RankService {
       _currentSeason = await _fetchCurrentSeason();
       _activeTracks = await _fetchSeasonTracks();
 
-      _rankTypes = ['br', 'zb', 'rr', 'rl', 'rlzb', 'bl'];
+      _rankTypes = modes.map((mode) => mode["short"]!.toLowerCase()).toList();
 
       await startRankBulkTrack();
       await checkDisplayNames();
@@ -135,17 +135,18 @@ class RankService {
   }
 
   Future<List<String>> _fetchSeasonTracks() async {
-    List<String> tracks = ["", "", "", "", "", ""];
+    List<String> tracks = List.filled(modes.length, "");
 
     dynamic jsonObject = await ApiService().getData(
         Endpoints.activeTracks, getBasicAuthHeader(),
         pathParams: {'activeBy': "${DateTime.now().toIso8601String()}Z"});
 
     for (var data in jsonObject) {
-      int? index = modeKeys[data["rankingType"]];
-      if (index != null) {
-        tracks[index] = data["trackguid"];
-      }
+      int? index = modes
+          .map((mode) => mode['type'])
+          .toList()
+          .indexOf(data["rankingType"]);
+      tracks[index] = data["trackguid"];
     }
 
     return tracks;
@@ -363,7 +364,10 @@ class RankService {
 
   Future<void> storeRankData(List<dynamic> data) async {
     for (var dat in data) {
-      int rankingType = modeKeys[dat["rankingType"]]!;
+      int rankingType = modes
+          .map((mode) => mode['type'])
+          .toList()
+          .indexOf(dat["rankingType"]);
       Database db = await connectToDB(dat["accountId"]);
       await createNewSeasonTable(_rankTypes[rankingType], db);
 

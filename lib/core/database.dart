@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:fortnite_ranked_tracker/core/rank_service.dart';
+import 'package:fortnite_ranked_tracker/core/utils.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
@@ -8,14 +9,6 @@ class DataBase {
   late Database _db;
   late Directory _directory;
   bool systemDBInitialized = false;
-  List<String> keys = [
-    "battleRoyale",
-    "zeroBuild",
-    "rocketRacing",
-    "reload",
-    "reloadZeroBuild",
-    "ballistic"
-  ];
 
   DataBase._();
 
@@ -66,6 +59,8 @@ class DataBase {
           reload INTEGER DEFAULT 0,
           reloadZeroBuild INTEGER DEFAULT 0,
           ballistic INTEGER DEFAULT 0,
+          og INTEGER DEFAULT 0,
+          ogZeroBuild INTEGER DEFAULT 0,
           position INTEGER,
           visible INTEGER DEFAULT 1
         )
@@ -80,6 +75,10 @@ class DataBase {
     _addColumnIfNotExists(db, "reloadZeroBuild", "INTEGER", defaultValue: 0);
 
     _addColumnIfNotExists(db, "ballistic", "INTEGER", defaultValue: 0);
+
+    _addColumnIfNotExists(db, "og", "INTEGER", defaultValue: 0);
+
+    _addColumnIfNotExists(db, "ogZeroBuild", "INTEGER", defaultValue: 0);
   }
 
   Future<void> _addColumnIfNotExists(
@@ -104,6 +103,8 @@ class DataBase {
       {String tableName = "profile0"}) async {
     await init();
 
+    final keys = modes.map((mode) => mode['key']!).toList();
+
     Map<String, dynamic> params = {
       'accountId': accountId,
       'displayName': displayName,
@@ -112,15 +113,7 @@ class DataBase {
 
     List<Map<String, dynamic>> existingRecords = await _db.query(
       tableName,
-      columns: [
-        'accountId',
-        'battleRoyale',
-        'zeroBuild',
-        'rocketRacing',
-        'reload',
-        'reloadZeroBuild',
-        'ballistic'
-      ],
+      columns: ['accountId', ...modes.map((mode) => mode['key']!)],
       where: 'accountId = ?',
       whereArgs: [params['accountId']],
     );
@@ -162,31 +155,20 @@ class DataBase {
 
     final List<Map<String, dynamic>> queryResult = await _db.query(
       tableName,
-      columns: [
-        'battleRoyale',
-        'zeroBuild',
-        'rocketRacing',
-        'reload',
-        'reloadZeroBuild',
-        'ballistic'
-      ],
+      columns: modes.map((mode) => mode['key']!).toList(),
       where: 'accountId = ?',
       whereArgs: [accountId],
     );
 
     if (queryResult.isEmpty) {
-      return [false, false, false, false, false, false];
+      return List.filled(modes.length, false);
     }
 
     final Map<String, dynamic> playerData = queryResult.first;
-    return [
-      playerData['battleRoyale'] == 1,
-      playerData['zeroBuild'] == 1,
-      playerData['rocketRacing'] == 1,
-      playerData['reload'] == 1,
-      playerData['reloadZeroBuild'] == 1,
-      playerData['ballistic'] == 1
-    ];
+
+    return modes.map((mode) {
+      return playerData[mode['key']] == 1;
+    }).toList();
   }
 
   Future<void> swapCardPositions(int position1, int position2,
@@ -248,23 +230,10 @@ class DataBase {
         "Visible": account["visible"]
       };
 
-      if (account["battleRoyale"] == 1) {
-        accountData["Battle Royale"] = {};
-      }
-      if (account["zeroBuild"] == 1) {
-        accountData["Zero Build"] = {};
-      }
-      if (account["rocketRacing"] == 1) {
-        accountData["Rocket Racing"] = {};
-      }
-      if (account["reload"] == 1) {
-        accountData["Reload"] = {};
-      }
-      if (account["reloadZeroBuild"] == 1) {
-        accountData["Reload Zero Build"] = {};
-      }
-      if (account["ballistic"] == 1) {
-        accountData["Ballistic"] = {};
+      for (var mode in modes) {
+        if (account[mode['key']] == 1) {
+          accountData[mode['label']!] = {};
+        }
       }
 
       result.add(accountData);
@@ -285,13 +254,8 @@ class DataBase {
         "AccountId": account["accountId"],
         "DisplayName": account["displayName"],
       };
-      if (account["rocketRacing"] +
-              account["battleRoyale"] +
-              account["zeroBuild"] +
-              account["reload"] +
-              account["reloadZeroBuild"] +
-              account["ballistic"] ==
-          0) {
+
+      if (modes.every((mode) => account[mode['key']] == 0)) {
         result.add(accountData);
       }
     }
@@ -347,7 +311,7 @@ class DataBase {
     List<Map<String, dynamic>> result = await _db.query(
       tableName,
       columns: [columns],
-      where: '${keys[key]} = ?',
+      where: '${modes.map((mode) => mode['key']!).toList()[key]} = ?',
       whereArgs: [activeValue],
     );
 

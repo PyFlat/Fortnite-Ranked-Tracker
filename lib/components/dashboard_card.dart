@@ -18,19 +18,25 @@ class DashboardCard extends StatelessWidget {
       required this.index,
       required this.talker});
 
+  RankData _buildRankData(Map<String, dynamic>? gameModeValues) {
+    return RankData(
+      progressText: getStringValue(gameModeValues, 'RankProgressionText'),
+      progress: getDoubleValue(gameModeValues, 'RankProgression'),
+      lastProgress: getStringValue(gameModeValues, 'LastProgress'),
+      lastChanged: getStringValue(gameModeValues, 'LastChanged'),
+      dailyMatches: getIntValue(gameModeValues, 'DailyMatches'),
+      rankImagePath: getImageAssetPath(gameModeValues),
+      rank: getStringValue(gameModeValues, 'Rank'),
+      active: gameModeValues != null,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final displayName = item['DisplayName'] as String;
     final accountId = item["AccountId"] as String;
     final accountAvatar = item["AccountAvatar"];
     final nickName = item["NickName"];
-
-    final battleRoyaleValues = getGameModeValues(item, 'Battle Royale');
-    final zeroBuildValues = getGameModeValues(item, 'Zero Build');
-    final rocketRacingValues = getGameModeValues(item, 'Rocket Racing');
-    final reloadValues = getGameModeValues(item, 'Reload');
-    final reloadZeroBuildValues = getGameModeValues(item, 'Reload Zero Build');
-    final ballisticValues = getGameModeValues(item, 'Ballistic');
 
     return RankCard(
       displayName: displayName,
@@ -42,67 +48,10 @@ class DashboardCard extends StatelessWidget {
       color: color,
       initialIndex: index,
       talker: talker,
-      battleRoyale: RankData(
-        progressText: getStringValue(battleRoyaleValues, 'RankProgressionText'),
-        progress: getDoubleValue(battleRoyaleValues, 'RankProgression'),
-        lastProgress: getStringValue(battleRoyaleValues, 'LastProgress'),
-        lastChanged: getStringValue(battleRoyaleValues, 'LastChanged'),
-        dailyMatches: getIntValue(battleRoyaleValues, 'DailyMatches'),
-        rankImagePath: getImageAssetPath(battleRoyaleValues),
-        rank: getStringValue(battleRoyaleValues, 'Rank'),
-        active: battleRoyaleValues != null,
-      ),
-      zeroBuild: RankData(
-        progressText: getStringValue(zeroBuildValues, 'RankProgressionText'),
-        progress: getDoubleValue(zeroBuildValues, 'RankProgression'),
-        lastProgress: getStringValue(zeroBuildValues, 'LastProgress'),
-        lastChanged: getStringValue(zeroBuildValues, 'LastChanged'),
-        dailyMatches: getIntValue(zeroBuildValues, 'DailyMatches'),
-        rankImagePath: getImageAssetPath(zeroBuildValues),
-        rank: getStringValue(zeroBuildValues, 'Rank'),
-        active: zeroBuildValues != null,
-      ),
-      rocketRacing: RankData(
-        progressText: getStringValue(rocketRacingValues, 'RankProgressionText'),
-        progress: getDoubleValue(rocketRacingValues, 'RankProgression'),
-        lastProgress: getStringValue(rocketRacingValues, 'LastProgress'),
-        lastChanged: getStringValue(rocketRacingValues, 'LastChanged'),
-        dailyMatches: getIntValue(rocketRacingValues, 'DailyMatches'),
-        rankImagePath: getImageAssetPath(rocketRacingValues),
-        rank: getStringValue(rocketRacingValues, 'Rank'),
-        active: rocketRacingValues != null,
-      ),
-      reload: RankData(
-        progressText: getStringValue(reloadValues, 'RankProgressionText'),
-        progress: getDoubleValue(reloadValues, 'RankProgression'),
-        lastProgress: getStringValue(reloadValues, 'LastProgress'),
-        lastChanged: getStringValue(reloadValues, 'LastChanged'),
-        dailyMatches: getIntValue(reloadValues, 'DailyMatches'),
-        rankImagePath: getImageAssetPath(reloadValues),
-        rank: getStringValue(reloadValues, 'Rank'),
-        active: reloadValues != null,
-      ),
-      reloadZeroBuild: RankData(
-        progressText:
-            getStringValue(reloadZeroBuildValues, 'RankProgressionText'),
-        progress: getDoubleValue(reloadZeroBuildValues, 'RankProgression'),
-        lastProgress: getStringValue(reloadZeroBuildValues, 'LastProgress'),
-        lastChanged: getStringValue(reloadZeroBuildValues, 'LastChanged'),
-        dailyMatches: getIntValue(reloadZeroBuildValues, 'DailyMatches'),
-        rankImagePath: getImageAssetPath(reloadZeroBuildValues),
-        rank: getStringValue(reloadZeroBuildValues, 'Rank'),
-        active: reloadZeroBuildValues != null,
-      ),
-      ballistic: RankData(
-        progressText: getStringValue(ballisticValues, 'RankProgressionText'),
-        progress: getDoubleValue(ballisticValues, 'RankProgression'),
-        lastProgress: getStringValue(ballisticValues, 'LastProgress'),
-        lastChanged: getStringValue(ballisticValues, 'LastChanged'),
-        dailyMatches: getIntValue(ballisticValues, 'DailyMatches'),
-        rankImagePath: getImageAssetPath(ballisticValues),
-        rank: getStringValue(ballisticValues, 'Rank'),
-        active: ballisticValues != null,
-      ),
+      rankModes: List.generate(
+          modes.length,
+          (index) =>
+              _buildRankData(getGameModeValues(item, modes[index]['label']!))),
     );
   }
 }

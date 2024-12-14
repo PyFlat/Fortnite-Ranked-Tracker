@@ -4,6 +4,7 @@ import 'package:talker_flutter/talker_flutter.dart';
 import '../core/database.dart';
 import '../core/rank_data.dart';
 import '../core/rank_service.dart';
+import '../core/utils.dart';
 import 'account_details_dialog.dart';
 import 'user_popup_menu.dart';
 
@@ -16,12 +17,7 @@ class RankCard extends StatefulWidget {
   final bool showSwitches;
   final String? accountAvatar;
 
-  final RankData battleRoyale;
-  final RankData zeroBuild;
-  final RankData rocketRacing;
-  final RankData reload;
-  final RankData reloadZeroBuild;
-  final RankData ballistic;
+  final List<RankData> rankModes;
 
   final Color? color;
 
@@ -40,12 +36,7 @@ class RankCard extends StatefulWidget {
       this.accountAvatar,
       required this.showMenu,
       required this.showSwitches,
-      required this.battleRoyale,
-      required this.zeroBuild,
-      required this.rocketRacing,
-      required this.reload,
-      required this.reloadZeroBuild,
-      required this.ballistic,
+      required this.rankModes,
       required this.talker});
 
   @override
@@ -54,32 +45,16 @@ class RankCard extends StatefulWidget {
 
 class RankCardState extends State<RankCard>
     with SingleTickerProviderStateMixin {
-  late bool _battleRoyaleTracking;
-  late bool _zeroBuildTracking;
-  late bool _rocketRacingTracking;
-  late bool _reloadTracking;
-  late bool _reloadZeroBuildTracking;
-  late bool _ballisticTracking;
+  late List<bool> _trackingStates;
 
   int _currentIndex = 0;
-  final List<String> _tabNames = [
-    "Battle Royale",
-    "Zero Build",
-    "Rocket Racing",
-    "Reload",
-    "Reload Zero Build",
-    "Ballistic"
-  ];
+  final List<String> _tabNames = modes.map((mode) => mode['label']!).toList();
 
   @override
   void initState() {
     super.initState();
-    _battleRoyaleTracking = widget.battleRoyale.tracking ?? false;
-    _zeroBuildTracking = widget.zeroBuild.tracking ?? false;
-    _rocketRacingTracking = widget.rocketRacing.tracking ?? false;
-    _reloadTracking = widget.reload.tracking ?? false;
-    _reloadZeroBuildTracking = widget.reloadZeroBuild.tracking ?? false;
-    _ballisticTracking = widget.ballistic.tracking ?? false;
+    _trackingStates =
+        widget.rankModes.map((rank) => rank.tracking ?? false).toList();
     _currentIndex = widget.initialIndex ?? 0;
   }
 
@@ -267,82 +242,17 @@ class RankCardState extends State<RankCard>
   }
 
   Widget _buildContentView() {
-    switch (_currentIndex) {
-      case 0:
-        return _buildContent(
-          widget.battleRoyale,
-          _battleRoyaleTracking,
-          "Battle Royale",
-          (bool value) async {
-            setState(() {
-              _battleRoyaleTracking = value;
-            });
-            await _updatePlayerTracking(value, 0);
-          },
-        );
-      case 1:
-        return _buildContent(
-          widget.zeroBuild,
-          _zeroBuildTracking,
-          "Zero Build",
-          (bool value) async {
-            setState(() {
-              _zeroBuildTracking = value;
-            });
-            await _updatePlayerTracking(value, 1);
-          },
-        );
-      case 2:
-        return _buildContent(
-          widget.rocketRacing,
-          _rocketRacingTracking,
-          "Rocket Racing",
-          (bool value) async {
-            setState(() {
-              _rocketRacingTracking = value;
-            });
-            await _updatePlayerTracking(value, 2);
-          },
-        );
-      case 3:
-        return _buildContent(
-          widget.reload,
-          _reloadTracking,
-          "Reload",
-          (bool value) async {
-            setState(() {
-              _reloadTracking = value;
-            });
-            await _updatePlayerTracking(value, 3);
-          },
-        );
-      case 4:
-        return _buildContent(
-          widget.reloadZeroBuild,
-          _reloadZeroBuildTracking,
-          "Reload Zero Build",
-          (bool value) async {
-            setState(() {
-              _reloadZeroBuildTracking = value;
-            });
-            await _updatePlayerTracking(value, 4);
-          },
-        );
-      case 5:
-        return _buildContent(
-          widget.ballistic,
-          _ballisticTracking,
-          "Ballistic",
-          (bool value) async {
-            setState(() {
-              _ballisticTracking = value;
-            });
-            await _updatePlayerTracking(value, 5);
-          },
-        );
-      default:
-        return const Center(child: Text("Invalid Index"));
-    }
+    return _buildContent(
+      widget.rankModes[_currentIndex],
+      _trackingStates[_currentIndex],
+      modes[_currentIndex]["label"]!,
+      (bool value) async {
+        setState(() {
+          _trackingStates[_currentIndex] = value;
+        });
+        await _updatePlayerTracking(value, _currentIndex);
+      },
+    );
   }
 
   Widget _buildShowIcon() {

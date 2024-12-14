@@ -25,14 +25,7 @@ class HomeScreenState extends State<HomeScreen>
   List<Map<String, dynamic>> _previousData = [];
   final List<Color?> _currentCardColors = [];
   final List<double> _currentScales = [];
-  final List _rankedModes = [
-    "Battle Royale",
-    "Zero Build",
-    "Rocket Racing",
-    "Reload",
-    "Reload Zero Build",
-    "Ballistic"
-  ];
+  final List _rankedModes = modes.map((mode) => mode["label"]).toList();
   bool _firstIteration = true;
 
   List<Map<String, dynamic>> data = [];
@@ -74,14 +67,6 @@ class HomeScreenState extends State<HomeScreen>
   Future<List<Map<String, dynamic>>> _getData() async {
     List<Map<String, dynamic>> data = await _database.getAccountDataActive();
     Map<String, String> avatarImages = {};
-    final accountTypes = {
-      "Battle Royale": "br",
-      "Zero Build": "zb",
-      "Rocket Racing": "rr",
-      "Reload": "rl",
-      "Reload Zero Build": "rlzb",
-      "Ballistic": "bl"
-    };
     List<String> accountIds =
         data.map((item) => item['AccountId'] as String).toList();
 
@@ -92,9 +77,9 @@ class HomeScreenState extends State<HomeScreen>
     }
 
     for (Map<String, dynamic> account in data) {
-      for (var entry in accountTypes.entries) {
-        String accountType = entry.key;
-        String typeCode = entry.value;
+      for (var mode in modes) {
+        String accountType = mode['label']!;
+        String typeCode = mode['short']!.toLowerCase();
         account["AccountAvatar"] = avatarImages[account["AccountId"]];
 
         if (account.containsKey(accountType)) {

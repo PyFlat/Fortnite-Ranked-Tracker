@@ -42,21 +42,9 @@ class SearchCardState extends State<SearchCard> {
 
     nickName = await DataBase().getPlayerNickName(widget.accountId);
 
-    final bool brActive = activeRankingTypes[0];
-    final bool zbActive = activeRankingTypes[1];
-    final bool rrActive = activeRankingTypes[2];
-    final bool rlActive = activeRankingTypes[3];
-    final bool rlzbActive = activeRankingTypes[4];
-    final bool blActive = activeRankingTypes[5];
-
     List<dynamic> formattedResult = [
-      null,
-      null,
-      null,
-      null,
-      null,
-      null,
-      [brActive, zbActive, rrActive, rlActive, rlzbActive, blActive]
+      activeRankingTypes,
+      ...List.filled(activeRankingTypes.length, null)
     ];
     for (dynamic item in result) {
       String progressText = item["currentDivision"] == 17
@@ -81,21 +69,23 @@ class SearchCardState extends State<SearchCard> {
         };
       }
 
-      if (item["rankingType"] == "ranked-br") {
-        formattedResult[0] = formattedItem;
-      } else if (item["rankingType"] == "ranked-zb") {
-        formattedResult[1] = formattedItem;
-      } else if (item["rankingType"] == "delmar-competitive") {
-        formattedResult[2] = formattedItem;
-      } else if (item["rankingType"] == "ranked_blastberry_build") {
-        formattedResult[3] = formattedItem;
-      } else if (item["rankingType"] == "ranked_blastberry_nobuild") {
-        formattedResult[4] = formattedItem;
-      } else if (item["rankingType"] == "ranked-feral") {
-        formattedResult[5] = formattedItem;
-      }
+      final types = modes.map((mode) => mode['type']).toList();
+
+      formattedResult[types.indexOf(item["rankingType"]) + 1] = formattedItem;
     }
     return formattedResult;
+  }
+
+  RankData _buildRankData(dynamic data, dynamic tracking) {
+    return RankData(
+      active: true,
+      progressText: getStringValue(data, 'RankProgressionText'),
+      progress: getDoubleValue(data, 'RankProgression'),
+      lastChanged: getStringValue(data, 'LastChanged'),
+      rankImagePath: getImageAssetPath(data),
+      rank: getStringValue(data, "Rank"),
+      tracking: tracking,
+    );
   }
 
   @override
@@ -108,13 +98,8 @@ class SearchCardState extends State<SearchCard> {
         } else if (snapshot.hasError) {
           return Text('Error: ${snapshot.error}');
         } else if (snapshot.hasData) {
-          final brData = snapshot.data?[0];
-          final zbData = snapshot.data?[1];
-          final rrData = snapshot.data?[2];
-          final rlData = snapshot.data?[3];
-          final rlzbData = snapshot.data?[4];
-          final blData = snapshot.data?[5];
-          final active = snapshot.data?[6];
+          final snapshotData = snapshot.data ?? [];
+
           return SizedBox(
             width: 350,
             height: 350,
@@ -126,59 +111,16 @@ class SearchCardState extends State<SearchCard> {
               searchCardKey: widget.key as GlobalKey,
               showMenu: false,
               showSwitches: true,
-              battleRoyale: RankData(
-                active: true,
-                progressText: getStringValue(brData, 'RankProgressionText'),
-                progress: getDoubleValue(brData, 'RankProgression'),
-                lastChanged: getStringValue(brData, 'LastChanged'),
-                rankImagePath: getImageAssetPath(brData),
-                rank: getStringValue(brData, "Rank"),
-                tracking: active[0],
-              ),
-              zeroBuild: RankData(
-                active: true,
-                progressText: getStringValue(zbData, 'RankProgressionText'),
-                progress: getDoubleValue(zbData, 'RankProgression'),
-                lastChanged: getStringValue(zbData, 'LastChanged'),
-                rankImagePath: getImageAssetPath(zbData),
-                rank: getStringValue(zbData, "Rank"),
-                tracking: active[1],
-              ),
-              rocketRacing: RankData(
-                active: true,
-                progressText: getStringValue(rrData, 'RankProgressionText'),
-                progress: getDoubleValue(rrData, 'RankProgression'),
-                lastChanged: getStringValue(rrData, 'LastChanged'),
-                rankImagePath: getImageAssetPath(rrData),
-                rank: getStringValue(rrData, "Rank"),
-                tracking: active[2],
-              ),
-              reload: RankData(
-                active: true,
-                progressText: getStringValue(rlData, 'RankProgressionText'),
-                progress: getDoubleValue(rlData, 'RankProgression'),
-                lastChanged: getStringValue(rlData, 'LastChanged'),
-                rankImagePath: getImageAssetPath(rlData),
-                rank: getStringValue(rlData, "Rank"),
-                tracking: active[3],
-              ),
-              reloadZeroBuild: RankData(
-                active: true,
-                progressText: getStringValue(rlzbData, 'RankProgressionText'),
-                progress: getDoubleValue(rlzbData, 'RankProgression'),
-                lastChanged: getStringValue(rlzbData, 'LastChanged'),
-                rankImagePath: getImageAssetPath(rlzbData),
-                rank: getStringValue(rlzbData, "Rank"),
-                tracking: active[4],
-              ),
-              ballistic: RankData(
-                active: true,
-                progressText: getStringValue(blData, 'RankProgressionText'),
-                progress: getDoubleValue(blData, 'RankProgression'),
-                lastChanged: getStringValue(blData, 'LastChanged'),
-                rankImagePath: getImageAssetPath(blData),
-                rank: getStringValue(blData, "Rank"),
-                tracking: active[5],
+              rankModes: List.generate(
+                modes.length,
+                (index) => _buildRankData(
+                  snapshotData.length > index + 1
+                      ? snapshotData[index + 1]
+                      : null,
+                  snapshotData.isNotEmpty && snapshotData[0] != null
+                      ? snapshotData[0][index]
+                      : null,
+                ),
               ),
               talker: widget.talker,
             ),
