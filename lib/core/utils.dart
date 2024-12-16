@@ -89,12 +89,12 @@ const List<Map<String, String>> modes = [
     'short': 'BL',
     'type': 'ranked-feral'
   },
-  {'key': 'og', 'label': 'OG', 'short': 'OG', 'type': 'ranked-feral'},
+  {'key': 'og', 'label': 'OG', 'short': 'OG', 'type': 'ranked-figment-build'},
   {
     'key': 'ogZeroBuild',
     'label': 'OG Zero Build',
     'short': 'OGZB',
-    'type': 'ranked-feral'
+    'type': 'ranked-figment-nobuild'
   }
 ];
 
