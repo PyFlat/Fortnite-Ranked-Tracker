@@ -269,6 +269,7 @@ class HomeScreenState extends State<HomeScreen>
               var item = data[i];
 
               int dataChanged = -1;
+              int previousProgress = 0;
               if (_previousData.isNotEmpty) {
                 if (i >= _previousData.length) {
                   dataChanged = -1;
@@ -299,6 +300,15 @@ class HomeScreenState extends State<HomeScreen>
                 Future.delayed(const Duration(seconds: 1, milliseconds: 250),
                     () => _resetCardState(i));
                 index = dataChanged;
+                previousProgress = _previousData[i][_rankedModes[dataChanged]]
+                    ["TotalProgress"];
+                if (previousProgress > 1700) {
+                  previousProgress = (1700 +
+                          (_previousData[i][_rankedModes[dataChanged]]
+                                  ["RankProgression"] *
+                              100))
+                      .toInt();
+                }
               }
 
               if (rankUpdateData != null &&
@@ -316,8 +326,12 @@ class HomeScreenState extends State<HomeScreen>
               if (item["Visible"] == 0) {
                 continue;
               }
-
-              cards.add(_buildAnimatedCard(item, i, index));
+              if (hasChanged) {
+                cards.add(_buildAnimatedCard(item, i, index, previousProgress));
+              } else {
+                cards
+                    .add(_buildSimpleCard(item, index, _currentCardColors[i]!));
+              }
             }
 
             _previousData = List.from(data);
@@ -382,12 +396,8 @@ class HomeScreenState extends State<HomeScreen>
     );
   }
 
-  Widget buildCard(
-      List candidateData, int i, int index, Color cardColor, Map item) {
-    return _buildAnimatedCard(item, i, index);
-  }
-
-  Widget _buildAnimatedCard(dynamic item, int i, int index) {
+  Widget _buildAnimatedCard(
+      dynamic item, int i, int index, int previousProgress) {
     return TweenAnimationBuilder<Color?>(
       key: ValueKey(item.toString()),
       tween: ColorTween(begin: Colors.black26, end: _currentCardColors[i]),
@@ -397,9 +407,35 @@ class HomeScreenState extends State<HomeScreen>
           tween: Tween(begin: 1.0, end: _currentScales[i]),
           duration: const Duration(milliseconds: 100),
           builder: (context, scale, child) {
-            return Transform.scale(
-              scale: scale,
-              child: _buildSimpleCard(item, index, color!),
+            final String mode = modes[index]["label"]!;
+            double totalProgress =
+                (item[mode]["TotalProgress"] as int).toDouble();
+
+            if (totalProgress > 1700) {
+              totalProgress =
+                  (1700 + (item[mode]["RankProgression"] * 100)).toDouble();
+            }
+            double begin = totalProgress - (totalProgress - previousProgress);
+            if (previousProgress == 0) {
+              begin = totalProgress;
+            }
+            return TweenAnimationBuilder<double>(
+              tween: Tween(begin: begin, end: totalProgress),
+              duration: const Duration(milliseconds: 1000),
+              builder: (context, progress, child) {
+                final itemCopy = Map<String, dynamic>.from(item);
+                itemCopy[mode] = Map<String, dynamic>.from(item[mode]);
+                itemCopy[mode]['RankProgression'] = (progress % 100) / 100;
+
+                return Transform.scale(
+                  scale: scale,
+                  child: _buildSimpleCard(
+                    progress == totalProgress ? item : itemCopy,
+                    index,
+                    color!,
+                  ),
+                );
+              },
             );
           },
         );
