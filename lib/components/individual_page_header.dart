@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:fortnite_ranked_tracker/constants/constants.dart';
 
 import '../core/season_service.dart';
+import '../core/utils.dart';
 import 'season_selector.dart';
 
 class IndividualPageHeader extends StatefulWidget {
@@ -34,7 +34,9 @@ class IndividualPageHeaderState extends State<IndividualPageHeader> {
     }
 
     final displayText = seasonInfo != null
-        ? "${seasonInfo["tableName"]!} - ${Constants.rankingTypeNames[seasonInfo["rankingType"]]}"
+        ? "${seasonInfo["tableName"]!} - ${modes.firstWhere(
+            (element) => element["type"] == seasonInfo!["rankingType"],
+          )["label"]!}"
         : "Select a Season";
 
     return Padding(

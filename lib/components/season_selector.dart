@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../core/rank_service.dart';
 import '../core/season_service.dart';
-import '../constants/constants.dart';
+import '../core/utils.dart';
 
 class SeasonSelector extends StatelessWidget {
   final SeasonService seasonService;
@@ -48,10 +48,13 @@ class SeasonSelector extends StatelessWidget {
                     child: ListView.builder(
                       itemCount: seasons.length,
                       itemBuilder: (context, index) {
+                        String subtitle = modes.firstWhere(
+                          (element) =>
+                              element["type"] == seasons[index]["rankingType"],
+                        )["label"]!;
                         return ListTile(
                           title: Text(seasons[index]["tableName"]),
-                          subtitle: Text(Constants
-                              .rankingTypeNames[seasons[index]["rankingType"]]),
+                          subtitle: Text(subtitle),
                           onTap: () {
                             seasonService.setCurrentSeason(seasons[index]);
                             onSeasonSelected();

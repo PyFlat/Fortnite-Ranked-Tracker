@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:fortnite_ranked_tracker/components/custom_search_bar.dart';
 
-import '../constants/constants.dart';
 import '../core/rank_service.dart';
 import 'dart:async';
 
 import 'dart:math' as math;
+
+import '../core/utils.dart';
 
 class GraphBottomSheetContent extends StatefulWidget {
   final List<Map<String, dynamic>> items;
@@ -139,8 +140,10 @@ class GraphBottomSheetContentState extends State<GraphBottomSheetContent> {
                 return ListTile(
                   title: Text(filteredItems[index]["displayName"]),
                   subtitle: seasonInfo.isNotEmpty
-                      ? Text(
-                          "${seasonInfo["tableName"]} - ${Constants.rankingTypeNames[seasonInfo["rankingType"]]}")
+                      ? Text("${seasonInfo["tableName"]} - ${modes.firstWhere(
+                          (element) =>
+                              element["type"] == seasonInfo["rankingType"],
+                        )["label"]!}")
                       : null,
                   leading: IconButton(
                     icon: filteredItems[index]["visible"]
@@ -344,7 +347,7 @@ class GraphBottomSheetContentState extends State<GraphBottomSheetContent> {
                               return ExpansionPanel(
                                 backgroundColor:
                                     selectedAccountId == item["accountId"]
-                                        ? Colors.blue.withValues(alpha: 0.1)
+                                        ? Colors.blue.withValues(alpha: .1)
                                         : Colors.transparent,
                                 headerBuilder: (context, isExpanded) {
                                   return ListTile(
@@ -362,16 +365,21 @@ class GraphBottomSheetContentState extends State<GraphBottomSheetContent> {
                                         selectedSeason?["tableId"] ==
                                             season["tableId"];
 
+                                    String subtitle = modes.firstWhere(
+                                      (element) =>
+                                          element["type"] ==
+                                          season["rankingType"],
+                                    )["label"]!;
+
                                     return ListTile(
                                       title: Text(season["tableName"]!),
-                                      subtitle: Text(Constants.rankingTypeNames[
-                                          season["rankingType"]]),
+                                      subtitle: Text(subtitle),
                                       trailing: isSelectedSeason
                                           ? const Icon(Icons.check,
                                               color: Colors.blue)
                                           : null,
                                       tileColor: isSelectedSeason
-                                          ? Colors.blue.withValues(alpha: 0.1)
+                                          ? Colors.blue.withValues(alpha: .1)
                                           : Colors.transparent,
                                       onTap: () {
                                         setState(() {
@@ -426,7 +434,7 @@ class GraphBottomSheetContentState extends State<GraphBottomSheetContent> {
                                               (math.Random().nextDouble() *
                                                       0xFFFFFF)
                                                   .toInt())
-                                          .withValues(alpha: 1.0),
+                                          .withValues(alpha: 1),
                                     });
                                   }
                                 : null,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:fortnite_ranked_tracker/components/rank_card.dart';
 import 'package:fortnite_ranked_tracker/constants/constants.dart';
 import 'package:fortnite_ranked_tracker/core/avatar_manager.dart';
+import 'package:fortnite_ranked_tracker/core/rank_data.dart';
 import 'package:fortnite_ranked_tracker/core/utils.dart';
 
 import '../core/rank_service.dart';
@@ -46,19 +47,9 @@ class SearchCardState extends State<SearchCard> {
 
     nickName = await RankService().getPlayerNickName(widget.accountId);
 
-    final bool brActive = activeRankingTypes[0];
-    final bool zbActive = activeRankingTypes[1];
-    final bool rrActive = activeRankingTypes[2];
-    final bool rlActive = activeRankingTypes[3];
-    final bool rlzbActive = activeRankingTypes[4];
-
     List<dynamic> formattedResult = [
-      null,
-      null,
-      null,
-      null,
-      null,
-      [brActive, zbActive, rrActive, rlActive, rlzbActive]
+      activeRankingTypes,
+      ...List.filled(activeRankingTypes.length, null)
     ];
     for (dynamic item in result) {
       String progressText = item["currentDivision"] == 17
@@ -83,19 +74,23 @@ class SearchCardState extends State<SearchCard> {
         };
       }
 
-      if (item["rankingType"] == "ranked-br") {
-        formattedResult[0] = formattedItem;
-      } else if (item["rankingType"] == "ranked-zb") {
-        formattedResult[1] = formattedItem;
-      } else if (item["rankingType"] == "delmar-competitive") {
-        formattedResult[2] = formattedItem;
-      } else if (item["rankingType"] == "ranked_blastberry_build") {
-        formattedResult[3] = formattedItem;
-      } else if (item["rankingType"] == "ranked_blastberry_nobuild") {
-        formattedResult[4] = formattedItem;
-      }
+      final types = modes.map((mode) => mode['type']).toList();
+
+      formattedResult[types.indexOf(item["rankingType"]) + 1] = formattedItem;
     }
     return formattedResult;
+  }
+
+  RankData _buildRankData(dynamic data, dynamic tracking) {
+    return RankData(
+      active: true,
+      progressText: getStringValue(data, 'RankProgressionText'),
+      progress: getDoubleValue(data, 'RankProgression'),
+      lastChanged: getStringValue(data, 'LastChanged'),
+      rankImagePath: getImageAssetPath(data),
+      rank: getStringValue(data, "Rank"),
+      tracking: tracking,
+    );
   }
 
   @override
@@ -108,12 +103,8 @@ class SearchCardState extends State<SearchCard> {
         } else if (snapshot.hasError) {
           return Text('Error: ${snapshot.error}');
         } else if (snapshot.hasData) {
-          final brData = snapshot.data?[0];
-          final zbData = snapshot.data?[1];
-          final rrData = snapshot.data?[2];
-          final rlData = snapshot.data?[3];
-          final rlzbData = snapshot.data?[4];
-          final active = snapshot.data?[5];
+          final snapshotData = snapshot.data ?? [];
+
           return SizedBox(
             width: 350,
             height: 350,
@@ -125,47 +116,17 @@ class SearchCardState extends State<SearchCard> {
               searchCardKey: widget.key as GlobalKey,
               showMenu: false,
               showSwitches: true,
-              battleRoyaleActive: true,
-              battleRoyaleProgressText:
-                  getStringValue(brData, 'RankProgressionText'),
-              battleRoyaleProgress: getDoubleValue(brData, 'RankProgression'),
-              battleRoyaleLastChanged: getStringValue(brData, 'LastChanged'),
-              battleRoyaleRankImagePath: getImageAssetPath(brData),
-              battleRoyaleRank: getStringValue(brData, "Rank"),
-              battleRoyaleTracking: active[0],
-              zeroBuildActive: true,
-              zeroBuildProgressText:
-                  getStringValue(zbData, 'RankProgressionText'),
-              zeroBuildProgress: getDoubleValue(zbData, 'RankProgression'),
-              zeroBuildLastChanged: getStringValue(zbData, 'LastChanged'),
-              zeroBuildRankImagePath: getImageAssetPath(zbData),
-              zeroBuildRank: getStringValue(zbData, "Rank"),
-              zeroBuildTracking: active[1],
-              rocketRacingActive: true,
-              rocketRacingProgressText:
-                  getStringValue(rrData, 'RankProgressionText'),
-              rocketRacingProgress: getDoubleValue(rrData, 'RankProgression'),
-              rocketRacingLastChanged: getStringValue(rrData, 'LastChanged'),
-              rocketRacingRankImagePath: getImageAssetPath(rrData),
-              rocketRacingRank: getStringValue(rrData, "Rank"),
-              rocketRacingTracking: active[2],
-              reloadActive: true,
-              reloadProgressText: getStringValue(rlData, 'RankProgressionText'),
-              reloadProgress: getDoubleValue(rlData, 'RankProgression'),
-              reloadLastChanged: getStringValue(rlData, 'LastChanged'),
-              reloadRankImagePath: getImageAssetPath(rlData),
-              reloadRank: getStringValue(rlData, "Rank"),
-              reloadTracking: active[3],
-              reloadZeroBuildActive: true,
-              reloadZeroBuildProgressText:
-                  getStringValue(rlzbData, 'RankProgressionText'),
-              reloadZeroBuildProgress:
-                  getDoubleValue(rlzbData, 'RankProgression'),
-              reloadZeroBuildLastChanged:
-                  getStringValue(rlzbData, 'LastChanged'),
-              reloadZeroBuildRankImagePath: getImageAssetPath(rlzbData),
-              reloadZeroBuildRank: getStringValue(rlzbData, "Rank"),
-              reloadZeroBuildTracking: active[4],
+              rankModes: List.generate(
+                modes.length,
+                (index) => _buildRankData(
+                  snapshotData.length > index + 1
+                      ? snapshotData[index + 1]
+                      : null,
+                  snapshotData.isNotEmpty && snapshotData[0] != null
+                      ? snapshotData[0][index]
+                      : null,
+                ),
+              ),
             ),
           );
         } else {

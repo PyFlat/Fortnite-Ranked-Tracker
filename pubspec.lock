@@ -727,7 +727,6 @@ packages:
     version: "0.0.0"
   socket_io_client:
     dependency: "direct main"
-    description:
       name: socket_io_client
       sha256: "180fdbc7685e32a849511bbf8b1c7bcc46ab0ff116f7024aa204b425bb3a1ffe"
       url: "https://pub.dev"
@@ -742,8 +741,6 @@ packages:
     source: hosted
     version: "3.0.1"
   source_span:
-    dependency: transitive
-    description:
       name: source_span
       sha256: "53e943d4206a5e30df338fd4c6e7a077e02254531b138a15aec3bd143c1a8b3c"
       url: "https://pub.dev"

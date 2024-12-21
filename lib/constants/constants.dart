@@ -41,12 +41,4 @@ class Constants {
 
   static const String defaultSkinId =
       "CID_A_402_Athena_Commando_F_RebirthFresh";
-
-  static const Map rankingTypeNames = {
-    "ranked-br": "Battle Royale",
-    "ranked-zb": "Zero Build",
-    "delmar-competitive": "Rocket Racing",
-    "ranked_blastberry_build": "Reload",
-    "ranked_blastberry_nobuild": "Reload Zero Build"
-  };
 }

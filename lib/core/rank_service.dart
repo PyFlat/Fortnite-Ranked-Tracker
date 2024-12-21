@@ -123,7 +123,8 @@ class RankService {
     final avatarManager = AvatarManager();
 
     for (var element in resultCasted) {
-      if (!element.containsKey("accountAvatar")) {
+      if (!element.containsKey("accountAvatar") ||
+          element["accountAvatar"] == "random") {
         element["accountAvatar"] =
             avatarManager.getAvatar(element["accountId"]);
       }

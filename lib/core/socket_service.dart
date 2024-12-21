@@ -11,6 +11,7 @@ class StreamSocket {}
 
 class SocketService {
   Socket? _socket;
+  List? data;
   static bool _isInitialized = false;
 
   final _socketResponse = StreamController<Map?>.broadcast();
@@ -58,11 +59,15 @@ class SocketService {
     });
 
     _socket!.on('dataChanged', (_) {
-      RankService().emitDataRefresh();
+      RankService().emitDataRefresh(data: data);
+      data = null;
     });
   }
 
-  void sendDataChanged() {
+  void sendDataChanged({List? data}) {
+    if (data != null) {
+      this.data = data;
+    }
     _socket!.emit('refreshPage', "");
   }
 

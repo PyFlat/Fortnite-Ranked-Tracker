@@ -10,6 +10,7 @@ import '../components/dashboard_card.dart';
 import 'package:flutter/material.dart';
 
 import '../core/talker_service.dart';
+import '../core/utils.dart';
 import 'search_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -24,13 +25,7 @@ class HomeScreenState extends State<HomeScreen>
   final RankService _rankService = RankService();
   final List<Color?> _currentCardColors = [];
   final List<double> _currentScales = [];
-  final List _rankedModes = [
-    "Battle Royale",
-    "Zero Build",
-    "Rocket Racing",
-    "Reload",
-    "Reload Zero Build"
-  ];
+  final List _rankedModes = modes.map((mode) => mode["label"]).toList();
   bool _firstIteration = true;
 
   late Future<List<Map<String, dynamic>>> dataFuture;
@@ -196,17 +191,12 @@ class HomeScreenState extends State<HomeScreen>
                           _currentScales[i] = cardScale;
                         }
 
-                        Map<String, int> rankingTypeToIndex = {
-                          "battleRoyale": 0,
-                          "zeroBuild": 1,
-                          "rocketRacing": 2,
-                          "reload": 3,
-                          "reloadZeroBuild": 4
-                        };
+                        List rankingKeysList =
+                            modes.map((mode) => mode["key"]).toList();
 
                         if (rankUpdateData != null &&
                             item["AccountId"] == rankUpdateData![0]) {
-                          index = rankingTypeToIndex[rankUpdateData![1]]!;
+                          index = rankingKeysList.indexOf(rankUpdateData![1]);
                         }
 
                         if (_currentCardColors.length <= i) {

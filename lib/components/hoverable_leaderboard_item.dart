@@ -62,7 +62,7 @@ class HoverableLeaderboardItemState extends State<HoverableLeaderboardItem> {
                 margin:
                     const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
                 decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.2),
+                  color: Colors.black.withValues(alpha: .2),
                   borderRadius: BorderRadius.circular(16.0),
                 ),
               )
@@ -134,7 +134,7 @@ class HoverableLeaderboardItemState extends State<HoverableLeaderboardItem> {
         gradient: _getLeaderboardItemGradient(entry["rank"] - 1),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.5),
+            color: Colors.black.withValues(alpha: .5),
             blurRadius: 6.0,
             offset: const Offset(0, 3),
           ),
@@ -222,8 +222,8 @@ class HoverableLeaderboardItemState extends State<HoverableLeaderboardItem> {
       default:
         return LinearGradient(
           colors: [
-            Colors.blueAccent.withValues(alpha: 0.3),
-            Colors.deepPurple.withValues(alpha: 0.3),
+            Colors.blueAccent.withValues(alpha: .3),
+            Colors.deepPurple.withValues(alpha: .3),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
