@@ -326,12 +326,7 @@ class HomeScreenState extends State<HomeScreen>
               if (item["Visible"] == 0) {
                 continue;
               }
-              if (hasChanged) {
-                cards.add(_buildAnimatedCard(item, i, index, previousProgress));
-              } else {
-                cards
-                    .add(_buildSimpleCard(item, index, _currentCardColors[i]!));
-              }
+              cards.add(_buildAnimatedCard(item, i, index, previousProgress));
             }
 
             _previousData = List.from(data);
