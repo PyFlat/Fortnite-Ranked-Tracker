@@ -301,7 +301,8 @@ class HomeScreenState extends State<HomeScreen>
                     () => _resetCardState(i));
                 index = dataChanged;
                 previousProgress = _previousData[i][_rankedModes[dataChanged]]
-                    ["TotalProgress"];
+                        ["TotalProgress"] ??
+                    0;
                 if (previousProgress > 1700) {
                   previousProgress = (1700 +
                           (_previousData[i][_rankedModes[dataChanged]]
@@ -404,7 +405,7 @@ class HomeScreenState extends State<HomeScreen>
           builder: (context, scale, child) {
             final String mode = modes[index]["label"]!;
             double totalProgress =
-                (item[mode]["TotalProgress"] as int).toDouble();
+                ((item[mode]["TotalProgress"] ?? 0) as int).toDouble();
 
             if (totalProgress > 1700) {
               totalProgress =
