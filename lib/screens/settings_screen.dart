@@ -7,7 +7,6 @@ import 'package:flutter_settings_ui/flutter_settings_ui.dart';
 import 'package:launch_at_startup/launch_at_startup.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:window_manager/window_manager.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -33,9 +32,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _initializeSettings() async {
     prefs = await SharedPreferences.getInstance();
     setState(() {
-      showAtStartup = prefs.getBool("showAtStartup") ?? true;
       autoStart = prefs.getBool("autoStart") ?? false;
-      minimizeAsTray = prefs.getBool("minimizeAsTray") ?? true;
     });
   }
 
@@ -61,23 +58,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       FirebaseAuth.instance.signOut();
                       Navigator.of(context).pop();
                     },
-                  ),
-                  SettingsTile.switchTile(
-                    leading: const Icon(Icons.visibility_rounded),
-                    initialValue: showAtStartup,
-                    onToggle: (newValue) {
-                      setState(() {
-                        showAtStartup = newValue;
-                        prefs.setBool("showAtStartup", newValue);
-                      });
-                    },
-                    title: const Text("Show window at startup"),
-                    enabled: !kIsWeb &&
-                            (Platform.isWindows ||
-                                Platform.isMacOS ||
-                                Platform.isLinux)
-                        ? true
-                        : false,
                   ),
                   SettingsTile.switchTile(
                     leading: const Icon(Icons.start_rounded),
@@ -106,25 +86,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         ? true
                         : false,
                   ),
-                  SettingsTile.switchTile(
-                    leading: const Icon(Icons.arrow_downward_rounded),
-                    initialValue: minimizeAsTray,
-                    onToggle: (newValue) async {
-                      setState(() {
-                        minimizeAsTray = newValue;
-                        prefs.setBool("minimizeAsTray", newValue);
-                      });
-                      if (minimizeAsTray) {
-                        windowManager.setPreventClose(true);
-                      } else {
-                        windowManager.setPreventClose(false);
-                      }
-                    },
-                    title: const Text("Minimize to tray when closed"),
-                    enabled: !kIsWeb && (Platform.isWindows || Platform.isLinux)
-                        ? true
-                        : false,
-                  )
                 ]),
               ],
             );

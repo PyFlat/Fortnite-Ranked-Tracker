@@ -89,7 +89,7 @@ class HoverableLeaderboardItemState extends State<HoverableLeaderboardItem> {
             'Rounds', entry["matches"], const Icon(Icons.loop_rounded)),
         _buildStatChip(
           'Wins',
-          entry["victorys"],
+          entry["victories"],
           const Icon(Icons.emoji_events_rounded, color: Colors.amber),
         ),
         _buildStatChip(

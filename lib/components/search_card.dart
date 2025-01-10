@@ -76,6 +76,8 @@ class SearchCardState extends State<SearchCard> {
 
       final types = modes.map((mode) => mode['type']).toList();
 
+      print(formattedResult);
+
       formattedResult[types.indexOf(item["rankingType"]) + 1] = formattedItem;
     }
     return formattedResult;

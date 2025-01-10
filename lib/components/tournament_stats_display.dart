@@ -47,6 +47,11 @@ class _StatsDisplayState extends State<StatsDisplay> {
         } else if (snapshot.hasData) {
           final data = snapshot.data;
           final sessionHistory = data!["sessions"] as List;
+          sessionHistory.sort((a, b) => DateTime.parse(a["endTime"])
+                  .isBefore(DateTime.parse(b["endTime"]))
+              ? -1
+              : 1);
+
           return Expanded(
             child: SingleChildScrollView(
               child: Row(
@@ -129,7 +134,7 @@ class _StatsDisplayState extends State<StatsDisplay> {
         }),
         const Divider(),
         _buildStatRow(
-          text: 'Wins: ${widget.entry["victorys"]}',
+          text: 'Wins: ${widget.entry["victories"]}',
           icon: Icons.emoji_events_rounded,
           iconColor: Colors.amber,
         ),
@@ -144,22 +149,22 @@ class _StatsDisplayState extends State<StatsDisplay> {
         ),
         _buildStatRow(
           text:
-              'Avg Kills: ${(int.parse(widget.entry["elims"]) / int.parse(widget.entry["matches"])).toStringAsFixed(2)}',
+              'Avg Kills: ${(widget.entry["elims"] / widget.entry["matches"]).toStringAsFixed(2)}',
           icon: Icons.hide_source_rounded,
         ),
         _buildStatRow(
           text:
-              'Avg Time Alive: ${formatDuration((_getSessionHistoryStat("TIME_ALIVE_STAT", data) / int.parse(widget.entry["matches"])))}',
+              'Avg Time Alive: ${formatDuration((_getSessionHistoryStat("TIME_ALIVE_STAT", data) / widget.entry["matches"]))}',
           icon: Icons.hourglass_top_rounded,
         ),
         _buildStatRow(
           text:
-              'Avg Points: ${(widget.entry["points"] / int.parse(widget.entry["matches"])).toStringAsFixed(2)}',
+              'Avg Points: ${(widget.entry["points"] / widget.entry["matches"]).toStringAsFixed(2)}',
           icon: Icons.hotel_class_rounded,
         ),
         _buildStatRow(
           text:
-              'Avg Place: ${(_getSessionHistoryStat("PLACEMENT_STAT_INDEX", data) / int.parse(widget.entry["matches"])).toStringAsFixed(2)}',
+              'Avg Place: ${(_getSessionHistoryStat("PLACEMENT_STAT_INDEX", data) / widget.entry["matches"]).toStringAsFixed(2)}',
           icon: Icons.leaderboard_rounded,
         ),
       ],

@@ -37,6 +37,7 @@ class Constants {
     "ME": "Middle East",
     "BR": "Brazil",
     "OCE": "Oceania",
+    "ONSITE": "All"
   };
 
   static const String defaultSkinId =
