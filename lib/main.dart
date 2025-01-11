@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
 import 'package:provider/provider.dart';
@@ -43,8 +44,9 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   late Timer timer;
   late Dio dio;
-  final connectionChecker = InternetConnection();
+  late InternetConnection connectionChecker;
   late StreamSubscription<InternetConnection> subscription;
+
   bool _isOffline = false;
 
   @override
@@ -54,17 +56,21 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
     AvatarManager().initialize("assets/avatar-images");
 
     WidgetsBinding.instance.addObserver(this);
-    connectionChecker.onStatusChange.listen((InternetStatus status) {
-      if (status == InternetStatus.connected) {
-        setState(() {
-          _isOffline = false;
-        });
-      } else {
-        setState(() {
-          _isOffline = true;
-        });
-      }
-    });
+    if (!kIsWeb) {
+      connectionChecker = InternetConnection();
+      connectionChecker.onStatusChange.listen((InternetStatus status) {
+        if (status == InternetStatus.connected) {
+          setState(() {
+            _isOffline = false;
+          });
+        } else {
+          setState(() {
+            _isOffline = true;
+          });
+        }
+      });
+    }
+
     super.initState();
   }
 
