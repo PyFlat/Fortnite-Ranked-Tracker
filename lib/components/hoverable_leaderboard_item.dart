@@ -31,17 +31,17 @@ class HoverableLeaderboardItemState extends State<HoverableLeaderboardItem> {
         child: Stack(
           children: [
             Container(
-              height: 120,
+              height: 90,
               margin:
-                  const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+                  const EdgeInsets.symmetric(vertical: 3.0, horizontal: 16.0),
               decoration: _buildLeaderboardItemDecoration(widget.entry),
               child: Padding(
-                padding: const EdgeInsets.all(16.0),
+                padding: const EdgeInsets.all(10.0),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _buildRankCircle(widget.entry),
-                    const SizedBox(width: 16.0),
+                    const SizedBox(width: 10.0),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -58,9 +58,9 @@ class HoverableLeaderboardItemState extends State<HoverableLeaderboardItem> {
             ),
             if (_isHovered)
               Container(
-                height: 120,
+                height: 90,
                 margin:
-                    const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+                    const EdgeInsets.symmetric(vertical: 3.0, horizontal: 16.0),
                 decoration: BoxDecoration(
                   color: Colors.black.withValues(alpha: .2),
                   borderRadius: BorderRadius.circular(16.0),
@@ -79,28 +79,47 @@ class HoverableLeaderboardItemState extends State<HoverableLeaderboardItem> {
   }
 
   Widget _buildStatChips(dynamic entry) {
-    return Wrap(
-      spacing: 8.0,
-      runSpacing: 4.0,
-      children: [
-        _buildStatChip('Points', entry["points"],
-            const Icon(Icons.star_rounded, color: Colors.amber)),
-        _buildStatChip(
-            'Rounds', entry["matches"], const Icon(Icons.loop_rounded)),
-        _buildStatChip(
-          'Wins',
-          entry["victories"],
-          const Icon(Icons.emoji_events_rounded, color: Colors.amber),
-        ),
-        _buildStatChip(
-            "Kills",
-            entry["elims"],
-            const Icon(
-              Icons.close_rounded,
-              color: Colors.redAccent,
-            ))
-      ],
-    );
+    return LayoutBuilder(builder: (context, constraints) {
+      return Row(
+        spacing: 8.0,
+        children: [
+          _buildStatChip(
+              'Points',
+              entry["points"],
+              const Icon(
+                Icons.star_rounded,
+                color: Colors.amber,
+                size: 22,
+              )),
+          _buildStatChip(
+              'Rounds',
+              entry["matches"],
+              const Icon(
+                Icons.loop_rounded,
+                size: 22,
+              )),
+          if (constraints.maxWidth > 310)
+            _buildStatChip(
+              'Wins',
+              entry["victories"],
+              const Icon(
+                Icons.emoji_events_rounded,
+                color: Colors.amber,
+                size: 22,
+              ),
+            ),
+          if (constraints.maxWidth > 420)
+            _buildStatChip(
+                "Kills",
+                entry["elims"],
+                const Icon(
+                  Icons.close_rounded,
+                  color: Colors.redAccent,
+                  size: 22,
+                ))
+        ],
+      );
+    });
   }
 
   Widget _buildStatChip(String label, dynamic value, Icon icon) {
@@ -114,11 +133,11 @@ class HoverableLeaderboardItemState extends State<HoverableLeaderboardItem> {
         mainAxisSize: MainAxisSize.min,
         children: [
           icon,
-          const SizedBox(width: 4.0),
+          const SizedBox(width: 2.0),
           Text(
             '$label: $value',
             style: const TextStyle(
-              fontSize: 14.0,
+              fontSize: 12.0,
               color: Colors.white70,
             ),
           ),
@@ -167,7 +186,7 @@ class HoverableLeaderboardItemState extends State<HoverableLeaderboardItem> {
 
   Widget _buildPillTag(String displayName) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
+      padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4.0),
       decoration: BoxDecoration(
         color: Colors.blueGrey[800],
         borderRadius: BorderRadius.circular(20.0),
@@ -175,7 +194,7 @@ class HoverableLeaderboardItemState extends State<HoverableLeaderboardItem> {
       child: Text(
         displayName,
         style: const TextStyle(
-          fontSize: 16.0,
+          fontSize: 14.0,
           color: Colors.white,
           fontWeight: FontWeight.w500,
         ),
@@ -195,7 +214,7 @@ class HoverableLeaderboardItemState extends State<HoverableLeaderboardItem> {
         ),
       ],
       gradient: _getLeaderboardItemGradient(entry["rank"] - 1),
-      border: Border.all(color: Colors.white, width: entry["rank"] > 3 ? 2 : 3),
+      border: Border.all(color: Colors.white, width: entry["rank"] > 3 ? 1 : 2),
     );
   }
 

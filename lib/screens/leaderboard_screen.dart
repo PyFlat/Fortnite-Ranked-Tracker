@@ -39,19 +39,11 @@ class LeaderboardScreenState extends State<LeaderboardScreen> {
   void initState() {
     super.initState();
     _initialData = _loadLeadboardData();
-    SystemChrome.setPreferredOrientations(
-        [DeviceOrientation.landscapeLeft, DeviceOrientation.landscapeRight]);
   }
 
   @override
   void dispose() {
     super.dispose();
-    SystemChrome.setPreferredOrientations([
-      DeviceOrientation.landscapeLeft,
-      DeviceOrientation.landscapeRight,
-      DeviceOrientation.portraitDown,
-      DeviceOrientation.portraitUp
-    ]);
   }
 
   Future<void> _loadLeadboardData() async {
@@ -170,16 +162,110 @@ class LeaderboardScreenState extends State<LeaderboardScreen> {
     );
   }
 
+  Widget buildTournamentDetails() {
+    return Card(
+      elevation: 4,
+      margin: const EdgeInsets.all(8.0),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Wrap(
+              runSpacing: 16,
+              spacing: 32,
+              children: [
+                TextButton.icon(
+                  onPressed: () {},
+                  label: Text("Rules & Prices"),
+                  icon: Icon(Icons.info, size: 20, color: Colors.grey),
+                ),
+                TextButton.icon(
+                  label: Text("Tournament ID"),
+                  icon: _showCheckmark
+                      ? const Icon(Icons.check_circle, color: Colors.green)
+                      : Icon(Icons.copy, size: 20, color: Colors.grey),
+                  onPressed: () async {
+                    Clipboard.setData(
+                        ClipboardData(text: widget.tournamentWindow["id"]));
+                    setState(() {
+                      _showCheckmark = true;
+                      Future.delayed(const Duration(seconds: 1), () {
+                        if (mounted) {
+                          setState(() {
+                            _showCheckmark = false;
+                          });
+                        }
+                      });
+                    });
+                  },
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: CustomSearchBar(
+                    searchController: _searchController,
+                    onChanged: _updateSearchQuery,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    String regionName = Constants.regions[widget.region]!;
+    final regionName = Constants.regions[widget.region]!;
+    final eventDate = DateFormat('dd.MM.yyyy HH:mm')
+        .format(DateTime.parse(widget.tournamentWindow['beginTime']).toLocal());
+
     DateTime beginTime = DateTime.parse(widget.tournamentWindow["beginTime"]);
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          '${widget.metadata["longTitle"]} - ${widget.tournamentWindow["windowName"]} (${DateFormat("dd.MM.yyyy").format(DateTime.parse(widget.tournamentWindow["beginTime"]).toLocal())}) - $regionName',
-        ),
-      ),
+          title: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        spacing: 32,
+        children: [
+          Column(
+            children: [
+              Text(
+                widget.metadata['longTitle'],
+                style:
+                    const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                overflow: TextOverflow.ellipsis,
+              ),
+              Text(
+                '${widget.tournamentWindow["windowName"]}',
+                style:
+                    const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+          Column(
+            children: [
+              Text(
+                regionName,
+                style: TextStyle(fontSize: 16),
+                overflow: TextOverflow.ellipsis,
+              ),
+              Text(
+                eventDate,
+                style: TextStyle(fontSize: 16),
+              )
+            ],
+          ),
+        ],
+      )),
       floatingActionButton: FloatingActionButton.extended(
           onPressed: () {
             setState(() {
@@ -207,76 +293,12 @@ class LeaderboardScreenState extends State<LeaderboardScreen> {
 
             return Column(
               children: [
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: CustomSearchBar(
-                    searchController: _searchController,
-                    onChanged: _updateSearchQuery,
-                  ),
-                ),
-                Card(
-                  elevation: 4,
-                  margin: const EdgeInsets.all(16.0),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16.0, vertical: 8.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Loaded: ${_allLeaderboardData.length}',
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        Row(
-                          children: [
-                            Text(
-                              "ID: ${widget.tournamentWindow["id"]}",
-                              style: TextStyle(
-                                fontWeight: FontWeight.w400,
-                                color: Colors.grey.shade400,
-                                fontSize: 14,
-                              ),
-                            ),
-                            IconButton(
-                              icon: _showCheckmark
-                                  ? const Icon(Icons.check_circle,
-                                      color: Colors.green)
-                                  : Icon(Icons.copy,
-                                      size: 20, color: Colors.grey),
-                              onPressed: () async {
-                                Clipboard.setData(ClipboardData(
-                                    text: widget.tournamentWindow["id"]));
-                                setState(() {
-                                  _showCheckmark = true;
-                                  Future.delayed(const Duration(seconds: 1),
-                                      () {
-                                    if (mounted) {
-                                      setState(() {
-                                        _showCheckmark = false;
-                                      });
-                                    }
-                                  });
-                                });
-                              },
-                              tooltip: 'Copy ID',
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
+                buildTournamentDetails(),
                 if (_searchResults.isNotEmpty)
                   Expanded(
                     child: ListView.builder(
                       itemCount: _searchResults.length,
-                      prototypeItem: const SizedBox(height: 120),
+                      prototypeItem: const SizedBox(height: 90),
                       itemBuilder: (context, index) {
                         final entry = _searchResults[index];
                         return _buildLeaderboardItem(entry, index);

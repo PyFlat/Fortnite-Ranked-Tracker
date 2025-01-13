@@ -172,20 +172,38 @@ class _StatsDisplayState extends State<StatsDisplay> {
   }
 
   Widget _buildRoundCard(Map<String, dynamic> session, int roundNumber) {
-    final String placement =
-        '${session["PLACEMENT_STAT_INDEX"] ?? "N/A"}. Place';
+    final int placement = session["PLACEMENT_STAT_INDEX"] ?? -1;
+    final String placementString =
+        placement > 0 ? '$placement. Place' : 'No Placement';
     final int elims = session["TEAM_ELIMS_STAT_INDEX"] ?? 0;
     final String timeAlive = formatDuration(session["TIME_ALIVE_STAT"]);
-    // final int pointsEarned =
-    //     calculatePoints(scoringRules, round["trackedStats"]);
     final String date =
         "${DateFormat(DateFormat.YEAR_ABBR_MONTH_WEEKDAY_DAY).format(DateTime.parse(session["endTime"]))} ${DateFormat(DateFormat.HOUR24_MINUTE).format(DateTime.parse(session["endTime"]))}";
 
+    // Determine border color based on placement
+    Color borderColor;
+    switch (placement) {
+      case 1:
+        borderColor = Colors.amber; // Gold
+        break;
+      case 2:
+        borderColor = Colors.grey; // Silver
+        break;
+      case 3:
+        borderColor = const Color(0xFFCD7F32); // Bronze
+        break;
+      default:
+        borderColor = Colors.transparent; // No border for other placements
+    }
+
     return Card(
-      color: const Color(0xFF2C2F33),
+      color: (session["scored"] ?? true)
+          ? const Color(0xFF2C2F33)
+          : const Color(0xFF7E8287),
       elevation: 3,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(8),
+        side: BorderSide(color: borderColor, width: 2),
       ),
       margin: const EdgeInsets.only(bottom: 8),
       child: Padding(
@@ -200,7 +218,7 @@ class _StatsDisplayState extends State<StatsDisplay> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      placement,
+                      placementString,
                       style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -264,7 +282,7 @@ class _StatsDisplayState extends State<StatsDisplay> {
                   ),
                 ),
                 const Spacer(),
-                Text("Round $roundNumber")
+                Text("Round $roundNumber"),
               ],
             ),
           ],
