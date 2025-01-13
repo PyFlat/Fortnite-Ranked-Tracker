@@ -40,16 +40,16 @@ dependencies:
   percent_indicator: ^4.2.3
   path: ^1.9.0
   flutter_svg: ^2.0.10+1
-  intl: ^0.19.0
+  intl: ^0.20.1
   settings_ui: ^2.0.2
-  fl_chart: ^0.69.1
+  fl_chart: ^0.70.1
   flutter_launcher_icons: ^0.14.1
   dio: ^5.5.0+1
   talker_dio_logger: ^4.4.7
   talker_flutter: ^4.4.7
   data_table_2: ^2.5.15
   flutter_settings_ui: ^3.0.1
-  syncfusion_flutter_sliders: ^27.2.2
+  syncfusion_flutter_sliders: ^28.1.38
   http: ^1.2.2
   package_info_plus: ^8.0.2
   launch_at_startup: ^0.3.1
@@ -58,7 +58,7 @@ dependencies:
   firebase_auth: ^5.3.1
   internet_connection_checker_plus: ^2.5.2
   socket_io_client: ^3.0.2
-  archive: ^3.6.1
+  archive: ^4.0.2
 
 
 dev_dependencies:
