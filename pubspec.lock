@@ -93,10 +93,10 @@ packages:
     dependency: transitive
     description:
       name: connectivity_plus
-      sha256: e0817759ec6d2d8e57eb234e6e57d2173931367a865850c7acea40d4b4f9c27d
+      sha256: "8a68739d3ee113e51ad35583fdf9ab82c55d09d693d3c39da1aebab87c938412"
       url: "https://pub.dev"
     source: hosted
-    version: "6.1.1"
+    version: "6.1.2"
   connectivity_plus_platform_interface:
     dependency: transitive
     description:
@@ -460,10 +460,10 @@ packages:
     dependency: "direct main"
     description:
       name: package_info_plus
-      sha256: "70c421fe9d9cc1a9a7f3b05ae56befd469fe4f8daa3b484823141a55442d858d"
+      sha256: "739e0a5c3c4055152520fa321d0645ee98e932718b4c8efeeb51451968fe0790"
       url: "https://pub.dev"
     source: hosted
-    version: "8.1.2"
+    version: "8.1.3"
   package_info_plus_platform_interface:
     dependency: transitive
     description:
@@ -596,10 +596,10 @@ packages:
     dependency: transitive
     description:
       name: share_plus
-      sha256: "6327c3f233729374d0abaafd61f6846115b2a481b4feddd8534211dc10659400"
+      sha256: fce43200aa03ea87b91ce4c3ac79f0cecd52e2a7a56c7a4185023c271fbfa6da
       url: "https://pub.dev"
     source: hosted
-    version: "10.1.3"
+    version: "10.1.4"
   share_plus_platform_interface:
     dependency: transitive
     description:
@@ -713,10 +713,10 @@ packages:
     dependency: transitive
     description:
       name: stream_channel
-      sha256: "4ac0537115a24d772c408a2520ecd0abb99bca2ea9c4e634ccbdbfae64fe17ec"
+      sha256: "969e04c80b8bcdf826f8f16579c7b14d780458bd97f56d107d3950fdbeef059d"
       url: "https://pub.dev"
     source: hosted
-    version: "2.1.3"
+    version: "2.1.4"
   string_scanner:
     dependency: transitive
     description:
@@ -729,50 +729,50 @@ packages:
     dependency: transitive
     description:
       name: syncfusion_flutter_core
-      sha256: "12735505d616320aebe39a6fc90b6608a09116378d66aee9636b0eddf7b75971"
+      sha256: "794870919ca73e29c6cb25392a097cdfe58da4d6f3f3d3eccc529ecf52f78752"
       url: "https://pub.dev"
     source: hosted
-    version: "28.1.38"
+    version: "28.1.39"
   syncfusion_flutter_sliders:
     dependency: "direct main"
     description:
       name: syncfusion_flutter_sliders
-      sha256: "418a15a1cc3aa3f183c4b55abc4dd448499bfa08debc744d071ecdc0a9761c34"
+      sha256: "79b6904fac9111634847bf4e4dcccbd220f6ab0fd916645d11cdb0d0ad1e7f10"
       url: "https://pub.dev"
     source: hosted
-    version: "28.1.38"
+    version: "28.1.39"
   talker:
     dependency: transitive
     description:
       name: talker
-      sha256: "6d4ab102a746d7c2b8fe44e36b9f9dbe4097c3067c644fd02274c759ae20bedd"
+      sha256: "4c3b9b7b8c8882fc30253bbbe7c75d2f68d63ea35b7c1b6be2debe4a323c2ec9"
       url: "https://pub.dev"
     source: hosted
-    version: "4.6.2"
+    version: "4.6.4"
   talker_dio_logger:
     dependency: "direct main"
     description:
       name: talker_dio_logger
-      sha256: daf636f1c3c634ecc6f059c81cc9e29307d555d8c9b05cb8eee3b923729c497a
+      sha256: b0d2c3486d1f17cb9eb187ee91bc23e5d7c438b80464432c3deb809d29228f8d
       url: "https://pub.dev"
     source: hosted
-    version: "4.6.2"
+    version: "4.6.4"
   talker_flutter:
     dependency: "direct main"
     description:
       name: talker_flutter
-      sha256: c1c71f2276ca113b604cc9bad3e6171da950f1aac1768ef2f92a46d754c64f41
+      sha256: f23d184bc1ea675ed0fe1bfda636707f155f0596e898a7709bc488ead2c546b3
       url: "https://pub.dev"
     source: hosted
-    version: "4.6.2"
+    version: "4.6.4"
   talker_logger:
     dependency: transitive
     description:
       name: talker_logger
-      sha256: "6a38786d0755538a397d374c57f381f26c15c45095a2e9677b09ac2a00f464e4"
+      sha256: "27e4d0ba5c6950643a2500ad6c2e189099d0b9912f67389a49155e48fc2d9a55"
       url: "https://pub.dev"
     source: hosted
-    version: "4.6.2"
+    version: "4.6.4"
   term_glyph:
     dependency: transitive
     description:
