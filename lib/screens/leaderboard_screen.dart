@@ -4,19 +4,24 @@ import 'package:fortnite_ranked_tracker/components/custom_search_bar.dart';
 import 'package:fortnite_ranked_tracker/constants/constants.dart';
 import 'package:fortnite_ranked_tracker/components/tournament_stats_display.dart';
 import 'package:fortnite_ranked_tracker/core/rank_service.dart';
-import 'package:intl/intl.dart';
 
 import '../components/hoverable_leaderboard_item.dart';
+import '../components/tournament_details_sheet.dart';
 import 'search_screen.dart';
 
 class LeaderboardScreen extends StatefulWidget {
   const LeaderboardScreen(
       {super.key,
       required this.tournamentWindow,
+      required this.filteredSessions,
+      required this.cumulativeSessions,
       required this.metadata,
       required this.region});
 
   final Map<String, dynamic> tournamentWindow;
+
+  final List<Map<String, dynamic>> filteredSessions;
+  final List<Map<String, dynamic>> cumulativeSessions;
 
   final Map<String, dynamic> metadata;
 
@@ -32,8 +37,6 @@ class LeaderboardScreenState extends State<LeaderboardScreen> {
   String _searchQuery = '';
   final SearchController _searchController = SearchController();
   Future<void>? _initialData;
-
-  bool _showCheckmark = false;
 
   @override
   void initState() {
@@ -171,52 +174,11 @@ class LeaderboardScreenState extends State<LeaderboardScreen> {
       ),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Wrap(
-              runSpacing: 16,
-              spacing: 32,
-              children: [
-                TextButton.icon(
-                  onPressed: () {},
-                  label: Text("Rules & Prices"),
-                  icon: Icon(Icons.info, size: 20, color: Colors.grey),
-                ),
-                TextButton.icon(
-                  label: Text("Tournament ID"),
-                  icon: _showCheckmark
-                      ? const Icon(Icons.check_circle, color: Colors.green)
-                      : Icon(Icons.copy, size: 20, color: Colors.grey),
-                  onPressed: () async {
-                    Clipboard.setData(
-                        ClipboardData(text: widget.tournamentWindow["id"]));
-                    setState(() {
-                      _showCheckmark = true;
-                      Future.delayed(const Duration(seconds: 1), () {
-                        if (mounted) {
-                          setState(() {
-                            _showCheckmark = false;
-                          });
-                        }
-                      });
-                    });
-                  },
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: CustomSearchBar(
-                    searchController: _searchController,
-                    onChanged: _updateSearchQuery,
-                  ),
-                ),
-              ],
-            ),
-          ],
+        child: Expanded(
+          child: CustomSearchBar(
+            searchController: _searchController,
+            onChanged: _updateSearchQuery,
+          ),
         ),
       ),
     );
@@ -225,55 +187,77 @@ class LeaderboardScreenState extends State<LeaderboardScreen> {
   @override
   Widget build(BuildContext context) {
     final regionName = Constants.regions[widget.region]!;
-    final eventDate = DateFormat('dd.MM.yyyy HH:mm')
-        .format(DateTime.parse(widget.tournamentWindow['beginTime']).toLocal());
 
     DateTime beginTime = DateTime.parse(widget.tournamentWindow["beginTime"]);
     return Scaffold(
       appBar: AppBar(
-          title: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        spacing: 32,
-        children: [
-          Column(
-            children: [
-              Text(
-                widget.metadata['longTitle'],
-                style:
-                    const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                overflow: TextOverflow.ellipsis,
-              ),
-              Text(
-                '${widget.tournamentWindow["windowName"]}',
-                style:
-                    const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-          ),
-          Column(
-            children: [
-              Text(
-                regionName,
-                style: TextStyle(fontSize: 16),
-                overflow: TextOverflow.ellipsis,
-              ),
-              Text(
-                eventDate,
-                style: TextStyle(fontSize: 16),
-              )
-            ],
+        title: Text(
+          "${widget.metadata['longTitle']} ${widget.tournamentWindow["windowName"]}",
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          overflow: TextOverflow.ellipsis,
+        ),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 8.0),
+            child: IconButton(
+              icon: Icon(Icons.info_outline),
+              onPressed: () {
+                showModalBottomSheet<bool>(
+                  context: context,
+                  isScrollControlled: true,
+                  builder: (BuildContext context) {
+                    return SizedBox(
+                      height: MediaQuery.of(context).size.height * 0.9,
+                      child: TournamentDetailsSheet(
+                          regionName: regionName,
+                          title: widget.metadata['longTitle'],
+                          windowName: widget.tournamentWindow["windowName"],
+                          beginTime: widget.tournamentWindow['beginTime'],
+                          endTime: widget.tournamentWindow['endTime'],
+                          eventId: widget.tournamentWindow["id"],
+                          isCumulative: ["cumulative", "floating"]
+                              .contains(widget.tournamentWindow["eventId"]),
+                          showCumulative:
+                              widget.tournamentWindow["cumulative"] != null),
+                    );
+                  },
+                ).then((bool? changeCumulative) {
+                  if (changeCumulative != null && context.mounted) {
+                    Navigator.pop(context);
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => LeaderboardScreen(
+                            tournamentWindow: changeCumulative
+                                ? widget.filteredSessions.firstWhere(
+                                    (element) =>
+                                        element["id"] ==
+                                        widget.tournamentWindow["cumulative"])
+                                : widget.cumulativeSessions.firstWhere(
+                                    (element) =>
+                                        element["id"] ==
+                                        widget.tournamentWindow["cumulative"]),
+                            filteredSessions: widget.filteredSessions,
+                            cumulativeSessions: widget.cumulativeSessions,
+                            metadata: widget.metadata,
+                            region: widget.region),
+                      ),
+                    );
+                  }
+                });
+              },
+            ),
           ),
         ],
-      )),
+      ),
       floatingActionButton: FloatingActionButton.extended(
-          onPressed: () {
-            setState(() {
-              _initialData = _fetchLeaderboardData();
-            });
-          },
-          icon: Icon(Icons.refresh_rounded),
-          label: Text("Refresh")),
+        onPressed: () {
+          setState(() {
+            _initialData = _fetchLeaderboardData();
+          });
+        },
+        icon: Icon(Icons.refresh_rounded),
+        label: Text("Refresh"),
+      ),
       body: FutureBuilder(
           future: _initialData,
           builder: (context, snapshot) {
@@ -293,7 +277,16 @@ class LeaderboardScreenState extends State<LeaderboardScreen> {
 
             return Column(
               children: [
-                buildTournamentDetails(),
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Row(
+                    children: [
+                      Expanded(
+                          child: CustomSearchBar(
+                              searchController: _searchController)),
+                    ],
+                  ),
+                ),
                 if (_searchResults.isNotEmpty)
                   Expanded(
                     child: ListView.builder(

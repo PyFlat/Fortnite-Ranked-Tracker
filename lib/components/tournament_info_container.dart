@@ -70,13 +70,51 @@ class TournamentInfoContainerState extends State<TournamentInfoContainer> {
       selectedRegion = region;
     });
 
-    showModalBottomSheet<Map<String, dynamic>>(
+    showModalBottomSheet<List>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Theme.of(context).canvasColor,
       builder: (BuildContext context) {
         List<Map<String, dynamic>> filteredSessions =
-            (widget.item["windows"][region] as List).cast();
+            List<Map<String, dynamic>>.from(
+                (widget.item["windows"][region] as List)
+                    .map((item) => Map<String, dynamic>.from(item)));
+
+        final cumulativeSessions = filteredSessions
+            .where((item) => item["cumulative"] != null)
+            .toList();
+
+        filteredSessions
+            .removeWhere((item) => cumulativeSessions.contains(item));
+
+        for (var item in cumulativeSessions) {
+          final cumulativeList = item["cumulative"];
+
+          String? latestId;
+          DateTime latestEndTime = DateTime(0001);
+
+          for (var id in cumulativeList) {
+            final element =
+                filteredSessions.firstWhere((element) => element["id"] == id);
+
+            if (element["endTime"] != null) {
+              final endTime = DateTime.parse(element["endTime"]);
+              if (endTime.isAfter(latestEndTime)) {
+                latestEndTime = endTime;
+                latestId = id;
+              }
+            }
+          }
+
+          if (latestId != null) {
+            final elementToUpdate = filteredSessions
+                .firstWhere((element) => element["id"] == latestId);
+
+            elementToUpdate["cumulative"] = item["id"];
+          }
+
+          item["cumulative"] = latestId;
+        }
 
         filteredSessions.sort((a, b) => DateTime.parse(a["beginTime"])
             .compareTo(DateTime.parse(b["beginTime"])));
@@ -124,6 +162,10 @@ class TournamentInfoContainerState extends State<TournamentInfoContainer> {
                     contentPadding: const EdgeInsets.symmetric(
                       vertical: 10.0,
                       horizontal: 16.0,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(
+                          12), // Explicitly set border radius
                     ),
                     title: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -201,7 +243,8 @@ class TournamentInfoContainerState extends State<TournamentInfoContainer> {
                       ),
                     ),
                     onTap: () {
-                      Navigator.pop(context, eventWindow);
+                      Navigator.pop(context,
+                          [eventWindow, filteredSessions, cumulativeSessions]);
                     },
                   ),
                 );
@@ -210,12 +253,14 @@ class TournamentInfoContainerState extends State<TournamentInfoContainer> {
           ),
         );
       },
-    ).then((Map<String, dynamic>? selectedTemplate) {
-      if (selectedTemplate != null && context.mounted) {
+    ).then((List? data) {
+      if (data != null && data[0] != null && context.mounted) {
         Navigator.of(context).push(
           MaterialPageRoute(
             builder: (context) => LeaderboardScreen(
-                tournamentWindow: selectedTemplate,
+                tournamentWindow: data[0],
+                filteredSessions: data[1],
+                cumulativeSessions: data[2],
                 metadata: widget.item,
                 region: region),
           ),

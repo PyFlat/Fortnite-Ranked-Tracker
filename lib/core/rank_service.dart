@@ -221,7 +221,7 @@ class RankService {
 
       return await getEventLeaderboard(eventId, windowId);
     } catch (error) {
-      print(error);
+      talker.error(error);
       return [];
     }
   }
