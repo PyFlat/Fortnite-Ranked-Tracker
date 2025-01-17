@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:fortnite_ranked_tracker/components/custom_search_bar.dart';
 import 'package:fortnite_ranked_tracker/constants/constants.dart';
 import 'package:fortnite_ranked_tracker/components/tournament_stats_display.dart';
@@ -165,25 +164,6 @@ class LeaderboardScreenState extends State<LeaderboardScreen> {
     );
   }
 
-  Widget buildTournamentDetails() {
-    return Card(
-      elevation: 4,
-      margin: const EdgeInsets.all(8.0),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Expanded(
-          child: CustomSearchBar(
-            searchController: _searchController,
-            onChanged: _updateSearchQuery,
-          ),
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final regionName = Constants.regions[widget.region]!;
@@ -283,7 +263,9 @@ class LeaderboardScreenState extends State<LeaderboardScreen> {
                     children: [
                       Expanded(
                           child: CustomSearchBar(
-                              searchController: _searchController)),
+                        searchController: _searchController,
+                        onChanged: _updateSearchQuery,
+                      )),
                     ],
                   ),
                 ),
