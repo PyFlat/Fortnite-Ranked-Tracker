@@ -2,9 +2,9 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:fortnite_ranked_tracker/components/event_window_sheet.dart';
 import 'package:fortnite_ranked_tracker/constants/constants.dart';
 import 'package:fortnite_ranked_tracker/screens/leaderboard_screen.dart';
-import 'package:intl/intl.dart';
 
 import 'hoverable_region_item.dart';
 
@@ -19,6 +19,7 @@ class TournamentInfoContainer extends StatefulWidget {
 
 class TournamentInfoContainerState extends State<TournamentInfoContainer> {
   bool _isHovered = false;
+
   String? selectedRegion;
   late Timer updateTimer;
 
@@ -65,208 +66,131 @@ class TournamentInfoContainerState extends State<TournamentInfoContainer> {
     return liveSession;
   }
 
-  void _showTemplateSelectionSheet(BuildContext context, String region) {
-    setState(() {
-      selectedRegion = region;
-    });
+  List calculateSessions(String region) {
+    List<Map<String, dynamic>> filteredSessions =
+        List<Map<String, dynamic>>.from((widget.item["windows"][region] as List)
+            .map((item) => Map<String, dynamic>.from(item)));
 
-    showModalBottomSheet<List>(
+    final cumulativeSessions =
+        filteredSessions.where((item) => item["cumulative"] != null).toList();
+
+    filteredSessions.removeWhere((item) => cumulativeSessions.contains(item));
+
+    for (var item in cumulativeSessions) {
+      final cumulativeList = item["cumulative"];
+
+      String? latestId;
+      DateTime latestEndTime = DateTime(0001);
+
+      for (var id in cumulativeList) {
+        final element =
+            filteredSessions.firstWhere((element) => element["id"] == id);
+
+        if (element["endTime"] != null) {
+          final endTime = DateTime.parse(element["endTime"]);
+          if (endTime.isAfter(latestEndTime)) {
+            latestEndTime = endTime;
+            latestId = id;
+          }
+        }
+      }
+
+      if (latestId != null) {
+        final elementToUpdate =
+            filteredSessions.firstWhere((element) => element["id"] == latestId);
+
+        elementToUpdate["cumulative"] = item["id"];
+      }
+
+      item["cumulative"] = latestId;
+    }
+
+    filteredSessions.sort((a, b) => DateTime.parse(a["beginTime"])
+        .compareTo(DateTime.parse(b["beginTime"])));
+
+    Map<String, dynamic>? nextEventWindow =
+        _getNextEventSession(filteredSessions);
+
+    return [filteredSessions, cumulativeSessions, nextEventWindow];
+  }
+
+  Future<List?> _showBottomSheet(
+      BuildContext context,
+      String region,
+      List<Map<String, dynamic>> filteredSessions,
+      List<Map<String, dynamic>> cumulativeSessions,
+      Map<String, dynamic> nextEventWindow) async {
+    final data = await showModalBottomSheet<List>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Theme.of(context).canvasColor,
       builder: (BuildContext context) {
-        List<Map<String, dynamic>> filteredSessions =
-            List<Map<String, dynamic>>.from(
-                (widget.item["windows"][region] as List)
-                    .map((item) => Map<String, dynamic>.from(item)));
-
-        final cumulativeSessions = filteredSessions
-            .where((item) => item["cumulative"] != null)
-            .toList();
-
-        filteredSessions
-            .removeWhere((item) => cumulativeSessions.contains(item));
-
-        for (var item in cumulativeSessions) {
-          final cumulativeList = item["cumulative"];
-
-          String? latestId;
-          DateTime latestEndTime = DateTime(0001);
-
-          for (var id in cumulativeList) {
-            final element =
-                filteredSessions.firstWhere((element) => element["id"] == id);
-
-            if (element["endTime"] != null) {
-              final endTime = DateTime.parse(element["endTime"]);
-              if (endTime.isAfter(latestEndTime)) {
-                latestEndTime = endTime;
-                latestId = id;
-              }
-            }
-          }
-
-          if (latestId != null) {
-            final elementToUpdate = filteredSessions
-                .firstWhere((element) => element["id"] == latestId);
-
-            elementToUpdate["cumulative"] = item["id"];
-          }
-
-          item["cumulative"] = latestId;
-        }
-
-        filteredSessions.sort((a, b) => DateTime.parse(a["beginTime"])
-            .compareTo(DateTime.parse(b["beginTime"])));
-
-        Map<String, dynamic>? nextEventWindow =
-            _getNextEventSession(filteredSessions);
-
-        return Container(
-          height: MediaQuery.of(context).size.height * 0.9,
-          padding: const EdgeInsets.all(16.0),
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: filteredSessions.map((eventWindow) {
-                DateTime now = DateTime.now();
-                DateTime beginTime =
-                    DateTime.parse(eventWindow["beginTime"]).toLocal();
-                DateTime endTime =
-                    DateTime.parse(eventWindow["endTime"]).toLocal();
-                bool isLive = beginTime.isBefore(now) &&
-                    endTime.add(const Duration(minutes: 30)).isAfter(now);
-                bool isNext = nextEventWindow == eventWindow;
-
-                String timeUntilNext = '';
-                if (isNext && !isLive) {
-                  Duration timeDifference = beginTime.difference(now);
-                  int days = timeDifference.inDays;
-                  int hours = timeDifference.inHours % 24;
-                  int minutes = timeDifference.inMinutes % 60;
-
-                  if (days > 0) {
-                    timeUntilNext =
-                        "Live in $days days $hours hours $minutes minutes";
-                  } else if (hours > 0) {
-                    timeUntilNext = "Live in $hours hours $minutes minutes";
-                  } else {
-                    timeUntilNext = "Live in $minutes minutes";
-                  }
-                }
-
-                return Card(
-                  elevation: 3,
-                  margin: const EdgeInsets.symmetric(vertical: 8.0),
-                  child: ListTile(
-                    contentPadding: const EdgeInsets.symmetric(
-                      vertical: 10.0,
-                      horizontal: 16.0,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(
-                          12), // Explicitly set border radius
-                    ),
-                    title: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          eventWindow["windowName"],
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: isLive
-                                ? Colors.redAccent
-                                : (isNext ? Colors.orange : null),
-                          ),
-                        ),
-                        if (isLive)
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: Colors.redAccent,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: const Text(
-                              'LIVE',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-                    trailing: Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text(
-                          DateFormat.EEEE().format(beginTime),
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        Text(
-                          DateFormat('dd.MM.yyyy').format(beginTime),
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey,
-                          ),
-                        ),
-                      ],
-                    ),
-                    subtitle: Padding(
-                      padding: const EdgeInsets.only(top: 8.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            "${DateFormat('HH:mm').format(beginTime)} - ${DateFormat('HH:mm').format(endTime)}",
-                            style: const TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey,
-                            ),
-                          ),
-                          if (isNext && !isLive)
-                            Padding(
-                              padding: const EdgeInsets.only(top: 8.0),
-                              child: Text(
-                                timeUntilNext,
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.orange,
-                                ),
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
-                    onTap: () {
-                      Navigator.pop(context,
-                          [eventWindow, filteredSessions, cumulativeSessions]);
-                    },
-                  ),
-                );
-              }).toList(),
-            ),
-          ),
+        return EventWindowSheet(
+          title: "${widget.item["longTitle"]} - ${Constants.regions[region]}",
+          filteredSessions: filteredSessions,
+          cumulativeSessions: cumulativeSessions,
+          nextEventWindow: nextEventWindow,
         );
       },
-    ).then((List? data) {
-      if (data != null && data[0] != null && context.mounted) {
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (context) => LeaderboardScreen(
-                tournamentWindow: data[0],
-                filteredSessions: data[1],
-                cumulativeSessions: data[2],
-                metadata: widget.item,
-                region: region),
-          ),
-        );
-      }
+    );
+
+    return data;
+  }
+
+  Future<void> _showTemplateSelectionSheet(BuildContext context, String region,
+      {String? eventId, bool? cumulative}) async {
+    setState(() {
+      selectedRegion = region;
     });
+
+    bool openCumulative = eventId != null && cumulative != null;
+
+    List sessionData = calculateSessions(region);
+
+    List? data;
+
+    if (!openCumulative) {
+      data = await _showBottomSheet(
+          context, region, sessionData[0], sessionData[1], sessionData[2]);
+      if (data == null) return;
+    }
+
+    if (context.mounted) {
+      Map<String, dynamic>? eventWindow;
+
+      if (openCumulative) {
+        eventWindow = cumulative
+            ? (sessionData[0] as List)
+                .firstWhere((element) => element["id"] == eventId)
+            : (sessionData[1] as List)
+                .firstWhere((element) => element["id"] == eventId);
+      }
+
+      final value = await Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => LeaderboardScreen(
+            tournamentWindow: openCumulative ? eventWindow : data![0],
+            filteredSessions: sessionData[0],
+            cumulativeSessions: sessionData[1],
+            metadata: widget.item,
+            region: region,
+          ),
+        ),
+      );
+
+      if (value != null && context.mounted) {
+        if (!value[0]) {
+          _showTemplateSelectionSheet(
+            context,
+            region,
+            eventId: value[1],
+            cumulative: value[2],
+          );
+        } else {
+          _showTemplateSelectionSheet(context, region);
+        }
+      }
+    }
   }
 
   String _formatEventTime(DateTime startTime, DateTime endTime,

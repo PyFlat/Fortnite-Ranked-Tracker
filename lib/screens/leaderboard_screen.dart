@@ -181,8 +181,8 @@ class LeaderboardScreenState extends State<LeaderboardScreen> {
             padding: const EdgeInsets.only(right: 8.0),
             child: IconButton(
               icon: Icon(Icons.info_outline),
-              onPressed: () {
-                showModalBottomSheet<bool>(
+              onPressed: () async {
+                final data = await showModalBottomSheet<int>(
                   context: context,
                   isScrollControlled: true,
                   builder: (BuildContext context) {
@@ -201,29 +201,19 @@ class LeaderboardScreenState extends State<LeaderboardScreen> {
                               widget.tournamentWindow["cumulative"] != null),
                     );
                   },
-                ).then((bool? changeCumulative) {
-                  if (changeCumulative != null && context.mounted) {
-                    Navigator.pop(context);
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) => LeaderboardScreen(
-                            tournamentWindow: changeCumulative
-                                ? widget.filteredSessions.firstWhere(
-                                    (element) =>
-                                        element["id"] ==
-                                        widget.tournamentWindow["cumulative"])
-                                : widget.cumulativeSessions.firstWhere(
-                                    (element) =>
-                                        element["id"] ==
-                                        widget.tournamentWindow["cumulative"]),
-                            filteredSessions: widget.filteredSessions,
-                            cumulativeSessions: widget.cumulativeSessions,
-                            metadata: widget.metadata,
-                            region: widget.region),
-                      ),
-                    );
+                );
+                if (data != null) {
+                  if (data <= 1 && context.mounted) {
+                    bool cumulative = data == 1 ? true : false;
+                    Navigator.pop(context, [
+                      false,
+                      widget.tournamentWindow["cumulative"],
+                      cumulative,
+                    ]);
+                  } else if (data == 2 && context.mounted) {
+                    Navigator.pop(context, [true]);
                   }
-                });
+                }
               },
             ),
           ),

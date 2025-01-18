@@ -47,7 +47,7 @@ class _TournamentDetailsSheetState extends State<TournamentDetailsSheet>
 
   String formatDateTime(String isoString) {
     final dateTime = DateTime.parse(isoString);
-    return DateFormat('MMM dd, yyyy - HH:mm').format(dateTime);
+    return DateFormat('dd.MM.yyyy - HH:mm').format(dateTime);
   }
 
   Widget _buildIcon(IconData icon, Color color) {
@@ -129,15 +129,25 @@ class _TournamentDetailsSheetState extends State<TournamentDetailsSheet>
                     SizedBox(
                       width: 14,
                     ),
-                    Expanded(
-                        child: Text(
+                    Text(
                       "Session: ${widget.windowName}",
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
                         color: Colors.white,
                       ),
-                    )),
+                    ),
+                    SizedBox(
+                      width: 14,
+                    ),
+                    IconButton(
+                        onPressed: () {
+                          Navigator.pop(context, 2);
+                        },
+                        icon: Icon(
+                          Icons.edit,
+                          color: Colors.white,
+                        )),
                   ],
                 ),
                 if (widget.showCumulative) ...[
@@ -164,7 +174,7 @@ class _TournamentDetailsSheetState extends State<TournamentDetailsSheet>
                       CustomSwitch(
                           value: widget.isCumulative,
                           onChanged: (value) {
-                            Navigator.pop(context, widget.isCumulative);
+                            Navigator.pop(context, widget.isCumulative ? 1 : 0);
                           }),
                     ],
                   ),

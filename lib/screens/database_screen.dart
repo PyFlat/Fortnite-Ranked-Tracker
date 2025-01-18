@@ -2,6 +2,7 @@ import 'package:data_table_2/data_table_2.dart';
 import 'package:flutter/material.dart';
 import 'package:fortnite_ranked_tracker/components/individual_page_header.dart';
 import 'package:fortnite_ranked_tracker/core/rank_service.dart';
+import 'package:intl/intl.dart';
 import '../components/season_selector.dart';
 import '../core/season_service.dart';
 
@@ -77,9 +78,14 @@ class _DatabaseScreenState extends State<DatabaseScreen> {
     return data.map<DataRow>((row) {
       return DataRow(
         cells: columns.map<DataCell>((columnName) {
+          String? text = row[columnName]?.toString();
+          if (text != null && columnName == "datetime") {
+            text = DateFormat('dd.MM.yyyy HH:mm')
+                .format(DateTime.parse(text).toLocal());
+          }
           return DataCell(Center(
             child: Text(
-              row[columnName]?.toString() ?? '',
+              text ?? '',
               textAlign: TextAlign.center,
             ),
           ));
