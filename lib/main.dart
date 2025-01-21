@@ -32,7 +32,7 @@ void main() async {
       }
 
       if (Platform.isLinux || Platform.isWindows || Platform.isMacOS) {
-        if (!(await FlutterSingleInstance.platform.isFirstInstance())) {
+        if (!(await FlutterSingleInstance().isFirstInstance())) {
           await setShowInstance(true);
           exit(0);
         }
@@ -141,7 +141,7 @@ class _MyAppState extends State<MyApp>
     with TrayListener, WindowListener, WidgetsBindingObserver {
   late Timer timer;
   late Dio dio;
-  final connectionChecker = InternetConnectionChecker();
+  final connectionChecker = InternetConnectionChecker.createInstance();
   late StreamSubscription<InternetConnectionChecker> subscription;
   bool _isOffline = false;
 

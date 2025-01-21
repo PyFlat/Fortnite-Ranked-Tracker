@@ -458,7 +458,7 @@ class GraphBottomSheetContentState extends State<GraphBottomSheetContent> {
                                               (math.Random().nextDouble() *
                                                       0xFFFFFF)
                                                   .toInt())
-                                          .withValues(alpha: .0),
+                                          .withValues(alpha: 1),
                                     });
                                   }
                                 : null,
