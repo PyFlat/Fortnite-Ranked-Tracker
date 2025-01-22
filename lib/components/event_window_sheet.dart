@@ -14,7 +14,7 @@ class EventWindowSheet extends StatefulWidget {
       required this.title,
       required this.filteredSessions,
       required this.cumulativeSessions,
-      required this.nextEventWindow,
+      this.nextEventWindow,
       this.eventId,
       this.cumulative});
 

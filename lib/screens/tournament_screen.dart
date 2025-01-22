@@ -66,7 +66,7 @@ class TournamentScreenState extends State<TournamentScreen> {
     List<Map<String, dynamic>> tournaments = await RankService().fetchEvents();
 
     List<Map<String, dynamic>> tournamentsHistory =
-        await RankService().fetchEventsHistory(days: 150);
+        await RankService().fetchEventsHistory(days: 200);
 
     tournaments
         .sort((a, b) => getNextSession(a)!.compareTo(getNextSession(b)!));

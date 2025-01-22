@@ -119,7 +119,7 @@ class TournamentInfoContainerState extends State<TournamentInfoContainer> {
       String region,
       List<Map<String, dynamic>> filteredSessions,
       List<Map<String, dynamic>> cumulativeSessions,
-      Map<String, dynamic> nextEventWindow) async {
+      Map<String, dynamic>? nextEventWindow) async {
     final data = await showModalBottomSheet<List>(
       context: context,
       isScrollControlled: true,
