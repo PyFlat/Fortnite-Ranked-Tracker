@@ -54,6 +54,9 @@ class TournamentInfoContainerState extends State<TournamentInfoContainer> {
   Map<String, dynamic>? _getLiveSession(List<Map<String, dynamic>> sessions) {
     Map<String, dynamic>? liveSession;
     for (var eventWindow in sessions) {
+      if (eventWindow["cumulative"] != null) {
+        continue;
+      }
       DateTime now = DateTime.now();
       DateTime beginTime = DateTime.parse(eventWindow["beginTime"]).toLocal();
       DateTime endTime = DateTime.parse(eventWindow["endTime"]).toLocal();
