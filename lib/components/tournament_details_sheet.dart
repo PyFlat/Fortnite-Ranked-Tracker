@@ -46,7 +46,7 @@ class _TournamentDetailsSheetState extends State<TournamentDetailsSheet>
   }
 
   String formatDateTime(String isoString) {
-    final dateTime = DateTime.parse(isoString);
+    final dateTime = DateTime.parse(isoString).toLocal();
     return DateFormat('dd.MM.yyyy - HH:mm').format(dateTime);
   }
 

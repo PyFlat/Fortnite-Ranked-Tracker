@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:fortnite_ranked_tracker/components/event_window_sheet.dart';
 import 'package:fortnite_ranked_tracker/constants/constants.dart';
+import 'package:fortnite_ranked_tracker/constants/endpoints.dart';
 import 'package:fortnite_ranked_tracker/screens/leaderboard_screen.dart';
 
 import 'hoverable_region_item.dart';
@@ -109,6 +110,9 @@ class TournamentInfoContainerState extends State<TournamentInfoContainer> {
     }
 
     filteredSessions.sort((a, b) => DateTime.parse(a["beginTime"])
+        .compareTo(DateTime.parse(b["beginTime"])));
+
+    cumulativeSessions.sort((a, b) => DateTime.parse(a["beginTime"])
         .compareTo(DateTime.parse(b["beginTime"])));
 
     Map<String, dynamic>? nextEventWindow =
@@ -281,7 +285,7 @@ class TournamentInfoContainerState extends State<TournamentInfoContainer> {
                     ClipRRect(
                       borderRadius: BorderRadius.circular(8.0),
                       child: Image.network(
-                        widget.item["imageUrl"],
+                        "${Endpoints.baseUrl}/image-proxy?url=${widget.item["imageUrl"]}",
                         fit: BoxFit.cover,
                       ),
                     ),
