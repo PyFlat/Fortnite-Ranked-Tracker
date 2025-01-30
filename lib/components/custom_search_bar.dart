@@ -14,6 +14,14 @@ class CustomSearchBarState extends State<CustomSearchBar> {
   bool _trailingVisible = false;
 
   @override
+  void initState() {
+    super.initState();
+    if (widget.searchController.text.isNotEmpty) {
+      _trailingVisible = true;
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return SearchBar(
       controller: widget.searchController,

@@ -178,22 +178,21 @@ class _StatsDisplayState extends State<StatsDisplay> {
     final int elims = session["TEAM_ELIMS_STAT_INDEX"] ?? 0;
     final String timeAlive = formatDuration(session["TIME_ALIVE_STAT"]);
     final String date =
-        "${DateFormat(DateFormat.YEAR_ABBR_MONTH_WEEKDAY_DAY).format(DateTime.parse(session["endTime"]))} ${DateFormat(DateFormat.HOUR24_MINUTE).format(DateTime.parse(session["endTime"]))}";
+        "${DateFormat(DateFormat.YEAR_ABBR_MONTH_WEEKDAY_DAY).format(DateTime.parse(session["endTime"]).toLocal())} ${DateFormat(DateFormat.HOUR24_MINUTE).format(DateTime.parse(session["endTime"]).toLocal())}";
 
-    // Determine border color based on placement
     Color borderColor;
     switch (placement) {
       case 1:
-        borderColor = Colors.amber; // Gold
+        borderColor = Colors.amber;
         break;
       case 2:
-        borderColor = Colors.grey; // Silver
+        borderColor = Colors.grey;
         break;
       case 3:
-        borderColor = const Color(0xFFCD7F32); // Bronze
+        borderColor = const Color(0xFFCD7F32);
         break;
       default:
-        borderColor = Colors.transparent; // No border for other placements
+        borderColor = Colors.transparent;
     }
 
     return Card(

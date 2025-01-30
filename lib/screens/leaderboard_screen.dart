@@ -61,7 +61,7 @@ class LeaderboardScreenState extends State<LeaderboardScreen> {
         widget.tournamentWindow["eventId"],
         widget.tournamentWindow["windowId"]);
 
-    _updateSearchQuery('');
+    _updateSearchQuery(_searchController.text);
   }
 
   void _updateSearchQuery(String query) {
