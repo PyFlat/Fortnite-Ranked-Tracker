@@ -32,6 +32,7 @@ class LeaderboardScreen extends StatefulWidget {
 
 class LeaderboardScreenState extends State<LeaderboardScreen> {
   List<Map<String, dynamic>> _allLeaderboardData = [];
+  List<Map<String, dynamic>> _scoringRules = [];
   List<dynamic> _searchResults = [];
   String _searchQuery = '';
   final SearchController _searchController = SearchController();
@@ -50,6 +51,10 @@ class LeaderboardScreenState extends State<LeaderboardScreen> {
 
   Future<void> _loadLeadboardData() async {
     _allLeaderboardData = await RankService().getEventLeaderboard(
+        widget.tournamentWindow["eventId"],
+        widget.tournamentWindow["windowId"]);
+
+    _scoringRules = await RankService().getEventScoringRules(
         widget.tournamentWindow["eventId"],
         widget.tournamentWindow["windowId"]);
 
@@ -132,6 +137,7 @@ class LeaderboardScreenState extends State<LeaderboardScreen> {
                 StatsDisplay(
                     entry: entry,
                     eventWindow: widget.tournamentWindow,
+                    scoringRules: _scoringRules,
                     openUser: _openUser)
               ],
             ),
@@ -189,16 +195,18 @@ class LeaderboardScreenState extends State<LeaderboardScreen> {
                     return SizedBox(
                       height: MediaQuery.of(context).size.height * 0.9,
                       child: TournamentDetailsSheet(
-                          regionName: regionName,
-                          title: widget.metadata['longTitle'],
-                          windowName: widget.tournamentWindow["windowName"],
-                          beginTime: widget.tournamentWindow['beginTime'],
-                          endTime: widget.tournamentWindow['endTime'],
-                          eventId: widget.tournamentWindow["id"],
-                          isCumulative: ["cumulative", "floating"]
-                              .contains(widget.tournamentWindow["eventId"]),
-                          showCumulative:
-                              widget.tournamentWindow["cumulative"] != null),
+                        regionName: regionName,
+                        title: widget.metadata['longTitle'],
+                        windowName: widget.tournamentWindow["windowName"],
+                        beginTime: widget.tournamentWindow['beginTime'],
+                        endTime: widget.tournamentWindow['endTime'],
+                        eventId: widget.tournamentWindow["id"],
+                        isCumulative: ["cumulative", "floating"]
+                            .contains(widget.tournamentWindow["eventId"]),
+                        showCumulative:
+                            widget.tournamentWindow["cumulative"] != null,
+                        scoringRules: _scoringRules,
+                      ),
                     );
                   },
                 );

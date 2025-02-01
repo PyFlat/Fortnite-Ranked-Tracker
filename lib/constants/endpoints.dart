@@ -33,5 +33,7 @@ class Endpoints {
 
   static const fetchLeaderboard = "$baseUrl/api/tournaments/fetchLeaderboard";
 
+  static const eventScoringRules = "$baseUrl/api/tournaments/scoringRules";
+
   static const eventEntryInfo = "$baseUrl/api/tournaments/eventEntryInfo";
 }

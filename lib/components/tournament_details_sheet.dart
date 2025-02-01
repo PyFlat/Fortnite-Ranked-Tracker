@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:fortnite_ranked_tracker/components/scoring_rules_widget.dart';
 import 'package:intl/intl.dart';
 
 class TournamentDetailsSheet extends StatefulWidget {
@@ -13,6 +14,8 @@ class TournamentDetailsSheet extends StatefulWidget {
   final bool isCumulative;
   final bool showCumulative;
 
+  final List<Map<String, dynamic>> scoringRules;
+
   const TournamentDetailsSheet(
       {super.key,
       required this.regionName,
@@ -22,7 +25,8 @@ class TournamentDetailsSheet extends StatefulWidget {
       required this.endTime,
       required this.eventId,
       required this.isCumulative,
-      required this.showCumulative});
+      required this.showCumulative,
+      required this.scoringRules});
 
   @override
   State<TournamentDetailsSheet> createState() => _TournamentDetailsSheetState();
@@ -58,6 +62,61 @@ class _TournamentDetailsSheetState extends State<TournamentDetailsSheet>
       ),
       padding: const EdgeInsets.all(8),
       child: Icon(icon, color: color, size: 16),
+    );
+  }
+
+  Widget buildScoringRules(List<Map<String, dynamic>> scoringRules) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: scoringRules.map<Widget>((rule) {
+        if (rule['trackedStat'] == 'PLACEMENT_STAT_INDEX') {
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Placement Rewards:",
+                  style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white),
+                ),
+                ...rule['rewardTiers'].map<Widget>((tier) {
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 6),
+                    child: Text(
+                      "Top ${tier['keyValue']} - ${tier['pointsEarned']} points",
+                      style: TextStyle(fontSize: 14, color: Colors.white70),
+                    ),
+                  );
+                }).toList(),
+              ],
+            ),
+          );
+        } else if (rule['trackedStat'] == 'TEAM_ELIMS_STAT_INDEX') {
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Elimination Rewards:",
+                  style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white),
+                ),
+                Text(
+                  "For each elimination: ${rule['rewardTiers'][0]['pointsEarned']} points",
+                  style: TextStyle(fontSize: 14, color: Colors.white70),
+                ),
+              ],
+            ),
+          );
+        }
+        return SizedBox(); // For other cases
+      }).toList(),
     );
   }
 
@@ -238,14 +297,9 @@ class _TournamentDetailsSheetState extends State<TournamentDetailsSheet>
               child: TabBarView(
                 controller: _tabController,
                 children: [
-                  // Rules Section
                   SingleChildScrollView(
-                    child: Text(
-                      "",
-                      style: const TextStyle(fontSize: 14, color: Colors.white),
-                    ),
-                  ),
-                  // Prices Section
+                      child: ScoringRulesWidget(
+                          scoringRules: widget.scoringRules)),
                   SingleChildScrollView(
                     child: Text(
                       "",

@@ -6,11 +6,13 @@ class StatsDisplay extends StatefulWidget {
   final Map<String, dynamic> entry;
   final Function(String, String) openUser;
   final Map<String, dynamic> eventWindow;
+  final List<Map<String, dynamic>> scoringRules;
 
   const StatsDisplay(
       {super.key,
       required this.entry,
       required this.eventWindow,
+      required this.scoringRules,
       required this.openUser});
 
   @override
@@ -273,7 +275,7 @@ class _StatsDisplayState extends State<StatsDisplay> {
                   width: 8,
                 ),
                 Text(
-                  '??? pts',
+                  '${calculatePoints(session)} pts',
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
@@ -290,16 +292,18 @@ class _StatsDisplayState extends State<StatsDisplay> {
     );
   }
 
-  int calculatePoints(List rules, Map<String, dynamic> stats) {
+  int calculatePoints(Map<String, dynamic> stats) {
     num totalPoints = 0;
 
-    for (var rule in rules) {
+    for (var rule in widget.scoringRules) {
       final trackedStat = rule['trackedStat'];
       final matchRule = rule['matchRule'];
-      final rewardTiers = rule['rewardTiers'] as List<dynamic>;
 
       if (stats.containsKey(trackedStat)) {
         final statValue = stats[trackedStat];
+
+        final rewardTiers = rule["rewardTiers"];
+
         for (var tier in rewardTiers) {
           final keyValue = tier['keyValue'];
           final pointsEarned = tier['pointsEarned'];
