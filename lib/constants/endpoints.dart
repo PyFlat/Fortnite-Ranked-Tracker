@@ -1,6 +1,8 @@
 class Endpoints {
   static const baseUrl = "http://localhost:3000";
 
+  static const fortniteApi = "https://fortnite-api.com";
+
   static const afterRegister = "$baseUrl/auth/register";
 
   static const searchByQuery = "$baseUrl/api/search/query";
@@ -34,6 +36,12 @@ class Endpoints {
   static const fetchLeaderboard = "$baseUrl/api/tournaments/fetchLeaderboard";
 
   static const eventScoringRules = "$baseUrl/api/tournaments/scoringRules";
+
+  static const eventPayoutTable = "$baseUrl/api/tournaments/payoutTable";
+
+  static const cosmeticSearch = "$fortniteApi/v2/cosmetics/br/search";
+
+  static const eventIdInfo = "$baseUrl/api/tournaments/eventIdInfo";
 
   static const eventEntryInfo = "$baseUrl/api/tournaments/eventEntryInfo";
 }

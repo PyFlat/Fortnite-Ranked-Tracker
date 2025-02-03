@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:fortnite_ranked_tracker/components/payout_table_widget.dart';
 import 'package:fortnite_ranked_tracker/components/scoring_rules_widget.dart';
 import 'package:intl/intl.dart';
 
@@ -15,6 +16,7 @@ class TournamentDetailsSheet extends StatefulWidget {
   final bool showCumulative;
 
   final List<Map<String, dynamic>> scoringRules;
+  final List<Map<String, dynamic>> payoutTable;
 
   const TournamentDetailsSheet(
       {super.key,
@@ -26,7 +28,8 @@ class TournamentDetailsSheet extends StatefulWidget {
       required this.eventId,
       required this.isCumulative,
       required this.showCumulative,
-      required this.scoringRules});
+      required this.scoringRules,
+      required this.payoutTable});
 
   @override
   State<TournamentDetailsSheet> createState() => _TournamentDetailsSheetState();
@@ -115,7 +118,7 @@ class _TournamentDetailsSheetState extends State<TournamentDetailsSheet>
             ),
           );
         }
-        return SizedBox(); // For other cases
+        return SizedBox();
       }).toList(),
     );
   }
@@ -140,12 +143,16 @@ class _TournamentDetailsSheetState extends State<TournamentDetailsSheet>
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  widget.title,
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                Expanded(
+                  child: Text(
+                    widget.title,
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
                 ElevatedButton.icon(
@@ -188,12 +195,15 @@ class _TournamentDetailsSheetState extends State<TournamentDetailsSheet>
                     SizedBox(
                       width: 14,
                     ),
-                    Text(
-                      "Session: ${widget.windowName}",
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
+                    Expanded(
+                      child: Text(
+                        "Session: ${widget.windowName}",
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
                       ),
                     ),
                     SizedBox(
@@ -301,11 +311,9 @@ class _TournamentDetailsSheetState extends State<TournamentDetailsSheet>
                       child: ScoringRulesWidget(
                           scoringRules: widget.scoringRules)),
                   SingleChildScrollView(
-                    child: Text(
-                      "",
-                      style: const TextStyle(fontSize: 14, color: Colors.white),
-                    ),
-                  ),
+                      child: PayoutTableWidget(
+                    payoutTable: widget.payoutTable,
+                  )),
                 ],
               ),
             ),

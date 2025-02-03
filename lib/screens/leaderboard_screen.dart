@@ -33,6 +33,7 @@ class LeaderboardScreen extends StatefulWidget {
 class LeaderboardScreenState extends State<LeaderboardScreen> {
   List<Map<String, dynamic>> _allLeaderboardData = [];
   List<Map<String, dynamic>> _scoringRules = [];
+  List<Map<String, dynamic>> _payoutTable = [];
   List<dynamic> _searchResults = [];
   String _searchQuery = '';
   final SearchController _searchController = SearchController();
@@ -50,13 +51,17 @@ class LeaderboardScreenState extends State<LeaderboardScreen> {
   }
 
   Future<void> _loadLeadboardData() async {
-    _allLeaderboardData = await RankService().getEventLeaderboard(
-        widget.tournamentWindow["eventId"],
-        widget.tournamentWindow["windowId"]);
+    final String eventId = widget.tournamentWindow["eventId"];
+    final String windowId = widget.tournamentWindow["windowId"];
 
-    _scoringRules = await RankService().getEventScoringRules(
-        widget.tournamentWindow["eventId"],
-        widget.tournamentWindow["windowId"]);
+    _allLeaderboardData =
+        await RankService().getEventLeaderboard(eventId, windowId);
+
+    _scoringRules = await RankService().getEventScoringRules(eventId, windowId);
+
+    _payoutTable = await RankService().getEventPayoutTable(eventId, windowId);
+
+    await updatePayoutTable();
 
     _updateSearchQuery('');
   }
@@ -67,6 +72,34 @@ class LeaderboardScreenState extends State<LeaderboardScreen> {
         widget.tournamentWindow["windowId"]);
 
     _updateSearchQuery(_searchController.text);
+  }
+
+  Future<void> updatePayoutTable() async {
+    for (var type in _payoutTable) {
+      String scoringType = type["scoringType"];
+      for (var rank in type["ranks"]) {
+        if (scoringType == "rank") {
+          final element = _allLeaderboardData.firstWhere(
+              (element) => element["rank"] == int.parse(rank["threshold"]));
+
+          rank["points"] = element["points"];
+        }
+        for (var payout in rank["payouts"]) {
+          String rewardType = payout["rewardType"];
+          if (rewardType == "game") {
+            String id = (payout["value"] as String).split(":")[1];
+            final cosmetic = await RankService().searchCosmetic(id);
+            payout["name"] = cosmetic["name"];
+            payout["url"] = cosmetic["images"]["smallIcon"];
+          } else if (rewardType == "token") {
+            final eventInfo =
+                await RankService().getEventIdInfo(payout["value"]);
+            payout["name"] = eventInfo["longTitle"];
+            payout["sessionName"] = eventInfo["windowName"];
+          }
+        }
+      }
+    }
   }
 
   void _updateSearchQuery(String query) {
@@ -206,6 +239,7 @@ class LeaderboardScreenState extends State<LeaderboardScreen> {
                         showCumulative:
                             widget.tournamentWindow["cumulative"] != null,
                         scoringRules: _scoringRules,
+                        payoutTable: _payoutTable,
                       ),
                     );
                   },

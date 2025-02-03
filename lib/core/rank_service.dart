@@ -226,6 +226,43 @@ class RankService {
     }
   }
 
+  Future<List<Map<String, dynamic>>> getEventPayoutTable(
+      String eventId, String windowId) async {
+    try {
+      final List data = await ApiService().getData(
+          Endpoints.eventPayoutTable, "",
+          queryParams: {"eventId": eventId, "windowId": windowId});
+      return data.cast<Map<String, dynamic>>();
+    } catch (error) {
+      talker.error(error);
+      return [];
+    }
+  }
+
+  Future<Map<String, dynamic>> searchCosmetic(String id) async {
+    try {
+      final Map data = await ApiService()
+          .getData(Endpoints.cosmeticSearch, "", queryParams: {"id": id});
+
+      return (data["data"] as Map).cast<String, dynamic>();
+    } catch (error) {
+      talker.error(error);
+      return {};
+    }
+  }
+
+  Future<Map<String, dynamic>> getEventIdInfo(String id) async {
+    try {
+      final Map data = await ApiService()
+          .getData(Endpoints.eventIdInfo, "", queryParams: {"id": id});
+
+      return data.cast<String, dynamic>();
+    } catch (error) {
+      talker.error(error);
+      return {};
+    }
+  }
+
   Future<List<Map<String, dynamic>>> fetchEventLeaderboard(
       String eventId, String windowId) async {
     try {
