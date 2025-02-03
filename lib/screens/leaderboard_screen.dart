@@ -80,9 +80,13 @@ class LeaderboardScreenState extends State<LeaderboardScreen> {
       for (var rank in type["ranks"]) {
         if (scoringType == "rank") {
           final element = _allLeaderboardData.firstWhere(
-              (element) => element["rank"] == int.parse(rank["threshold"]));
+            (element) => element["rank"] == int.parse(rank["threshold"]),
+            orElse: () => {},
+          );
 
-          rank["points"] = element["points"];
+          if (element != {}) {
+            rank["points"] = element["points"];
+          }
         }
         for (var payout in rank["payouts"]) {
           String rewardType = payout["rewardType"];
