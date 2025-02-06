@@ -404,6 +404,10 @@ class HomeScreenState extends State<HomeScreen>
           duration: const Duration(milliseconds: 100),
           builder: (context, scale, child) {
             final String mode = modes[index]["label"]!;
+
+            if (!(item as Map).containsKey(mode)) {
+              return _buildSimpleCard(item, index, color!);
+            }
             double totalProgress =
                 ((item[mode]["TotalProgress"] ?? 0) as int).toDouble();
 
