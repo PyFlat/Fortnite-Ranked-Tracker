@@ -13,13 +13,25 @@ class TournamentScreen extends StatefulWidget {
 
 class TournamentScreenState extends State<TournamentScreen> {
   Timer? refreshTimer;
+  List<Map<String, dynamic>> tournaments = [];
+  List<Map<String, dynamic>> tournamentsHistory = [];
+  Future<void>? _loadingFuture;
 
-  Future<Map<String, List<Map<String, dynamic>>>>? _initializationFuture;
   @override
   void initState() {
     super.initState();
+    _loadingFuture = _getTournamentInfo();
 
-    _initializationFuture = _getTournamentInfo();
+    refreshTimer = Timer.periodic(const Duration(minutes: 1), (timer) {
+      if (mounted) {
+        if (timer.tick % 30 == 0) {
+          _loadingFuture = _getTournamentInfo();
+        } else {
+          _resortTournaments();
+        }
+        setState(() {});
+      }
+    });
   }
 
   DateTime? getNextSession(Map<String, dynamic> tournament) {
@@ -38,7 +50,7 @@ class TournamentScreenState extends State<TournamentScreen> {
     for (var session in sessions) {
       DateTime endTime = DateTime.parse(session['endTime']);
 
-      if (endTime.add(Duration(minutes: 30)).isAfter(currentTime)) {
+      if (endTime.add(const Duration(minutes: 30)).isAfter(currentTime)) {
         upcomingSessions.add(session);
       } else {
         endedSessions.add(session);
@@ -62,22 +74,26 @@ class TournamentScreenState extends State<TournamentScreen> {
     return null;
   }
 
-  Future<Map<String, List<Map<String, dynamic>>>> _getTournamentInfo() async {
-    List<Map<String, dynamic>> tournaments = await RankService().fetchEvents();
-
-    List<Map<String, dynamic>> tournamentsHistory =
+  Future<void> _getTournamentInfo() async {
+    final fetchedTournaments = await RankService().fetchEvents();
+    final fetchedTournamentsHistory =
         await RankService().fetchEventsHistory(days: 200);
 
-    tournaments
+    fetchedTournaments
         .sort((a, b) => getNextSession(a)!.compareTo(getNextSession(b)!));
 
-    tournamentsHistory
+    fetchedTournamentsHistory
         .sort((a, b) => getNextSession(b)!.compareTo(getNextSession(a)!));
 
-    return {
-      "tournaments": tournaments,
-      "tournamentsHistory": tournamentsHistory
-    };
+    setState(() {
+      tournaments = fetchedTournaments;
+      tournamentsHistory = fetchedTournamentsHistory;
+    });
+  }
+
+  void _resortTournaments() {
+    tournaments
+        .sort((a, b) => getNextSession(a)!.compareTo(getNextSession(b)!));
   }
 
   @override
@@ -86,53 +102,52 @@ class TournamentScreenState extends State<TournamentScreen> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
           setState(() {
-            _initializationFuture = _getTournamentInfo();
+            _loadingFuture = _getTournamentInfo();
           });
         },
-        label: Text("Refresh"),
-        icon: Icon(Icons.refresh_rounded),
+        label: const Text("Refresh"),
+        icon: const Icon(Icons.refresh_rounded),
       ),
       body: FutureBuilder(
-          future: _initializationFuture,
-          builder: (builder, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
-            } else if (snapshot.hasError) {
-              return Center(child: Text(snapshot.error.toString()));
-            } else if (snapshot.hasData) {
-              return Center(
-                child: SingleChildScrollView(
-                    child: Column(
+        future: _loadingFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting &&
+              tournaments.isEmpty) {
+            return const Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError) {
+            return Center(child: Text(snapshot.error.toString()));
+          } else {
+            return Center(
+              child: SingleChildScrollView(
+                child: Column(
                   children: [
                     Wrap(
-                        children: (snapshot.data!["tournaments"])!
-                            .map((Map<String, dynamic> item) {
-                      return Padding(
-                        padding: const EdgeInsets.all(12),
-                        child: TournamentInfoContainer(item: item),
-                      );
-                    }).toList()),
+                      children: tournaments
+                          .map((item) => Padding(
+                                padding: const EdgeInsets.all(12),
+                                child: TournamentInfoContainer(item: item),
+                              ))
+                          .toList(),
+                    ),
                     const Padding(
                       padding: EdgeInsets.symmetric(horizontal: 8),
-                      child: Divider(
-                        thickness: 2,
-                      ),
+                      child: Divider(thickness: 2),
                     ),
                     Wrap(
-                        children: (snapshot.data!["tournamentsHistory"])!
-                            .map((Map<String, dynamic> item) {
-                      return Padding(
-                        padding: const EdgeInsets.all(12),
-                        child: TournamentInfoContainer(item: item),
-                      );
-                    }).toList()),
+                      children: tournamentsHistory
+                          .map((item) => Padding(
+                                padding: const EdgeInsets.all(12),
+                                child: TournamentInfoContainer(item: item),
+                              ))
+                          .toList(),
+                    ),
                   ],
-                )),
-              );
-            } else {
-              return SizedBox.shrink();
-            }
-          }),
+                ),
+              ),
+            );
+          }
+        },
+      ),
     );
   }
 

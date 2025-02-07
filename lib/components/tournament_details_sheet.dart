@@ -10,13 +10,16 @@ class TournamentDetailsSheet extends StatefulWidget {
   final String windowName;
   final String beginTime;
   final String endTime;
-  final String eventId;
+  final String id;
 
   final bool isCumulative;
   final bool showCumulative;
 
   final List<Map<String, dynamic>> scoringRules;
-  final List<Map<String, dynamic>> payoutTable;
+  final List<Map<String, dynamic>> allLeaderboardData;
+
+  final String eventId;
+  final String windowId;
 
   const TournamentDetailsSheet(
       {super.key,
@@ -25,11 +28,13 @@ class TournamentDetailsSheet extends StatefulWidget {
       required this.windowName,
       required this.beginTime,
       required this.endTime,
-      required this.eventId,
+      required this.id,
       required this.isCumulative,
       required this.showCumulative,
       required this.scoringRules,
-      required this.payoutTable});
+      required this.allLeaderboardData,
+      required this.eventId,
+      required this.windowId});
 
   @override
   State<TournamentDetailsSheet> createState() => _TournamentDetailsSheetState();
@@ -167,7 +172,7 @@ class _TournamentDetailsSheetState extends State<TournamentDetailsSheet>
                       ? const Icon(Icons.check_circle, color: Colors.green)
                       : const Icon(Icons.copy, size: 20, color: Colors.grey),
                   onPressed: () async {
-                    Clipboard.setData(ClipboardData(text: widget.eventId));
+                    Clipboard.setData(ClipboardData(text: widget.id));
                     setState(() {
                       _showCheckmark = true;
                       Future.delayed(const Duration(seconds: 1), () {
@@ -312,7 +317,9 @@ class _TournamentDetailsSheetState extends State<TournamentDetailsSheet>
                           scoringRules: widget.scoringRules)),
                   SingleChildScrollView(
                       child: PayoutTableWidget(
-                    payoutTable: widget.payoutTable,
+                    eventId: widget.eventId,
+                    windowId: widget.windowId,
+                    allLeaderboardData: widget.allLeaderboardData,
                   )),
                 ],
               ),

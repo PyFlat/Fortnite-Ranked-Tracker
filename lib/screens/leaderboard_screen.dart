@@ -33,7 +33,6 @@ class LeaderboardScreen extends StatefulWidget {
 class LeaderboardScreenState extends State<LeaderboardScreen> {
   List<Map<String, dynamic>> _allLeaderboardData = [];
   List<Map<String, dynamic>> _scoringRules = [];
-  List<Map<String, dynamic>> _payoutTable = [];
   List<dynamic> _searchResults = [];
   String _searchQuery = '';
   final SearchController _searchController = SearchController();
@@ -54,14 +53,10 @@ class LeaderboardScreenState extends State<LeaderboardScreen> {
     final String eventId = widget.tournamentWindow["eventId"];
     final String windowId = widget.tournamentWindow["windowId"];
 
-    _allLeaderboardData =
-        await RankService().getEventLeaderboard(eventId, windowId);
-
     _scoringRules = await RankService().getEventScoringRules(eventId, windowId);
 
-    _payoutTable = await RankService().getEventPayoutTable(eventId, windowId);
-
-    await updatePayoutTable();
+    _allLeaderboardData =
+        await RankService().getEventLeaderboard(eventId, windowId);
 
     _updateSearchQuery('');
   }
@@ -72,38 +67,6 @@ class LeaderboardScreenState extends State<LeaderboardScreen> {
         widget.tournamentWindow["windowId"]);
 
     _updateSearchQuery(_searchController.text);
-  }
-
-  Future<void> updatePayoutTable() async {
-    for (var type in _payoutTable) {
-      String scoringType = type["scoringType"];
-      for (var rank in type["ranks"]) {
-        if (scoringType == "rank") {
-          final element = _allLeaderboardData.firstWhere(
-            (element) => element["rank"] == int.parse(rank["threshold"]),
-            orElse: () => {},
-          );
-
-          if (element != {}) {
-            rank["points"] = element["points"];
-          }
-        }
-        for (var payout in rank["payouts"]) {
-          String rewardType = payout["rewardType"];
-          if (rewardType == "game") {
-            String id = (payout["value"] as String).split(":")[1];
-            final cosmetic = await RankService().searchCosmetic(id);
-            payout["name"] = cosmetic["name"];
-            payout["url"] = cosmetic["images"]["smallIcon"];
-          } else if (rewardType == "token") {
-            final eventInfo =
-                await RankService().getEventIdInfo(payout["value"]);
-            payout["name"] = eventInfo["longTitle"];
-            payout["sessionName"] = eventInfo["windowName"];
-          }
-        }
-      }
-    }
   }
 
   void _updateSearchQuery(String query) {
@@ -232,19 +195,20 @@ class LeaderboardScreenState extends State<LeaderboardScreen> {
                     return SizedBox(
                       height: MediaQuery.of(context).size.height * 0.9,
                       child: TournamentDetailsSheet(
-                        regionName: regionName,
-                        title: widget.metadata['longTitle'],
-                        windowName: widget.tournamentWindow["windowName"],
-                        beginTime: widget.tournamentWindow['beginTime'],
-                        endTime: widget.tournamentWindow['endTime'],
-                        eventId: widget.tournamentWindow["id"],
-                        isCumulative: ["cumulative", "floating"]
-                            .contains(widget.tournamentWindow["eventId"]),
-                        showCumulative:
-                            widget.tournamentWindow["cumulative"] != null,
-                        scoringRules: _scoringRules,
-                        payoutTable: _payoutTable,
-                      ),
+                          regionName: regionName,
+                          title: widget.metadata['longTitle'],
+                          windowName: widget.tournamentWindow["windowName"],
+                          beginTime: widget.tournamentWindow['beginTime'],
+                          endTime: widget.tournamentWindow['endTime'],
+                          id: widget.tournamentWindow["id"],
+                          isCumulative: ["cumulative", "floating"]
+                              .contains(widget.tournamentWindow["eventId"]),
+                          showCumulative:
+                              widget.tournamentWindow["cumulative"] != null,
+                          scoringRules: _scoringRules,
+                          allLeaderboardData: _allLeaderboardData,
+                          eventId: widget.tournamentWindow["eventId"],
+                          windowId: widget.tournamentWindow["windowId"]),
                     );
                   },
                 );
@@ -314,6 +278,17 @@ class LeaderboardScreenState extends State<LeaderboardScreen> {
                         final entry = _searchResults[index];
                         return _buildLeaderboardItem(entry, index);
                       },
+                    ),
+                  ),
+                if (_searchResults.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Text(
+                      _allLeaderboardData.isEmpty
+                          ? "This event hasn't been fetched yet."
+                          : "No match was found with the search query.",
+                      style: TextStyle(color: Colors.white70, fontSize: 16),
+                      textAlign: TextAlign.center,
                     ),
                   ),
               ],

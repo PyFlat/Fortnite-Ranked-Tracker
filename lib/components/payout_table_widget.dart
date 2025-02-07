@@ -1,26 +1,108 @@
 import 'package:flutter/material.dart';
+import 'package:fortnite_ranked_tracker/core/rank_service.dart';
 
 class PayoutTableWidget extends StatefulWidget {
-  final List<Map<String, dynamic>> payoutTable;
-  const PayoutTableWidget({super.key, required this.payoutTable});
+  final String eventId;
+  final String windowId;
+
+  final List<Map<String, dynamic>> allLeaderboardData;
+  const PayoutTableWidget(
+      {super.key,
+      required this.eventId,
+      required this.windowId,
+      required this.allLeaderboardData});
 
   @override
   PayoutTableWidgetState createState() => PayoutTableWidgetState();
 }
 
 class PayoutTableWidgetState extends State<PayoutTableWidget> {
+  List<Map<String, dynamic>> _payoutTable = [];
+  Future<void>? _future;
+
+  @override
+  void initState() {
+    _future = getPayoutTable();
+    super.initState();
+  }
+
+  Future<void> getPayoutTable() async {
+    _payoutTable = await RankService()
+        .getEventPayoutTable(widget.eventId, widget.windowId);
+
+    await updatePayoutTable();
+  }
+
+  Future<void> updatePayoutTable() async {
+    for (var type in _payoutTable) {
+      String scoringType = type["scoringType"];
+      for (var rank in type["ranks"]) {
+        if (scoringType == "rank") {
+          final element = widget.allLeaderboardData.firstWhere(
+            (element) => element["rank"] == int.parse(rank["threshold"]),
+            orElse: () => {},
+          );
+
+          if (element != {}) {
+            rank["points"] = element["points"];
+          }
+        }
+        for (var payout in rank["payouts"]) {
+          String rewardType = payout["rewardType"];
+          if (rewardType == "game") {
+            String id = (payout["value"] as String).split(":")[1];
+            final cosmetic = await RankService().searchCosmetic(id);
+            payout["name"] = cosmetic["name"];
+            payout["url"] = cosmetic["images"]["smallIcon"];
+          } else if (rewardType == "token") {
+            final eventInfo =
+                await RankService().getEventIdInfo(payout["value"]);
+            payout["name"] = eventInfo["longTitle"];
+            payout["sessionName"] = eventInfo["windowName"];
+          }
+        }
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Wrap(
-        spacing: 16,
-        runSpacing: 16,
-        alignment: WrapAlignment.spaceBetween,
-        children: widget.payoutTable
-            .map((table) => _buildPayoutTableItem(table))
-            .toList(),
-      ),
+    return FutureBuilder(
+      future: _future,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Center(child: CircularProgressIndicator());
+        }
+
+        if (_payoutTable.isEmpty) {
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Text(
+                "This event doesn't have any prizes.",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.grey,
+                ),
+              ),
+            ),
+          );
+        }
+
+        return SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Wrap(
+            spacing: 16,
+            runSpacing: 16,
+            alignment: WrapAlignment.spaceBetween,
+            children: _payoutTable
+                .map((table) => _buildPayoutTableItem(table))
+                .toList(),
+          ),
+        );
+      },
     );
   }
 
