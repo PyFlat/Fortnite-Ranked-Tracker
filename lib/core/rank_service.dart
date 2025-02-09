@@ -103,6 +103,15 @@ class RankService {
         queryParams: {"accountId": accountId});
   }
 
+  Future<void> setAccountAvatar(String accountId, String avatar) async {
+    await ApiService().postData(
+        Endpoints.accountAvatar,
+        jsonEncode({"avatar": avatar}),
+        await getBasicAuthHeader(),
+        Constants.dataJson,
+        queryParams: {"accountId": accountId});
+  }
+
   Future<List<Map<String, dynamic>>> getDashboardData() async {
     List result = await ApiService()
         .getData(Endpoints.dashboardData, await getBasicAuthHeader());

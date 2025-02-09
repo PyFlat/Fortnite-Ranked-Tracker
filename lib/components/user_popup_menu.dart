@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fortnite_ranked_tracker/components/avatar_dialog.dart';
 
 import '../screens/database_screen.dart';
 import '../screens/graph_screen.dart';
@@ -38,6 +39,8 @@ class UserPopupMenu extends StatelessWidget {
                       displayName: displayName,
                     )),
           );
+        } else if (value == "change_account_avatar") {
+          showAvatarDialog(context, accountId);
         } else if (value == "open_database") {
           Navigator.push(
               context,
@@ -64,6 +67,8 @@ class UserPopupMenu extends StatelessWidget {
           const PopupMenuDivider(),
           buildMenuItem(
               "Show Account Details", const Icon(Icons.remove_red_eye_rounded)),
+          buildMenuItem("Change Account Avatar",
+              const Icon(Icons.account_circle_rounded)),
           const PopupMenuDivider(),
           buildMenuItem("Open Database", const Icon(Icons.storage_rounded)),
           buildMenuItem("Open Graph", const Icon(Icons.trending_up_rounded)),

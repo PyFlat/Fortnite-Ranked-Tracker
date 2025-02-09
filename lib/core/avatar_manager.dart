@@ -43,4 +43,18 @@ class AvatarManager {
     }
     return _accountToAvatar[accountId]!;
   }
+
+  void setAvatar(String accountId, String avatar) {
+    if (avatar == "random") {
+      avatar = _avatars[Random().nextInt(_avatars.length)];
+    }
+    _accountToAvatar[accountId] = avatar;
+  }
+
+  Future<List<String>> getAllAvatars() async {
+    while (!_initialized) {
+      await Future.delayed(const Duration(milliseconds: 50));
+    }
+    return _avatars;
+  }
 }

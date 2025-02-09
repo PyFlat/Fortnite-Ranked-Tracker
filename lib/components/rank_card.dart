@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fortnite_ranked_tracker/components/avatar_dialog.dart';
 import 'package:percent_indicator/circular_percent_indicator.dart';
 import '../core/rank_service.dart';
 import '../core/socket_service.dart';
@@ -77,9 +78,15 @@ class RankCardState extends State<RankCard>
             child: Row(
               children: [
                 if (widget.accountAvatar != null)
-                  CircleAvatar(
-                    radius: 25,
-                    backgroundImage: AssetImage(widget.accountAvatar!),
+                  GestureDetector(
+                    child: CircleAvatar(
+                      radius: 25,
+                      backgroundImage: AssetImage(widget.accountAvatar!),
+                    ),
+                    onDoubleTap: () =>
+                        showAvatarDialog(context, widget.accountId!),
+                    onLongPress: () =>
+                        showAvatarDialog(context, widget.accountId!),
                   ),
                 const SizedBox(width: 24),
                 Expanded(

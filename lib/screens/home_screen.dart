@@ -204,6 +204,11 @@ class HomeScreenState extends State<HomeScreen>
                           _currentScales.add(1.0);
                         }
 
+                        if (data[i]["AccountAvatar"] != null) {
+                          AvatarManager().setAvatar(
+                              item["AccountId"], data[i]["AccountAvatar"]);
+                        }
+
                         data[i]["AccountAvatar"] =
                             AvatarManager().getAvatar(item["AccountId"]);
 
