@@ -14,8 +14,9 @@ class TournamentDetailsSheet extends StatefulWidget {
 
   final bool isCumulative;
   final bool showCumulative;
+  final String? cumulativeId;
 
-  final List<Map<String, dynamic>> scoringRules;
+  final Map<String, List<Map<String, dynamic>>> scoringRules;
   final List<Map<String, dynamic>> allLeaderboardData;
 
   final String eventId;
@@ -31,6 +32,7 @@ class TournamentDetailsSheet extends StatefulWidget {
       required this.id,
       required this.isCumulative,
       required this.showCumulative,
+      required this.cumulativeId,
       required this.scoringRules,
       required this.allLeaderboardData,
       required this.eventId,
@@ -314,7 +316,9 @@ class _TournamentDetailsSheetState extends State<TournamentDetailsSheet>
                 children: [
                   SingleChildScrollView(
                       child: ScoringRulesWidget(
-                          scoringRules: widget.scoringRules)),
+                          scoringRules: widget.scoringRules,
+                          id: widget.id,
+                          cumulativeId: widget.cumulativeId)),
                   SingleChildScrollView(
                       child: PayoutTableWidget(
                     eventId: widget.eventId,

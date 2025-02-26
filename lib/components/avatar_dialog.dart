@@ -93,105 +93,109 @@ class AvatarDialogState extends State<AvatarDialog> {
               ))
         ],
       ),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          Divider(),
-          FutureBuilder(
-              future: _future,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const CircularProgressIndicator();
-                } else if (snapshot.hasError) {
-                  return const Text('Error loading avatars');
-                } else {
-                  return SizedBox(
-                    height: MediaQuery.of(context).size.height * 0.7,
-                    width: MediaQuery.of(context).size.width * 0.9,
-                    child: GridView.builder(
-                      gridDelegate:
-                          const SliverGridDelegateWithMaxCrossAxisExtent(
-                        maxCrossAxisExtent: 100,
-                        crossAxisSpacing: 4.0,
-                        mainAxisSpacing: 4.0,
-                      ),
-                      itemCount: filteredAvatars.length + 1,
-                      itemBuilder: (context, index) {
-                        if (index == 0) {
-                          bool isSelected = selectedAvatar == 'random';
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            Divider(),
+            FutureBuilder(
+                future: _future,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const CircularProgressIndicator();
+                  } else if (snapshot.hasError) {
+                    return const Text('Error loading avatars');
+                  } else {
+                    return SizedBox(
+                      height: MediaQuery.of(context).size.height * 0.7,
+                      width: MediaQuery.of(context).size.width * 0.9,
+                      child: GridView.builder(
+                        gridDelegate:
+                            const SliverGridDelegateWithMaxCrossAxisExtent(
+                          maxCrossAxisExtent: 100,
+                          crossAxisSpacing: 4.0,
+                          mainAxisSpacing: 4.0,
+                        ),
+                        itemCount: filteredAvatars.length + 1,
+                        itemBuilder: (context, index) {
+                          if (index == 0) {
+                            bool isSelected = selectedAvatar == 'random';
+                            return GestureDetector(
+                              onTap: () {
+                                setState(() {
+                                  selectedAvatar = 'random';
+                                });
+                              },
+                              child: Card(
+                                shape: RoundedRectangleBorder(
+                                  side: BorderSide(
+                                    color:
+                                        isSelected ? Colors.green : Colors.red,
+                                    width: 2.0,
+                                  ),
+                                  borderRadius: BorderRadius.circular(8.0),
+                                ),
+                                elevation: isSelected ? 8.0 : 2.0,
+                                child: Center(
+                                  child: Icon(
+                                    Icons.shuffle,
+                                    size: 48,
+                                    color:
+                                        isSelected ? Colors.green : Colors.red,
+                                  ),
+                                ),
+                              ),
+                            );
+                          }
+                          String avatar = filteredAvatars[index - 1];
+                          bool isSelected = avatar == selectedAvatar;
                           return GestureDetector(
                             onTap: () {
                               setState(() {
-                                selectedAvatar = 'random';
+                                selectedAvatar = avatar;
                               });
                             },
                             child: Card(
                               shape: RoundedRectangleBorder(
-                                side: BorderSide(
-                                  color: isSelected ? Colors.green : Colors.red,
-                                  width: 2.0,
-                                ),
                                 borderRadius: BorderRadius.circular(8.0),
                               ),
                               elevation: isSelected ? 8.0 : 2.0,
-                              child: Center(
-                                child: Icon(
-                                  Icons.shuffle,
-                                  size: 48,
-                                  color: isSelected ? Colors.green : Colors.red,
-                                ),
+                              child: Stack(
+                                children: [
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(8.0),
+                                    child: ColorFiltered(
+                                      colorFilter: ColorFilter.mode(
+                                        isSelected
+                                            ? Colors.black.withValues(alpha: .5)
+                                            : Colors.transparent,
+                                        BlendMode.darken,
+                                      ),
+                                      child: Image.asset(
+                                        avatar,
+                                        fit: BoxFit.cover,
+                                      ),
+                                    ),
+                                  ),
+                                  if (isSelected)
+                                    Center(
+                                      child: Icon(
+                                        Icons.check_circle,
+                                        color: Colors.green,
+                                        size: 48,
+                                      ),
+                                    ),
+                                ],
                               ),
                             ),
                           );
-                        }
-                        String avatar = filteredAvatars[index - 1];
-                        bool isSelected = avatar == selectedAvatar;
-                        return GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              selectedAvatar = avatar;
-                            });
-                          },
-                          child: Card(
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8.0),
-                            ),
-                            elevation: isSelected ? 8.0 : 2.0,
-                            child: Stack(
-                              children: [
-                                ClipRRect(
-                                  borderRadius: BorderRadius.circular(8.0),
-                                  child: ColorFiltered(
-                                    colorFilter: ColorFilter.mode(
-                                      isSelected
-                                          ? Colors.black.withValues(alpha: .5)
-                                          : Colors.transparent,
-                                      BlendMode.darken,
-                                    ),
-                                    child: Image.asset(
-                                      avatar,
-                                      fit: BoxFit.cover,
-                                    ),
-                                  ),
-                                ),
-                                if (isSelected)
-                                  Center(
-                                    child: Icon(
-                                      Icons.check_circle,
-                                      color: Colors.green,
-                                      size: 48,
-                                    ),
-                                  ),
-                              ],
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  );
-                }
-              }),
-        ],
+                        },
+                      ),
+                    );
+                  }
+                }),
+          ],
+        ),
       ),
     );
   }

@@ -77,7 +77,7 @@ class TournamentScreenState extends State<TournamentScreen> {
   Future<void> _getTournamentInfo() async {
     final fetchedTournaments = await RankService().fetchEvents();
     final fetchedTournamentsHistory =
-        await RankService().fetchEventsHistory(days: 200);
+        await RankService().fetchEventsHistory(days: 100);
 
     fetchedTournaments
         .sort((a, b) => getNextSession(a)!.compareTo(getNextSession(b)!));
@@ -122,24 +122,26 @@ class TournamentScreenState extends State<TournamentScreen> {
                 child: Column(
                   children: [
                     Wrap(
-                      children: tournaments
-                          .map((item) => Padding(
-                                padding: const EdgeInsets.all(12),
-                                child: TournamentInfoContainer(item: item),
-                              ))
-                          .toList(),
+                      spacing: 12,
+                      runSpacing: 12,
+                      children: List.generate(
+                        tournaments.length,
+                        (index) =>
+                            TournamentInfoContainer(item: tournaments[index]),
+                      ),
                     ),
                     const Padding(
                       padding: EdgeInsets.symmetric(horizontal: 8),
                       child: Divider(thickness: 2),
                     ),
                     Wrap(
-                      children: tournamentsHistory
-                          .map((item) => Padding(
-                                padding: const EdgeInsets.all(12),
-                                child: TournamentInfoContainer(item: item),
-                              ))
-                          .toList(),
+                      spacing: 12,
+                      runSpacing: 12,
+                      children: List.generate(
+                        tournamentsHistory.length,
+                        (index) => TournamentInfoContainer(
+                            item: tournamentsHistory[index]),
+                      ),
                     ),
                   ],
                 ),

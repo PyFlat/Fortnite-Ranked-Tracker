@@ -60,6 +60,26 @@ class MainScreenState extends State<MainScreen> {
         key: scaffoldKey,
         appBar: AppBar(
           title: const Text('Fortnite Ranked Tracker'),
+          actions: [
+            Row(
+              spacing: 5,
+              children: [
+                Text(
+                  "Connected",
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                ),
+                StreamBuilder(
+                    stream: SocketService().connectedStatus,
+                    builder: (context, snapshot) {
+                      return Icon(Icons.circle,
+                          color: snapshot.hasData && snapshot.data as bool
+                              ? Colors.green
+                              : Colors.red);
+                    }),
+                SizedBox(width: 15)
+              ],
+            )
+          ],
         ),
         body: FutureBuilder<void>(
           future: _initializationFuture,

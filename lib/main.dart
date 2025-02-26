@@ -5,14 +5,15 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:fortnite_ranked_tracker/core/rank_service.dart';
 import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
 import 'package:provider/provider.dart';
 import 'package:talker_flutter/talker_flutter.dart';
 
 import 'core/api_service.dart';
 import 'core/avatar_manager.dart';
+import 'core/socket_service.dart';
 import 'core/talker_service.dart';
+import 'core/rank_service.dart';
 import 'firebase_options.dart';
 import 'screens/login_screen.dart';
 import 'screens/main_screen.dart';
@@ -87,6 +88,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       RankService().emitDataRefresh();
+      SocketService().reconnect();
     }
     super.didChangeAppLifecycleState(state);
   }

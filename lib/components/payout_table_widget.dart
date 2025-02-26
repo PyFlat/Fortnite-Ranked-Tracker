@@ -19,10 +19,14 @@ class PayoutTableWidget extends StatefulWidget {
 class PayoutTableWidgetState extends State<PayoutTableWidget> {
   List<Map<String, dynamic>> _payoutTable = [];
   Future<void>? _future;
+  late int _teamSize;
 
   @override
   void initState() {
     _future = getPayoutTable();
+    _teamSize = widget.allLeaderboardData.isNotEmpty
+        ? (widget.allLeaderboardData[0]["accounts"] as List).length
+        : 1;
     super.initState();
   }
 
@@ -204,7 +208,9 @@ class PayoutTableWidgetState extends State<PayoutTableWidget> {
 
     if (rewardType == "ecomm") {
       text1 = "Earnings";
-      text2 = "\$$quantity";
+      quantity *= _teamSize;
+      text2 =
+          "\$${quantity.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.')}";
     } else if (rewardType == "token") {
       text1 = "Qualify";
       text2 = name ?? "";

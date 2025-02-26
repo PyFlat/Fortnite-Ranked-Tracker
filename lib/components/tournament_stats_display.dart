@@ -6,7 +6,7 @@ class StatsDisplay extends StatefulWidget {
   final Map<String, dynamic> entry;
   final Function(String, String) openUser;
   final Map<String, dynamic> eventWindow;
-  final List<Map<String, dynamic>> scoringRules;
+  final Map<String, List<Map<String, dynamic>>> scoringRules;
 
   const StatsDisplay(
       {super.key,
@@ -295,7 +295,7 @@ class _StatsDisplayState extends State<StatsDisplay> {
   int calculatePoints(Map<String, dynamic> stats) {
     num totalPoints = 0;
 
-    for (var rule in widget.scoringRules) {
+    for (var rule in widget.scoringRules[stats["tournamentId"]]!) {
       final trackedStat = rule['trackedStat'];
       final matchRule = rule['matchRule'];
 

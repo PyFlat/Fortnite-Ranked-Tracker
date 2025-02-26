@@ -47,7 +47,11 @@ class SocketService {
     _socket = io(Endpoints.baseUrl, optionBuilder.build());
 
     _socket!.onConnect((_) {
-      talker.info("Connected to the server");
+      talker.verbose("Connected to socket.io server");
+    });
+
+    _socket!.onDisconnect((_) {
+      talker.warning("Disconnected from socket.io server");
     });
 
     _socket!.onError((error) {
@@ -62,6 +66,20 @@ class SocketService {
       RankService().emitDataRefresh(data: data);
       data = null;
     });
+  }
+
+  bool get isConnected => _socket?.connected ?? false;
+
+  void reconnect() {
+    _socket?.disconnect();
+    _socket?.connect();
+  }
+
+  Stream<bool> get connectedStatus async* {
+    while (true) {
+      await Future.delayed(Duration(seconds: 1));
+      yield _socket?.connected ?? false;
+    }
   }
 
   void sendDataChanged({List? data}) {

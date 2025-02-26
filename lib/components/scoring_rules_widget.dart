@@ -2,9 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:fortnite_ranked_tracker/components/tournament_details_sheet.dart';
 
 class ScoringRulesWidget extends StatefulWidget {
-  final List<Map<String, dynamic>> scoringRules;
+  final Map<String, List<Map<String, dynamic>>> scoringRules;
+  final String id;
+  final String? cumulativeId;
 
-  const ScoringRulesWidget({super.key, required this.scoringRules});
+  const ScoringRulesWidget(
+      {super.key,
+      required this.scoringRules,
+      required this.id,
+      required this.cumulativeId});
 
   @override
   ScoringRulesWidgetState createState() => ScoringRulesWidgetState();
@@ -15,14 +21,21 @@ class ScoringRulesWidgetState extends State<ScoringRulesWidget> {
 
   @override
   Widget build(BuildContext context) {
+    String id;
+    if (widget.scoringRules.containsKey(widget.id)) {
+      id = widget.id;
+    } else {
+      id = widget.cumulativeId!;
+    }
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
       child: Wrap(
         spacing: 16,
         runSpacing: 16,
         alignment: WrapAlignment.spaceBetween,
-        children:
-            widget.scoringRules.map((rule) => _buildRuleItem(rule)).toList(),
+        children: widget.scoringRules[id]!
+            .map((rule) => _buildRuleItem(rule))
+            .toList(),
       ),
     );
   }

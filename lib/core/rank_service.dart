@@ -222,16 +222,16 @@ class RankService {
     }
   }
 
-  Future<List<Map<String, dynamic>>> getEventScoringRules(
+  Future<Map<String, List<Map<String, dynamic>>>> getEventScoringRules(
       String eventId, String windowId) async {
     try {
-      final List data = await ApiService().getData(
-          Endpoints.eventScoringRules, "",
+      final data = await ApiService().getData(Endpoints.eventScoringRules, "",
           queryParams: {"eventId": eventId, "windowId": windowId});
-      return data.cast<Map<String, dynamic>>();
+      return (data as Map<String, dynamic>).map((key, value) =>
+          MapEntry(key, (value as List).cast<Map<String, dynamic>>()));
     } catch (error) {
       talker.error(error);
-      return [];
+      return {};
     }
   }
 

@@ -32,7 +32,7 @@ class LeaderboardScreen extends StatefulWidget {
 
 class LeaderboardScreenState extends State<LeaderboardScreen> {
   List<Map<String, dynamic>> _allLeaderboardData = [];
-  List<Map<String, dynamic>> _scoringRules = [];
+  Map<String, List<Map<String, dynamic>>> _scoringRules = {};
   List<dynamic> _searchResults = [];
   String _searchQuery = '';
   final SearchController _searchController = SearchController();
@@ -205,6 +205,7 @@ class LeaderboardScreenState extends State<LeaderboardScreen> {
                               .contains(widget.tournamentWindow["eventId"]),
                           showCumulative:
                               widget.tournamentWindow["cumulative"] != null,
+                          cumulativeId: widget.tournamentWindow["cumulative"],
                           scoringRules: _scoringRules,
                           allLeaderboardData: _allLeaderboardData,
                           eventId: widget.tournamentWindow["eventId"],
