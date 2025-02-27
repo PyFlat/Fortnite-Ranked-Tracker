@@ -2,7 +2,6 @@ import 'package:data_table_2/data_table_2.dart';
 import 'package:flutter/material.dart';
 import 'package:fortnite_ranked_tracker/components/individual_page_header.dart';
 import 'package:fortnite_ranked_tracker/core/rank_service.dart';
-import 'package:intl/intl.dart';
 import '../components/season_selector.dart';
 import '../core/season_service.dart';
 
@@ -22,23 +21,23 @@ class _DatabaseScreenState extends State<DatabaseScreen> {
 
   final List<String> columns = <String>[
     "Total Match Id",
+    "Daily Match Id",
     "Datetime",
     "Rank",
     "Rank Progression",
-    "Daily Match Id",
     "Total Progress"
   ];
 
   final List<String> columns2 = <String>[
-    "id",
+    "totalMatchId",
+    "dailyMatchId",
     "datetime",
     "rank",
     "progress",
-    "daily_match_id",
-    "total_progress"
+    "totalProgress"
   ];
 
-  final List<int> sortableColumns = <int>[0, 3, 4, 5];
+  final List<int> sortableColumns = <int>[0, 1, 5];
 
   @override
   void didChangeDependencies() {
@@ -65,7 +64,7 @@ class _DatabaseScreenState extends State<DatabaseScreen> {
     }
 
     return await RankService().getSeasonBySeasonId(
-        widget.account["accountId"], currentSeason["tableId"],
+        widget.account["accountId"], currentSeason["id"],
         sortBy: columns2[_sortedColumn], isAscending: _isAscending);
   }
 
@@ -79,10 +78,7 @@ class _DatabaseScreenState extends State<DatabaseScreen> {
       return DataRow(
         cells: columns.map<DataCell>((columnName) {
           String? text = row[columnName]?.toString();
-          if (text != null && columnName == "datetime") {
-            text = DateFormat('dd.MM.yyyy HH:mm')
-                .format(DateTime.parse(text).toLocal());
-          }
+
           return DataCell(Center(
             child: Text(
               text ?? '',
@@ -144,11 +140,11 @@ class _DatabaseScreenState extends State<DatabaseScreen> {
                           snapshot.data!['data'].isEmpty) {
                         return const Center(child: Text('No data available'));
                       } else {
-                        final dbColumns =
-                            (snapshot.data!['columns'] as List).cast<String>();
+                        final dbColumns = columns2;
                         final data = (snapshot.data!['data'] as List)
                             .cast<Map<String, dynamic>>();
 
+                        dataTableShowLogs = false;
                         return Padding(
                           padding: const EdgeInsets.all(8.0),
                           child: DataTable2(

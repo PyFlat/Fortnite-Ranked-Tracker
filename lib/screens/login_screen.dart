@@ -4,7 +4,6 @@ import 'dart:math';
 import 'package:dio/dio.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:fortnite_ranked_tracker/core/rank_service.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key, required this.dio});
@@ -67,11 +66,10 @@ class LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
       return;
     }
     try {
-      UserCredential userCredential = await _auth.signInWithEmailAndPassword(
+      await _auth.signInWithEmailAndPassword(
         email: _emailController.text,
         password: _passwordController.text,
       );
-      RankService().afterRegister(userCredential);
     } catch (e) {
       if (mounted) {
         setState(() {

@@ -4,6 +4,7 @@ import 'package:archive/archive.dart';
 import 'package:dio/dio.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fortnite_ranked_tracker/core/avatar_manager.dart';
+import 'package:intl/intl.dart';
 
 import '../constants/constants.dart';
 import '../constants/endpoints.dart';
@@ -29,15 +30,6 @@ class RankService {
       talker.error('Failed to get FirebaseAuth Token');
       return "";
     }
-  }
-
-  Future<void> afterRegister(UserCredential userCredential) async {
-    await ApiService().postData(
-        Endpoints.afterRegister,
-        jsonEncode(
-            {"idToken": "${await userCredential.user!.getIdToken(true)}"}),
-        await getBasicAuthHeader(),
-        Constants.dataJson);
   }
 
   Future<List<Map<String, dynamic>>> searchByQuery(String query,
@@ -159,7 +151,7 @@ class RankService {
 
   Future<Map<String, dynamic>> getSeasonBySeasonId(
       String accountId, String seasonId,
-      {String sortBy = "id", bool isAscending = false}) async {
+      {String sortBy = "datetime", bool isAscending = false}) async {
     Map result = await ApiService()
         .getData(Endpoints.getSeason, await getBasicAuthHeader(), queryParams: {
       "accountId": accountId,
@@ -167,6 +159,19 @@ class RankService {
       "sortBy": sortBy,
       "isAscending": isAscending.toString()
     });
+
+    for (var row in result["data"]) {
+      row["rank"] = row["totalProgress"] > 1700
+          ? "Unreal"
+          : Constants.ranks[row["totalProgress"] ~/ 100];
+
+      row["progress"] = row["totalProgress"] > 1700
+          ? "#${row["totalProgress"] - 1700}"
+          : "${row["totalProgress"] % 100}%";
+
+      row["datetime"] = DateFormat("dd.MM.yyyy HH:mm")
+          .format(DateTime.parse(row["datetime"]).toLocal());
+    }
 
     return result.cast();
   }

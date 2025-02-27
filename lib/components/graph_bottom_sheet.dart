@@ -140,7 +140,7 @@ class GraphBottomSheetContentState extends State<GraphBottomSheetContent> {
                 return ListTile(
                   title: Text(filteredItems[index]["displayName"]),
                   subtitle: seasonInfo.isNotEmpty
-                      ? Text("${seasonInfo["tableName"]} - ${modes.firstWhere(
+                      ? Text("${seasonInfo["name"]} - ${modes.firstWhere(
                           (element) =>
                               element["type"] == seasonInfo["rankingType"],
                         )["label"]!}")
@@ -362,8 +362,7 @@ class GraphBottomSheetContentState extends State<GraphBottomSheetContent> {
                                 body: Column(
                                   children: filteredSeasons.map((season) {
                                     bool isSelectedSeason =
-                                        selectedSeason?["tableId"] ==
-                                            season["tableId"];
+                                        selectedSeason?["id"] == season["id"];
 
                                     String subtitle = modes.firstWhere(
                                       (element) =>
@@ -372,7 +371,7 @@ class GraphBottomSheetContentState extends State<GraphBottomSheetContent> {
                                     )["label"]!;
 
                                     return ListTile(
-                                      title: Text(season["tableName"]!),
+                                      title: Text(season["name"]!),
                                       subtitle: Text(subtitle),
                                       trailing: isSelectedSeason
                                           ? const Icon(Icons.check,

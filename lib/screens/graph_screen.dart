@@ -274,7 +274,7 @@ class _GraphScreenState extends State<GraphScreen> {
                     future: _dataFuture,
                     builder: (BuildContext context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {
-                        return const CircularProgressIndicator();
+                        return Center(child: CircularProgressIndicator());
                       } else if (snapshot.hasError) {
                         talker.error(snapshot.error);
                         return Container();
@@ -396,10 +396,10 @@ class _GraphScreenState extends State<GraphScreen> {
                       final itemData = data[test]["data"][index];
 
                       return LineTooltipItem(
-                        'Match: ${itemData["id"]}\n'
-                        'Rank: ${itemData["rank"]} ${itemData["rank"] == "Unreal" ? "#${itemData["progress"]}" : "${itemData["progress"]}%"}\n'
+                        'Match: ${itemData["totalMatchId"]}\n'
+                        'Rank: ${itemData["rank"]} ${itemData["progress"]}\n'
                         'Datetime: ${itemData["datetime"]}\n'
-                        'Daily Match: ${itemData["daily_match_id"]}',
+                        'Daily Match: ${itemData["dailyMatchId"]}',
                         const TextStyle(color: Colors.black, fontSize: 14),
                       );
                     } else {
@@ -508,20 +508,20 @@ class _GraphScreenState extends State<GraphScreen> {
       if (item["season"] == null || item["visible"] == false) {
         continue;
       }
-      final data = (await RankService().getSeasonBySeasonId(
-          item["accountId"], item["season"]["tableId"],
+      final List data = (await RankService().getSeasonBySeasonId(
+          item["accountId"], item["season"]["id"],
           isAscending: true))["data"];
 
       List<FlSpot> spots = [];
       for (int i = 0; i < data.length; i++) {
-        num yValue = data[i]["total_progress"];
+        num yValue = data[i]["totalProgress"];
         if (yValue >= 1700) {
           yValue = 1700 + (convertProgressForUnreal(yValue.toDouble()) * 300);
         }
         spots.add(FlSpot(i.toDouble(), yValue.toDouble()));
       }
       if (_currentOffsetY == 0) {
-        num start = data[0]["total_progress"] as num;
+        num start = data[0]["totalProgress"] as num;
         if (start >= 1700) {
           start = 1700 + (convertProgressForUnreal(start.toDouble()) * 300);
         }

@@ -3,8 +3,6 @@ class Endpoints {
 
   static const fortniteApi = "https://fortnite-api.com";
 
-  static const afterRegister = "$baseUrl/auth/register";
-
   static const searchByQuery = "$baseUrl/api/search/query";
 
   static const singleProgress = "$baseUrl/api/ranked/single-progress";

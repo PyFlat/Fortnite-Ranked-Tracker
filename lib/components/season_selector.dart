@@ -53,7 +53,7 @@ class SeasonSelector extends StatelessWidget {
                               element["type"] == seasons[index]["rankingType"],
                         )["label"]!;
                         return ListTile(
-                          title: Text(seasons[index]["tableName"]),
+                          title: Text(seasons[index]["name"]),
                           subtitle: Text(subtitle),
                           onTap: () {
                             seasonService.setCurrentSeason(seasons[index]);

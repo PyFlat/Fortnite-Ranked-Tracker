@@ -34,7 +34,7 @@ class IndividualPageHeaderState extends State<IndividualPageHeader> {
     }
 
     final displayText = seasonInfo != null
-        ? "${seasonInfo["tableName"]!} - ${modes.firstWhere(
+        ? "${seasonInfo["name"]!} - ${modes.firstWhere(
             (element) => element["type"] == seasonInfo!["rankingType"],
           )["label"]!}"
         : "Select a Season";
