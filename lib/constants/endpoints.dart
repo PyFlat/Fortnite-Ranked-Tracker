@@ -1,5 +1,5 @@
 class Endpoints {
-  static const baseUrl = "http://localhost:3000";
+  static const baseUrl = "http://192.168.2.40:3000";
 
   static const fortniteApi = "https://fortnite-api.com";
 
