@@ -95,6 +95,12 @@ class RankService {
         queryParams: {"accountId": accountId});
   }
 
+  Future<void> setPlayerIndex(String accountId, int index) async {
+    await ApiService().postData(Endpoints.index, jsonEncode({"index": index}),
+        await getBasicAuthHeader(), Constants.dataJson,
+        queryParams: {"accountId": accountId});
+  }
+
   Future<void> setAccountAvatar(String accountId, String avatar) async {
     await ApiService().postData(
         Endpoints.accountAvatar,

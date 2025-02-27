@@ -85,8 +85,9 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   }
 
   @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
+  Future<void> didChangeAppLifecycleState(AppLifecycleState state) async {
     if (state == AppLifecycleState.resumed) {
+      await Future.delayed(const Duration(seconds: 2));
       RankService().emitDataRefresh();
       SocketService().reconnect();
     }

@@ -154,7 +154,6 @@ class HomeScreenState extends State<HomeScreen>
 
                         bool hasChanged =
                             incomingData["AccountId"] == oldItem["AccountId"];
-
                         int progressionDifference = 0;
                         if (hasChanged) {
                           var changedItem = incomingData[updatedField];
@@ -165,7 +164,7 @@ class HomeScreenState extends State<HomeScreen>
 
                         var item = data[i];
 
-                        int index = 0;
+                        int index = data[i]["Index"];
 
                         if (hasChanged) {
                           Color cardColor = Colors.black26;
@@ -199,6 +198,8 @@ class HomeScreenState extends State<HomeScreen>
                           index = rankingKeysList.indexOf(rankUpdateData![1]);
                         }
 
+                        item["Index"] = index;
+
                         if (_currentCardColors.length <= i) {
                           _currentCardColors.add(Colors.black26);
                           _currentScales.add(1.0);
@@ -215,8 +216,12 @@ class HomeScreenState extends State<HomeScreen>
                         if (!item["Visible"]) {
                           continue;
                         }
-
-                        cards.add(_buildAnimatedCard(item, i, index));
+                        if (hasChanged) {
+                          cards.add(_buildAnimatedCard(item, i, index));
+                        } else {
+                          cards.add(_buildSimpleCard(
+                              item, index, _currentCardColors[i]!));
+                        }
                       }
 
                       if (cards.isEmpty) {
@@ -293,15 +298,33 @@ class HomeScreenState extends State<HomeScreen>
       duration: const Duration(milliseconds: 400),
       builder: (context, color, child) {
         return TweenAnimationBuilder<double>(
-          tween: Tween(begin: 1.0, end: _currentScales[i]),
-          duration: const Duration(milliseconds: 100),
-          builder: (context, scale, child) {
-            return Transform.scale(
-              scale: scale,
-              child: _buildSimpleCard(item, index, color!),
-            );
-          },
-        );
+            tween: Tween(begin: 1.0, end: _currentScales[i]),
+            duration: const Duration(milliseconds: 100),
+            builder: (context, scale, child) {
+              final String mode = modes[index]["label"]!;
+
+              if (!(item as Map).containsKey(mode)) {
+                return _buildSimpleCard(item, index, color!);
+              }
+
+              double begin = (item[mode]["AnimationStart"] as num).toDouble();
+              double end = (item[mode]["AnimationEnd"] as num).toDouble();
+
+              return TweenAnimationBuilder<double>(
+                tween: Tween(begin: begin.toDouble(), end: end.toDouble()),
+                duration: const Duration(milliseconds: 400),
+                builder: (context, progress, child) {
+                  final itemCopy = Map<String, dynamic>.from(item);
+                  itemCopy[mode] = Map<String, dynamic>.from(item[mode]);
+                  itemCopy[mode]['RankProgression'] = (progress % 100) / 100;
+                  return Transform.scale(
+                    scale: scale,
+                    child: _buildSimpleCard(
+                        progress == end ? item : itemCopy, index, color!),
+                  );
+                },
+              );
+            });
       },
     );
   }

@@ -19,6 +19,8 @@ class Endpoints {
 
   static const nickName = "$baseUrl/api/database/nick-name";
 
+  static const index = "$baseUrl/api/database/index";
+
   static const accountAvatar = "$baseUrl/api/database/account-avatar";
 
   static const accounts = "$baseUrl/api/database/accounts";

@@ -144,7 +144,6 @@ class _DatabaseScreenState extends State<DatabaseScreen> {
                         final data = (snapshot.data!['data'] as List)
                             .cast<Map<String, dynamic>>();
 
-                        dataTableShowLogs = false;
                         return Padding(
                           padding: const EdgeInsets.all(8.0),
                           child: DataTable2(

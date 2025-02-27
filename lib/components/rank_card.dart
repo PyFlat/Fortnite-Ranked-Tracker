@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:fortnite_ranked_tracker/components/avatar_dialog.dart';
 import 'package:percent_indicator/circular_percent_indicator.dart';
@@ -25,7 +27,7 @@ class RankCard extends StatefulWidget {
 
   const RankCard(
       {this.color = Colors.black26,
-      this.initialIndex = 0,
+      this.initialIndex,
       super.key,
       required this.displayName,
       this.accountId,
@@ -55,11 +57,29 @@ class RankCardState extends State<RankCard>
     _currentIndex = widget.initialIndex ?? 0;
   }
 
+  @override
+  void didUpdateWidget(covariant RankCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    _currentIndex = widget.initialIndex ?? 0;
+  }
+
   Future<void> _updatePlayerTracking(bool value, String rankingType) async {
     await RankService()
         .setPlayerTracking(rankingType, value, widget.accountId!);
     SocketService().sendDataChanged(data: [widget.accountId!, rankingType]);
     RankService().emitDataRefresh();
+  }
+
+  Timer? _debounce;
+
+  Future<void> _updateIndex(int index) async {
+    if (_debounce?.isActive ?? false) _debounce?.cancel();
+    _debounce = Timer(const Duration(seconds: 1), () async {
+      await RankService().setPlayerIndex(widget.accountId!, index);
+      SocketService()
+          .sendDataChanged(data: [widget.accountId!, modes[index]["key"]!]);
+    });
   }
 
   @override
@@ -150,7 +170,7 @@ class RankCardState extends State<RankCard>
                         ? _tabNames[_currentIndex - 1]
                         : _tabNames[_tabNames.length - 1],
                     child: IconButton(
-                      onPressed: () {
+                      onPressed: () async {
                         setState(() {
                           if (_currentIndex <= 0) {
                             _currentIndex = _tabNames.length - 1;
@@ -158,6 +178,7 @@ class RankCardState extends State<RankCard>
                             _currentIndex--;
                           }
                         });
+                        await _updateIndex(_currentIndex);
                       },
                       icon: const Icon(Icons.chevron_left),
                       color: Colors.white,
@@ -216,7 +237,7 @@ class RankCardState extends State<RankCard>
                         ? _tabNames[_currentIndex + 1]
                         : _tabNames[0],
                     child: IconButton(
-                      onPressed: () {
+                      onPressed: () async {
                         setState(() {
                           if (_currentIndex + 1 >= _tabNames.length) {
                             _currentIndex = 0;
@@ -224,6 +245,7 @@ class RankCardState extends State<RankCard>
                             _currentIndex++;
                           }
                         });
+                        await _updateIndex(_currentIndex);
                       },
                       icon: const Icon(Icons.chevron_right),
                       color: Colors.white,
