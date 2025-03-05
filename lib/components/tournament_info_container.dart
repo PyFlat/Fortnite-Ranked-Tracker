@@ -287,6 +287,36 @@ class TournamentInfoContainerState extends State<TournamentInfoContainer> {
                       child: Image.network(
                         "${Endpoints.baseUrl}/image-proxy?url=${widget.item["imageUrl"]}",
                         fit: BoxFit.cover,
+                        width: 275,
+                        height: 275 * (1080 / 750),
+                        loadingBuilder: (BuildContext context, Widget child,
+                            ImageChunkEvent? loadingProgress) {
+                          if (loadingProgress == null) return child;
+                          return Center(
+                            child: CircularProgressIndicator(
+                              value: loadingProgress.expectedTotalBytes != null
+                                  ? loadingProgress.cumulativeBytesLoaded /
+                                      loadingProgress.expectedTotalBytes!
+                                  : null,
+                            ),
+                          );
+                        },
+                        errorBuilder: (BuildContext context, Object error,
+                            StackTrace? stackTrace) {
+                          return const Center(
+                            child: Icon(Icons.error, color: Colors.red),
+                          );
+                        },
+                      ),
+                    ),
+                  if (widget.item["imageUrl"] != null &&
+                      (widget.item["imageUrl"] as String).contains("800x800"))
+                    Positioned.fill(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.white, width: 7),
+                          borderRadius: BorderRadius.circular(8.0),
+                        ),
                       ),
                     ),
                   if (!_isHovered)
