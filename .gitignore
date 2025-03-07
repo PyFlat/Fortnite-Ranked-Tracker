@@ -45,3 +45,4 @@ app.*.map.json
 
 generated_*
 Generated*
+/android/app/.cxx/
