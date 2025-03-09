@@ -70,8 +70,11 @@ class SocketService {
 
   bool get isConnected => _socket?.connected ?? false;
 
-  void reconnect() {
+  void reconnect() async {
     _socket?.disconnect();
+    _socket?.io.options?["extraHeaders"] = {
+      "authorization": await RankService().getBasicAuthHeader()
+    };
     _socket?.connect();
   }
 
