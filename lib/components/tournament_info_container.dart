@@ -213,6 +213,7 @@ class TournamentInfoContainerState extends State<TournamentInfoContainer> {
     final days = duration.inDays;
     final hours = duration.inHours % 24;
     final minutes = duration.inMinutes % 60;
+    final seconds = duration.inSeconds;
 
     if (duration.isNegative) {
       return "ENDED";
@@ -228,8 +229,16 @@ class TournamentInfoContainerState extends State<TournamentInfoContainer> {
         return "IN $hours HRS";
       }
       return "IN $hours HRS $minutes MINS";
+    } else if (minutes > 0) {
+      String text = "MINS";
+      if (minutes == 1) {
+        text = "MIN";
+      }
+      return "IN $minutes $text";
+    } else if (seconds > 0) {
+      return "IN $seconds SECONDS";
     } else {
-      return "IN $minutes MINS";
+      return "STARTING SOON";
     }
   }
 
