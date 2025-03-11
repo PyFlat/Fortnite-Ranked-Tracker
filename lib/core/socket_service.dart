@@ -66,6 +66,10 @@ class SocketService {
       RankService().emitDataRefresh(data: data);
       data = null;
     });
+
+    _socket!.on('cardIndexUpdated', (_) {
+      RankService().cardIndexUpdated(_);
+    });
   }
 
   bool get isConnected => _socket?.connected ?? false;
@@ -90,6 +94,11 @@ class SocketService {
       this.data = data;
     }
     _socket!.emit('refreshPage', "");
+  }
+
+  void updateCardIndex(int index, String accountId, int time) {
+    _socket!.emit('updateCardIndex',
+        {"index": index, "accountId": accountId, "time": time});
   }
 
   void dispose() {

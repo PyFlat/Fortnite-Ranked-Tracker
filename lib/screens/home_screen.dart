@@ -61,6 +61,16 @@ class HomeScreenState extends State<HomeScreen>
       onDone: () => talker.info("Rank updates stream closed."),
       onError: (e) => talker.error("Error in rank updates stream: $e"),
     );
+    RankService().rankCardIndexUpdates.listen((Map<String, dynamic> data) {
+      if (mounted) {
+        setState(() {
+          final Map<String, dynamic> account = this.data.firstWhere(
+              (element) => element["AccountId"] == data["accountId"]);
+          account["Index"] = data["index"];
+          account["Time"] = data["time"];
+        });
+      }
+    });
   }
 
   int _getProgressionDifference(Map<String, dynamic> newData) {

@@ -16,6 +16,11 @@ class RankService {
 
   Stream<List?> get rankUpdates => _rankUpdateController.stream;
 
+  final _rankCardIndexController =
+      StreamController<Map<String, dynamic>>.broadcast();
+  Stream<Map<String, dynamic>> get rankCardIndexUpdates =>
+      _rankCardIndexController.stream;
+
   RankService._();
 
   static final RankService _instance = RankService._();
@@ -26,8 +31,8 @@ class RankService {
 
   Future<void> init() async {
     modes = await getRankedModes();
-    Timer.periodic(Duration(seconds: 5), (timer) async {
-      emitDataRefresh();
+    Timer.periodic(Duration(hours: 1), (timer) async {
+      // emitDataRefresh();
       modes = await getRankedModes();
     });
   }
@@ -202,6 +207,10 @@ class RankService {
 
   void emitDataRefresh({List? data}) {
     _rankUpdateController.sink.add(data);
+  }
+
+  void cardIndexUpdated(Map<String, dynamic> data) {
+    _rankCardIndexController.sink.add(data);
   }
 
   Future<List<Map<String, dynamic>>> fetchEvents() async {

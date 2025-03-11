@@ -20,6 +20,7 @@ class RankCard extends StatefulWidget {
   final List<RankData> rankModes;
   final Color? color;
   final int? initialIndex;
+  final int? time;
 
   const RankCard({
     this.color = Colors.black26,
@@ -33,6 +34,7 @@ class RankCard extends StatefulWidget {
     required this.showMenu,
     required this.showSwitches,
     required this.rankModes,
+    this.time,
   });
 
   @override
@@ -45,7 +47,7 @@ class RankCardState extends State<RankCard>
   late Future<List<Map<String, String>>> _dataFuture;
   List<Map<String, String>>? _modes;
   int _currentIndex = 0;
-  Timer? _debounce;
+  DateTime updated = DateTime.now();
 
   @override
   void initState() {
@@ -59,8 +61,15 @@ class RankCardState extends State<RankCard>
   @override
   void didUpdateWidget(covariant RankCard oldWidget) {
     super.didUpdateWidget(oldWidget);
-    _dataFuture = RankService().getRankedModes(onlyActive: true);
-    _currentIndex = widget.initialIndex ?? 0;
+    if (widget.time != null) {
+      final DateTime newTime =
+          DateTime.fromMillisecondsSinceEpoch(widget.time!);
+
+      if (updated.isBefore(newTime)) {
+        _currentIndex = widget.initialIndex ?? 0;
+        updated = newTime;
+      }
+    }
   }
 
   Future<void> _updatePlayerTracking(bool value, String rankingType) async {
@@ -71,12 +80,9 @@ class RankCardState extends State<RankCard>
   }
 
   Future<void> _updateIndex(int index) async {
-    _debounce?.cancel();
-    _debounce = Timer(const Duration(seconds: 1), () async {
-      await RankService().setPlayerIndex(widget.accountId!, index);
-      SocketService().sendDataChanged(
-          data: [widget.accountId!, RankService().modes[index]["key"]!]);
-    });
+    updated = DateTime.now();
+    SocketService().updateCardIndex(
+        index, widget.accountId!, updated.millisecondsSinceEpoch);
   }
 
   @override
@@ -99,7 +105,7 @@ class RankCardState extends State<RankCard>
                 child: Text("An error occurred while fetching data"));
           }
           if (snapshot.hasData || _modes != null) {
-            if (snapshot.hasData) {
+            if (snapshot.hasData && snapshot.data!.isNotEmpty) {
               _modes = snapshot.data;
             }
             final tabNames = _modes!.map((m) => m['label']!).toList();
@@ -109,7 +115,7 @@ class RankCardState extends State<RankCard>
                 _buildHeader(),
                 _buildTabSelector(tabNames),
                 const Divider(color: Colors.white),
-                Expanded(child: _buildContentView()),
+                Expanded(child: _buildContentView(_modes)),
               ],
             );
           }
@@ -274,14 +280,13 @@ class RankCardState extends State<RankCard>
     );
   }
 
-  Widget _buildContentView() {
+  Widget _buildContentView(List<Map<String, String>>? modes) {
     final data = widget.rankModes[_currentIndex];
     final tracking = _trackingStates[_currentIndex];
-    final categoryLabel = RankService().modes[_currentIndex]["label"]!;
+    final categoryLabel = modes![_currentIndex]["label"]!;
     return _buildContent(data, tracking, categoryLabel, (bool value) async {
       setState(() => _trackingStates[_currentIndex] = value);
-      await _updatePlayerTracking(
-          value, RankService().modes[_currentIndex]["key"]!);
+      await _updatePlayerTracking(value, modes[_currentIndex]["key"]!);
     });
   }
 

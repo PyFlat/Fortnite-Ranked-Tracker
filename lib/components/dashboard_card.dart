@@ -39,6 +39,7 @@ class DashboardCard extends StatelessWidget {
     final accountId = item["AccountId"] as String;
     final accountAvatar = item["AccountAvatar"];
     final nickName = item["NickName"];
+    final time = item["Time"];
 
     return RankCard(
       displayName: displayName,
@@ -49,6 +50,7 @@ class DashboardCard extends StatelessWidget {
       accountAvatar: accountAvatar,
       color: color,
       initialIndex: index,
+      time: time,
       rankModes: List.generate(
           modes.length,
           (index) =>
