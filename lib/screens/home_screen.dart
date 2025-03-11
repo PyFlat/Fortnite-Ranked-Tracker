@@ -339,8 +339,8 @@ class HomeScreenState extends State<HomeScreen>
   Widget _buildSimpleCard(
       dynamic item, int index, Color color, List<Map<String, String>> modes) {
     return SizedBox(
-      width: 350,
-      height: 350,
+      width: 375,
+      height: 375,
       child: Padding(
         padding: const EdgeInsets.all(8.0),
         child: DashboardCard(
