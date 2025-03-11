@@ -28,6 +28,7 @@ class DashboardCard extends StatelessWidget {
       dailyMatches: getIntValue(gameModeValues, 'DailyMatches'),
       rankImagePath: getImageAssetPath(gameModeValues),
       rank: getStringValue(gameModeValues, 'Rank'),
+      oldRank: getStringValue(gameModeValues, 'OldRank'),
       active: gameModeValues != null,
     );
   }

@@ -6,6 +6,7 @@ class RankData {
   final int? dailyMatches;
   final String? rankImagePath;
   final String? rank;
+  final String? oldRank;
   final bool active;
   final bool? tracking;
 
@@ -17,6 +18,7 @@ class RankData {
     this.dailyMatches,
     this.rankImagePath,
     this.rank,
+    this.oldRank,
     required this.active,
     this.tracking,
   });

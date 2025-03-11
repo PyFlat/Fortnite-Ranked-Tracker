@@ -355,6 +355,22 @@ class RankCardState extends State<RankCard>
       );
     }
 
+    Color? color;
+
+    if (data.lastProgress != null) {
+      final lastProgress = int.parse(data.lastProgress!.replaceAll("%", ""));
+      if (lastProgress > 0) {
+        color = Colors.greenAccent;
+      } else if (lastProgress < 0) {
+        color = Colors.red.withValues(alpha: 0.75);
+      } else if (lastProgress == 0) {
+        color = Colors.yellow.withValues(alpha: 0.75);
+      }
+      if (data.oldRank != null && data.oldRank == "Unranked") {
+        color = Colors.blueAccent;
+      }
+    }
+
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -383,8 +399,15 @@ class RankCardState extends State<RankCard>
                 footer: Padding(
                   padding: const EdgeInsets.only(top: 8.0),
                   child: (data.lastProgress != null)
-                      ? Text(
-                          "Last Progress: ${data.lastProgress}",
+                      ? Row(
+                          spacing: 4,
+                          children: [
+                            Text("Last Progress:"),
+                            Text(
+                              data.lastProgress!,
+                              style: TextStyle(color: color),
+                            )
+                          ],
                         )
                       : const SizedBox.shrink(),
                 ),
