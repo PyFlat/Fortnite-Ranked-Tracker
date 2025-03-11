@@ -61,6 +61,8 @@ class DataBase {
           ballistic INTEGER DEFAULT 0,
           og INTEGER DEFAULT 0,
           ogZeroBuild INTEGER DEFAULT 0,
+          gatewayLTM INTEGER DEFAULT 0,
+          gatewayLTMZB INTEGER DEFAULT 0,
           position INTEGER,
           visible INTEGER DEFAULT 1
         )
@@ -70,15 +72,9 @@ class DataBase {
 
     _addColumnIfNotExists(db, "nickName", "TEXT");
 
-    _addColumnIfNotExists(db, "reload", "INTEGER", defaultValue: 0);
-
-    _addColumnIfNotExists(db, "reloadZeroBuild", "INTEGER", defaultValue: 0);
-
-    _addColumnIfNotExists(db, "ballistic", "INTEGER", defaultValue: 0);
-
-    _addColumnIfNotExists(db, "og", "INTEGER", defaultValue: 0);
-
-    _addColumnIfNotExists(db, "ogZeroBuild", "INTEGER", defaultValue: 0);
+    for (var mode in modes) {
+      _addColumnIfNotExists(db, mode['key']!, "INTEGER", defaultValue: 0);
+    }
   }
 
   Future<void> _addColumnIfNotExists(

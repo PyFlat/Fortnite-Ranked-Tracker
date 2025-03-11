@@ -95,6 +95,18 @@ const List<Map<String, String>> modes = [
     'label': 'OG Zero Build',
     'short': 'OGZB',
     'type': 'ranked-figment-nobuild'
+  },
+  {
+    'key': 'gatewayLTM',
+    'label': 'Gateway LTM',
+    'short': 'GLTM',
+    'type': 'ranked-bling'
+  },
+  {
+    'key': 'gatewayLTMZB',
+    'label': 'Gateway LTM Zero Build',
+    'short': 'GLTMZB',
+    'type': 'ranked-bling-nobuild'
   }
 ];
 
