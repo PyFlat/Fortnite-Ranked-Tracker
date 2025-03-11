@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../core/rank_service.dart';
 import '../core/season_service.dart';
-import '../core/utils.dart';
 import 'season_selector.dart';
 
 class IndividualPageHeader extends StatefulWidget {
@@ -34,9 +34,9 @@ class IndividualPageHeaderState extends State<IndividualPageHeader> {
     }
 
     final displayText = seasonInfo != null
-        ? "${seasonInfo["name"]!} - ${modes.firstWhere(
-            (element) => element["type"] == seasonInfo!["rankingType"],
-          )["label"]!}"
+        ? "${seasonInfo["name"]!} - ${RankService().modes.firstWhere(
+              (element) => element["type"] == seasonInfo!["rankingType"],
+            )["label"]!}"
         : "Select a Season";
 
     return Padding(

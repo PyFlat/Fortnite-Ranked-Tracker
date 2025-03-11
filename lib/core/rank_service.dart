@@ -22,6 +22,16 @@ class RankService {
 
   factory RankService() => _instance;
 
+  List<Map<String, String>> modes = [];
+
+  Future<void> init() async {
+    modes = await getRankedModes();
+    Timer.periodic(Duration(seconds: 5), (timer) async {
+      emitDataRefresh();
+      modes = await getRankedModes();
+    });
+  }
+
   Future<String> getBasicAuthHeader() async {
     try {
       final token = await FirebaseAuth.instance.currentUser?.getIdToken(true);
@@ -113,6 +123,7 @@ class RankService {
   Future<List<Map<String, dynamic>>> getDashboardData() async {
     List result = await ApiService()
         .getData(Endpoints.dashboardData, await getBasicAuthHeader());
+
     return result.cast<Map<String, dynamic>>();
   }
 
@@ -306,5 +317,23 @@ class RankService {
     });
 
     return response;
+  }
+
+  Future<List<Map<String, String>>> getRankedModes(
+      {bool onlyActive = false}) async {
+    try {
+      final List<dynamic> result = await ApiService().getData(
+          Endpoints.rankModeData,
+          queryParams: {"onlyActive": onlyActive.toString()},
+          await getBasicAuthHeader());
+
+      return result.map<Map<String, String>>((item) {
+        final map = item as Map<String, dynamic>;
+        return map.map((key, value) => MapEntry(key, value.toString()));
+      }).toList();
+    } catch (error) {
+      talker.error(error);
+      return [];
+    }
   }
 }

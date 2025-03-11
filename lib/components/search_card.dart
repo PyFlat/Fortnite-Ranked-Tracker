@@ -28,6 +28,8 @@ class SearchCardState extends State<SearchCard> {
 
   String? nickName;
 
+  List<Map<String, String>>? modes;
+
   void refresh() async {
     String? newNickName =
         await RankService().getPlayerNickName(widget.accountId);
@@ -46,6 +48,8 @@ class SearchCardState extends State<SearchCard> {
         await RankService().getPlayerTracking(widget.accountId);
 
     nickName = await RankService().getPlayerNickName(widget.accountId);
+
+    modes = await RankService().getRankedModes(onlyActive: true);
 
     List<dynamic> formattedResult = [
       activeRankingTypes,
@@ -74,7 +78,7 @@ class SearchCardState extends State<SearchCard> {
         };
       }
 
-      final types = modes.map((mode) => mode['type']).toList();
+      final types = modes!.map((mode) => mode['type']).toList();
 
       formattedResult[types.indexOf(item["rankingType"]) + 1] = formattedItem;
     }
@@ -117,7 +121,7 @@ class SearchCardState extends State<SearchCard> {
               showMenu: false,
               showSwitches: true,
               rankModes: List.generate(
-                modes.length,
+                RankService().modes.length,
                 (index) => _buildRankData(
                   snapshotData.length > index + 1
                       ? snapshotData[index + 1]

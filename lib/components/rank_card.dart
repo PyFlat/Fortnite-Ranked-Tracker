@@ -6,7 +6,6 @@ import 'package:percent_indicator/circular_percent_indicator.dart';
 import '../core/rank_service.dart';
 import '../core/socket_service.dart';
 import '../core/rank_data.dart';
-import '../core/utils.dart';
 import 'account_details_dialog.dart';
 import 'user_popup_menu.dart';
 
@@ -46,12 +45,14 @@ class RankCardState extends State<RankCard>
     with SingleTickerProviderStateMixin {
   late List<bool> _trackingStates;
 
+  late Future<List<Map<String, String>>> dataFuture;
+  List<Map<String, String>>? modes;
   int _currentIndex = 0;
-  final List<String> _tabNames = modes.map((mode) => mode['label']!).toList();
 
   @override
   void initState() {
     super.initState();
+    dataFuture = RankService().getRankedModes(onlyActive: true);
     _trackingStates =
         widget.rankModes.map((rank) => rank.tracking ?? false).toList();
     _currentIndex = widget.initialIndex ?? 0;
@@ -60,6 +61,8 @@ class RankCardState extends State<RankCard>
   @override
   void didUpdateWidget(covariant RankCard oldWidget) {
     super.didUpdateWidget(oldWidget);
+
+    dataFuture = RankService().getRankedModes(onlyActive: true);
 
     _currentIndex = widget.initialIndex ?? 0;
   }
@@ -77,8 +80,8 @@ class RankCardState extends State<RankCard>
     if (_debounce?.isActive ?? false) _debounce?.cancel();
     _debounce = Timer(const Duration(seconds: 1), () async {
       await RankService().setPlayerIndex(widget.accountId!, index);
-      SocketService()
-          .sendDataChanged(data: [widget.accountId!, modes[index]["key"]!]);
+      SocketService().sendDataChanged(
+          data: [widget.accountId!, RankService().modes[index]["key"]!]);
     });
   }
 
@@ -90,179 +93,206 @@ class RankCardState extends State<RankCard>
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(10),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(15.0),
-            child: Row(
-              children: [
-                if (widget.accountAvatar != null)
-                  GestureDetector(
-                    child: CircleAvatar(
-                      radius: 25,
-                      backgroundImage: AssetImage(widget.accountAvatar!),
-                    ),
-                    onDoubleTap: () =>
-                        showAvatarDialog(context, widget.accountId!),
-                    onLongPress: () =>
-                        showAvatarDialog(context, widget.accountId!),
-                  ),
-                const SizedBox(width: 24),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        widget.nickName == null
-                            ? widget.displayName
-                            : widget.nickName!,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 20,
-                        ),
-                      ),
-                      if (widget.nickName != null)
-                        Text(
-                          widget.displayName,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            color: Colors.grey,
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-                if (widget.showMenu)
-                  UserPopupMenu(
-                    context: context,
-                    displayName: widget.displayName,
-                    accountId: widget.accountId!,
-                    nickName: widget.nickName,
-                  ),
-                if (!widget.showMenu) _buildShowIcon(),
-              ],
-            ),
-          ),
-          Padding(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: .9),
-                borderRadius: BorderRadius.circular(10.0),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.white.withValues(alpha: .3),
-                    spreadRadius: 4,
-                    blurRadius: 7.5,
-                  ),
-                ],
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
+      child: FutureBuilder<List<Map<String, String>>>(
+          future: dataFuture,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting &&
+                modes == null) {
+              return const Center(
+                child: CircularProgressIndicator(),
+              );
+            }
+            if (snapshot.hasError) {
+              return const Center(
+                child: Text("An error occurred while fetching data"),
+              );
+            }
+            if (snapshot.hasData || modes != null) {
+              if (snapshot.hasData) {
+                modes = snapshot.data;
+              }
+
+              final tabNames = modes!.map((mode) => mode['label']!).toList();
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Tooltip(
-                    message: _currentIndex > 0
-                        ? _tabNames[_currentIndex - 1]
-                        : _tabNames[_tabNames.length - 1],
-                    child: IconButton(
-                      onPressed: () async {
-                        setState(() {
-                          if (_currentIndex <= 0) {
-                            _currentIndex = _tabNames.length - 1;
-                          } else {
-                            _currentIndex--;
-                          }
-                        });
-                        await _updateIndex(_currentIndex);
-                      },
-                      icon: const Icon(Icons.chevron_left),
-                      color: Colors.white,
-                    ),
-                  ),
-                  Expanded(
-                    child: Column(
+                  Padding(
+                    padding: const EdgeInsets.all(15.0),
+                    child: Row(
                       children: [
-                        Text(
-                          _tabNames[_currentIndex],
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontSize: 18.0,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
-                          ),
-                        ),
-                        const SizedBox(
-                          height: 4,
-                        ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: List.generate(
-                            _tabNames.length,
-                            (index) => AnimatedContainer(
-                              duration: const Duration(milliseconds: 300),
-                              width: _currentIndex == index ? 24.0 : 8.0,
-                              height: 4.0,
-                              margin:
-                                  const EdgeInsets.symmetric(horizontal: 4.0),
-                              decoration: BoxDecoration(
-                                color: _currentIndex == index
-                                    ? Colors.deepPurple
-                                    : Colors.grey,
-                                borderRadius: BorderRadius.circular(2.0),
-                                boxShadow: _currentIndex == index
-                                    ? [
-                                        BoxShadow(
-                                            color: Colors.deepPurple
-                                                .withValues(alpha: .5),
-                                            blurRadius: 6.0)
-                                      ]
-                                    : [],
-                              ),
+                        if (widget.accountAvatar != null)
+                          GestureDetector(
+                            child: CircleAvatar(
+                              radius: 25,
+                              backgroundImage:
+                                  AssetImage(widget.accountAvatar!),
                             ),
+                            onDoubleTap: () =>
+                                showAvatarDialog(context, widget.accountId!),
+                            onLongPress: () =>
+                                showAvatarDialog(context, widget.accountId!),
+                          ),
+                        const SizedBox(width: 24),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                widget.nickName == null
+                                    ? widget.displayName
+                                    : widget.nickName!,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 20,
+                                ),
+                              ),
+                              if (widget.nickName != null)
+                                Text(
+                                  widget.displayName,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                            ],
                           ),
                         ),
-                        const SizedBox(
-                          height: 4,
-                        )
+                        if (widget.showMenu)
+                          UserPopupMenu(
+                            context: context,
+                            displayName: widget.displayName,
+                            accountId: widget.accountId!,
+                            nickName: widget.nickName,
+                          ),
+                        if (!widget.showMenu) _buildShowIcon(),
                       ],
                     ),
                   ),
-                  Tooltip(
-                    message: _currentIndex + 1 < _tabNames.length
-                        ? _tabNames[_currentIndex + 1]
-                        : _tabNames[0],
-                    child: IconButton(
-                      onPressed: () async {
-                        setState(() {
-                          if (_currentIndex + 1 >= _tabNames.length) {
-                            _currentIndex = 0;
-                          } else {
-                            _currentIndex++;
-                          }
-                        });
-                        await _updateIndex(_currentIndex);
-                      },
-                      icon: const Icon(Icons.chevron_right),
-                      color: Colors.white,
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20.0, vertical: 10.0),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: .9),
+                        borderRadius: BorderRadius.circular(10.0),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.white.withValues(alpha: .3),
+                            spreadRadius: 4,
+                            blurRadius: 7.5,
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Tooltip(
+                            message: _currentIndex > 0
+                                ? tabNames[_currentIndex - 1]
+                                : tabNames[tabNames.length - 1],
+                            child: IconButton(
+                              onPressed: () async {
+                                setState(() {
+                                  if (_currentIndex <= 0) {
+                                    _currentIndex = tabNames.length - 1;
+                                  } else {
+                                    _currentIndex--;
+                                  }
+                                });
+                                await _updateIndex(_currentIndex);
+                              },
+                              icon: const Icon(Icons.chevron_left),
+                              color: Colors.white,
+                            ),
+                          ),
+                          Expanded(
+                            child: Column(
+                              children: [
+                                Text(
+                                  tabNames[_currentIndex],
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                    fontSize: 18.0,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                const SizedBox(
+                                  height: 4,
+                                ),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: List.generate(
+                                    tabNames.length,
+                                    (index) => AnimatedContainer(
+                                      duration:
+                                          const Duration(milliseconds: 300),
+                                      width:
+                                          _currentIndex == index ? 24.0 : 8.0,
+                                      height: 4.0,
+                                      margin: const EdgeInsets.symmetric(
+                                          horizontal: 4.0),
+                                      decoration: BoxDecoration(
+                                        color: _currentIndex == index
+                                            ? Colors.deepPurple
+                                            : Colors.grey,
+                                        borderRadius:
+                                            BorderRadius.circular(2.0),
+                                        boxShadow: _currentIndex == index
+                                            ? [
+                                                BoxShadow(
+                                                    color: Colors.deepPurple
+                                                        .withValues(alpha: .5),
+                                                    blurRadius: 6.0)
+                                              ]
+                                            : [],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(
+                                  height: 4,
+                                )
+                              ],
+                            ),
+                          ),
+                          Tooltip(
+                            message: _currentIndex + 1 < tabNames.length
+                                ? tabNames[_currentIndex + 1]
+                                : tabNames[0],
+                            child: IconButton(
+                              onPressed: () async {
+                                setState(() {
+                                  if (_currentIndex + 1 >= tabNames.length) {
+                                    _currentIndex = 0;
+                                  } else {
+                                    _currentIndex++;
+                                  }
+                                });
+                                await _updateIndex(_currentIndex);
+                              },
+                              icon: const Icon(Icons.chevron_right),
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
+                  const Divider(
+                    color: Colors.white,
+                  ),
+                  Expanded(
+                    child: _buildContentView(),
+                  ),
                 ],
-              ),
-            ),
-          ),
-          const Divider(
-            color: Colors.white,
-          ),
-          Expanded(
-            child: _buildContentView(),
-          ),
-        ],
-      ),
+              );
+            }
+            return const SizedBox.shrink();
+          }),
     );
   }
 
@@ -270,12 +300,13 @@ class RankCardState extends State<RankCard>
     return _buildContent(
       widget.rankModes[_currentIndex],
       _trackingStates[_currentIndex],
-      modes[_currentIndex]["label"]!,
+      RankService().modes[_currentIndex]["label"]!,
       (bool value) async {
         setState(() {
           _trackingStates[_currentIndex] = value;
         });
-        await _updatePlayerTracking(value, modes[_currentIndex]["key"]!);
+        await _updatePlayerTracking(
+            value, RankService().modes[_currentIndex]["key"]!);
       },
     );
   }

@@ -10,7 +10,6 @@ import '../components/dashboard_card.dart';
 import 'package:flutter/material.dart';
 
 import '../core/talker_service.dart';
-import '../core/utils.dart';
 import 'search_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -22,10 +21,10 @@ class HomeScreen extends StatefulWidget {
 
 class HomeScreenState extends State<HomeScreen>
     with SingleTickerProviderStateMixin {
-  final RankService _rankService = RankService();
   final List<Color?> _currentCardColors = [];
   final List<double> _currentScales = [];
-  final List _rankedModes = modes.map((mode) => mode["label"]).toList();
+  List<Map<String, String>>? modes;
+  List? _rankedModes;
   bool _firstIteration = true;
 
   late Future<List<Map<String, dynamic>>> dataFuture;
@@ -37,17 +36,25 @@ class HomeScreenState extends State<HomeScreen>
   @override
   void initState() {
     super.initState();
-    dataFuture = _rankService.getDashboardData();
+    dataFuture = getDashboardData();
     _listenToRankUpdates();
   }
 
+  Future<List<Map<String, dynamic>>> getDashboardData() async {
+    final dashboardData = await RankService().getDashboardData();
+    modes = await RankService().getRankedModes(onlyActive: true);
+    _rankedModes = modes!.map((mode) => mode["label"]).toList();
+
+    return dashboardData;
+  }
+
   void _listenToRankUpdates() {
-    _rankService.rankUpdates.listen(
+    RankService().rankUpdates.listen(
       (List? data) {
         if (mounted) {
           setState(() {
             rankUpdateData = data;
-            dataFuture = _rankService.getDashboardData();
+            dataFuture = getDashboardData();
           });
         }
       },
@@ -185,13 +192,13 @@ class HomeScreenState extends State<HomeScreen>
                               () {
                             _resetCardState(i);
                           });
-                          index = _rankedModes.indexOf(updatedField);
+                          index = _rankedModes!.indexOf(updatedField);
                           _currentCardColors[i] = cardColor;
                           _currentScales[i] = cardScale;
                         }
 
                         List rankingKeysList =
-                            modes.map((mode) => mode["key"]).toList();
+                            modes!.map((mode) => mode["key"]).toList();
 
                         if (rankUpdateData != null &&
                             item["AccountId"] == rankUpdateData![0]) {
@@ -220,7 +227,7 @@ class HomeScreenState extends State<HomeScreen>
                           cards.add(_buildAnimatedCard(item, i, index));
                         } else {
                           cards.add(_buildSimpleCard(
-                              item, index, _currentCardColors[i]!));
+                              item, index, _currentCardColors[i]!, modes!));
                         }
                       }
 
@@ -301,10 +308,10 @@ class HomeScreenState extends State<HomeScreen>
             tween: Tween(begin: 1.0, end: _currentScales[i]),
             duration: const Duration(milliseconds: 100),
             builder: (context, scale, child) {
-              final String mode = modes[index]["label"]!;
+              final String mode = modes![index]["label"]!;
 
               if (!(item as Map).containsKey(mode)) {
-                return _buildSimpleCard(item, index, color!);
+                return _buildSimpleCard(item, index, color!, modes!);
               }
 
               double begin = (item[mode]["AnimationStart"] as num).toDouble();
@@ -319,8 +326,8 @@ class HomeScreenState extends State<HomeScreen>
                   itemCopy[mode]['RankProgression'] = (progress % 100) / 100;
                   return Transform.scale(
                     scale: scale,
-                    child: _buildSimpleCard(
-                        progress == end ? item : itemCopy, index, color!),
+                    child: _buildSimpleCard(progress == end ? item : itemCopy,
+                        index, color!, modes!),
                   );
                 },
               );
@@ -329,7 +336,8 @@ class HomeScreenState extends State<HomeScreen>
     );
   }
 
-  Widget _buildSimpleCard(dynamic item, int index, Color color) {
+  Widget _buildSimpleCard(
+      dynamic item, int index, Color color, List<Map<String, String>> modes) {
     return SizedBox(
       width: 350,
       height: 350,
@@ -339,6 +347,7 @@ class HomeScreenState extends State<HomeScreen>
           item: item,
           color: color,
           index: index,
+          modes: modes,
         ),
       ),
     );

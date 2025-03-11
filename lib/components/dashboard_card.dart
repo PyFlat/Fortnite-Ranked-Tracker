@@ -9,11 +9,14 @@ class DashboardCard extends StatelessWidget {
   final Color color;
   final int index;
 
+  final List<Map<String, String>> modes;
+
   const DashboardCard(
       {super.key,
       required this.item,
       required this.color,
-      required this.index});
+      required this.index,
+      required this.modes});
 
   RankData _buildRankData(Map<String, dynamic>? gameModeValues) {
     String? lastChanged = getStringValue(gameModeValues, 'LastChanged');

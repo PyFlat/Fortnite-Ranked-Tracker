@@ -52,64 +52,6 @@ String prettifySeasonString(String inputStr) {
   return 'Chapter $chapter Season $season';
 }
 
-const List<Map<String, String>> modes = [
-  {
-    'key': 'battleRoyale',
-    'label': 'Battle Royale',
-    'short': 'BR',
-    'type': 'ranked-br'
-  },
-  {
-    'key': 'zeroBuild',
-    'label': 'Zero Build',
-    'short': 'ZB',
-    'type': 'ranked-zb'
-  },
-  {
-    'key': 'rocketRacing',
-    'label': 'Rocket Racing',
-    'short': 'RR',
-    'type': 'delmar-competitive'
-  },
-  {
-    'key': 'reload',
-    'label': 'Reload',
-    'short': 'RL',
-    'type': 'ranked_blastberry_build'
-  },
-  {
-    'key': 'reloadZeroBuild',
-    'label': 'Reload Zero Build',
-    'short': 'RLZB',
-    'type': 'ranked_blastberry_nobuild'
-  },
-  {
-    'key': 'ballistic',
-    'label': 'Ballistic',
-    'short': 'BL',
-    'type': 'ranked-feral'
-  },
-  {'key': 'og', 'label': 'OG', 'short': 'OG', 'type': 'ranked-figment-build'},
-  {
-    'key': 'ogZeroBuild',
-    'label': 'OG Zero Build',
-    'short': 'OGZB',
-    'type': 'ranked-figment-nobuild'
-  },
-  {
-    'key': 'gatewayLTM',
-    'label': 'Gateway LTM',
-    'short': 'GLTM',
-    'type': 'ranked-bling'
-  },
-  {
-    'key': 'gatewayLTMZB',
-    'label': 'Gateway LTM Zero Build',
-    'short': 'GLTMZB',
-    'type': 'ranked-bling-nobuild'
-  }
-];
-
 String? getRegionNameByEventId(String inputStr) {
   if (Constants.regionRegex.hasMatch(inputStr)) {
     RegExpMatch match = Constants.regionRegex.firstMatch(inputStr)!;

@@ -38,6 +38,7 @@ class MainScreenState extends State<MainScreen> {
   }
 
   Future<void> _initializeRankService() async {
+    await RankService().init();
     SocketService().connectToSocket();
   }
 

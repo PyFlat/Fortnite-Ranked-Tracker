@@ -11,6 +11,8 @@ class Endpoints {
 
   static const dashboardData = "$baseUrl/api/ranked/dashboard-data";
 
+  static const rankModeData = "$baseUrl/api/ranked/rankedModes";
+
   static const playerTracking = "$baseUrl/api/database/player-tracking";
 
   static const playerExisting = "$baseUrl/api/database/player-existing";

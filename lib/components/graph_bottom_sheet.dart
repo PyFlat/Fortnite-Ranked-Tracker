@@ -6,8 +6,6 @@ import 'dart:async';
 
 import 'dart:math' as math;
 
-import '../core/utils.dart';
-
 class GraphBottomSheetContent extends StatefulWidget {
   final List<Map<String, dynamic>> items;
   final bool openSeasonSelection;
@@ -140,10 +138,12 @@ class GraphBottomSheetContentState extends State<GraphBottomSheetContent> {
                 return ListTile(
                   title: Text(filteredItems[index]["displayName"]),
                   subtitle: seasonInfo.isNotEmpty
-                      ? Text("${seasonInfo["name"]} - ${modes.firstWhere(
-                          (element) =>
-                              element["type"] == seasonInfo["rankingType"],
-                        )["label"]!}")
+                      ? Text(
+                          "${seasonInfo["name"]} - ${RankService().modes.firstWhere(
+                                (element) =>
+                                    element["type"] ==
+                                    seasonInfo["rankingType"],
+                              )["label"]!}")
                       : null,
                   leading: IconButton(
                     icon: filteredItems[index]["visible"]
@@ -364,11 +364,12 @@ class GraphBottomSheetContentState extends State<GraphBottomSheetContent> {
                                     bool isSelectedSeason =
                                         selectedSeason?["id"] == season["id"];
 
-                                    String subtitle = modes.firstWhere(
-                                      (element) =>
-                                          element["type"] ==
-                                          season["rankingType"],
-                                    )["label"]!;
+                                    String subtitle =
+                                        RankService().modes.firstWhere(
+                                              (element) =>
+                                                  element["type"] ==
+                                                  season["rankingType"],
+                                            )["label"]!;
 
                                     return ListTile(
                                       title: Text(season["name"]!),
