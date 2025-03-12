@@ -22,6 +22,8 @@ class RankCard extends StatefulWidget {
   final int? initialIndex;
   final int? time;
 
+  final List<Map<String, String>> modes;
+
   const RankCard({
     this.color = Colors.black26,
     this.initialIndex,
@@ -35,6 +37,7 @@ class RankCard extends StatefulWidget {
     required this.showSwitches,
     required this.rankModes,
     this.time,
+    required this.modes,
   });
 
   @override
@@ -44,15 +47,12 @@ class RankCard extends StatefulWidget {
 class RankCardState extends State<RankCard>
     with SingleTickerProviderStateMixin {
   late List<bool> _trackingStates;
-  late Future<List<Map<String, String>>> _dataFuture;
-  List<Map<String, String>>? _modes;
   int _currentIndex = 0;
   DateTime updated = DateTime.now();
 
   @override
   void initState() {
     super.initState();
-    _dataFuture = RankService().getRankedModes(onlyActive: true);
     _trackingStates =
         widget.rankModes.map((rank) => rank.tracking ?? false).toList();
     _currentIndex = widget.initialIndex ?? 0;
@@ -87,42 +87,22 @@ class RankCardState extends State<RankCard>
 
   @override
   Widget build(BuildContext context) {
+    final tabNames = widget.modes.map((m) => m['label']!).toList();
     return Card(
-      color: widget.color,
-      elevation: 15,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: FutureBuilder<List<Map<String, String>>>(
-        future: _dataFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting &&
-              _modes == null) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (snapshot.hasError) {
-            return const Center(
-                child: Text("An error occurred while fetching data"));
-          }
-          if (snapshot.hasData || _modes != null) {
-            if (snapshot.hasData && snapshot.data!.isNotEmpty) {
-              _modes = snapshot.data;
-            }
-            final tabNames = _modes!.map((m) => m['label']!).toList();
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildHeader(),
-                _buildTabSelector(tabNames),
-                const Divider(color: Colors.white),
-                Expanded(child: _buildContentView(_modes)),
-              ],
-            );
-          }
-          return const SizedBox.shrink();
-        },
-      ),
-    );
+        color: widget.color,
+        elevation: 15,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildHeader(),
+            _buildTabSelector(tabNames),
+            const Divider(color: Colors.white),
+            Expanded(child: _buildContentView(widget.modes)),
+          ],
+        ));
   }
 
   Widget _buildHeader() {

@@ -233,7 +233,10 @@ class HomeScreenState extends State<HomeScreen>
                         if (!item["Visible"]) {
                           continue;
                         }
-                        if (hasChanged) {
+                        final String mode = modes![index]["label"]!;
+                        if (hasChanged ||
+                            item[mode]['TotalProgress'] !=
+                                item[mode]["AnimationEnd"]) {
                           cards.add(_buildAnimatedCard(item, i, index));
                         } else {
                           cards.add(_buildSimpleCard(

@@ -51,6 +51,7 @@ class DashboardCard extends StatelessWidget {
       color: color,
       initialIndex: index,
       time: time,
+      modes: modes,
       rankModes: List.generate(
           modes.length,
           (index) =>

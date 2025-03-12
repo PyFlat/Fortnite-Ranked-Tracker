@@ -58,8 +58,24 @@ class SocketService {
       talker.error("Socket error: $error");
     });
 
+    final List<Map?> incomingQueue = [];
+    bool isProcessing = false;
+
+    void processNext() {
+      if (isProcessing || incomingQueue.isEmpty) return;
+      isProcessing = true;
+      final item = incomingQueue.removeAt(0);
+      addResponse(item);
+
+      Future.delayed(const Duration(milliseconds: 20), () {
+        isProcessing = false;
+        processNext();
+      });
+    }
+
     _socket!.on('rankedProgress', (data) {
-      addResponse(data);
+      incomingQueue.add(data);
+      processNext();
     });
 
     _socket!.on('dataChanged', (_) {

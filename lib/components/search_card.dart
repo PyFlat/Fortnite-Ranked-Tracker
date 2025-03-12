@@ -120,8 +120,9 @@ class SearchCardState extends State<SearchCard> {
               searchCardKey: widget.key as GlobalKey,
               showMenu: false,
               showSwitches: true,
+              modes: modes!,
               rankModes: List.generate(
-                RankService().modes.length,
+                modes!.length,
                 (index) => _buildRankData(
                   snapshotData.length > index + 1
                       ? snapshotData[index + 1]
