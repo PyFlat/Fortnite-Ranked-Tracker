@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:fortnite_ranked_tracker/components/account_search_widget.dart';
 import 'package:fortnite_ranked_tracker/components/custom_search_bar.dart';
 import 'package:fortnite_ranked_tracker/constants/constants.dart';
 import 'package:fortnite_ranked_tracker/components/tournament_stats_display.dart';
@@ -34,19 +37,36 @@ class LeaderboardScreenState extends State<LeaderboardScreen> {
   List<Map<String, dynamic>> _allLeaderboardData = [];
   Map<String, List<Map<String, dynamic>>> _scoringRules = {};
   List<dynamic> _searchResults = [];
+
+  Map group = {};
   String _searchQuery = '';
   final SearchController _searchController = SearchController();
   Future<void>? _initialData;
+  bool autoUpdate = false;
+  Timer? _autoUpdateTimer;
 
   @override
   void initState() {
     super.initState();
     _initialData = _loadLeadboardData();
+    _startAutoUpdateTimer();
   }
 
   @override
   void dispose() {
+    _autoUpdateTimer?.cancel();
     super.dispose();
+  }
+
+  void _startAutoUpdateTimer() {
+    _autoUpdateTimer?.cancel();
+    if (autoUpdate) {
+      _autoUpdateTimer = Timer.periodic(Duration(seconds: 5), (timer) {
+        setState(() {
+          _initialData = _fetchLeaderboardData();
+        });
+      });
+    }
   }
 
   Future<void> _loadLeadboardData() async {
@@ -62,9 +82,17 @@ class LeaderboardScreenState extends State<LeaderboardScreen> {
   }
 
   Future<void> _fetchLeaderboardData() async {
-    _allLeaderboardData = await RankService().fetchEventLeaderboard(
-        widget.tournamentWindow["eventId"],
-        widget.tournamentWindow["windowId"]);
+    if (group.isEmpty) {
+      _allLeaderboardData = await RankService().fetchEventLeaderboard(
+          widget.tournamentWindow["eventId"],
+          widget.tournamentWindow["windowId"]);
+    } else {
+      _allLeaderboardData = await RankService()
+          .fetchEventLeaderboardWithAccountIds(
+              widget.tournamentWindow["eventId"],
+              widget.tournamentWindow["windowId"],
+              group.keys.toList().cast());
+    }
 
     _updateSearchQuery(_searchController.text);
   }
@@ -183,6 +211,20 @@ class LeaderboardScreenState extends State<LeaderboardScreen> {
           overflow: TextOverflow.ellipsis,
         ),
         actions: [
+          Row(
+            spacing: 4,
+            children: [
+              Text("Auto Update"),
+              Switch(
+                  value: autoUpdate,
+                  onChanged: (value) {
+                    setState(() {
+                      autoUpdate = value;
+                      _startAutoUpdateTimer();
+                    });
+                  })
+            ],
+          ),
           Padding(
             padding: const EdgeInsets.only(right: 8.0),
             child: IconButton(
@@ -230,15 +272,45 @@ class LeaderboardScreenState extends State<LeaderboardScreen> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          setState(() {
-            _initialData = _fetchLeaderboardData();
-          });
-        },
-        icon: Icon(Icons.refresh_rounded),
-        label: Text("Refresh"),
-      ),
+      floatingActionButton: Column(
+          mainAxisAlignment: MainAxisAlignment.end,
+          spacing: 8,
+          children: [
+            FloatingActionButton.extended(
+              heroTag: "refresh",
+              onPressed: () {
+                setState(() {
+                  _initialData = _fetchLeaderboardData();
+                });
+              },
+              icon: Icon(Icons.refresh_rounded),
+              label: Text("Refresh"),
+            ),
+            FloatingActionButton.extended(
+              heroTag: "group",
+              onPressed: () {
+                showModalBottomSheet(
+                  context: context,
+                  isScrollControlled: true,
+                  builder: (BuildContext context) {
+                    return SizedBox(
+                      height: MediaQuery.of(context).size.height * 0.9,
+                      child: GroupSelectionModal(
+                        group: group,
+                        onGroupChanged: (Map group) {
+                          setState(() {
+                            this.group = group;
+                          });
+                        },
+                      ),
+                    );
+                  },
+                );
+              },
+              icon: Icon(Icons.refresh_rounded),
+              label: Text("Group"),
+            ),
+          ]),
       body: FutureBuilder(
           future: _initialData,
           builder: (context, snapshot) {
@@ -249,7 +321,8 @@ class LeaderboardScreenState extends State<LeaderboardScreen> {
               );
             }
 
-            if (snapshot.connectionState == ConnectionState.waiting) {
+            if (snapshot.connectionState == ConnectionState.waiting &&
+                _allLeaderboardData.isEmpty) {
               return _buildCenteredMessage(
                 message: 'Searching For Event Data...',
                 icon: Icons.search,
@@ -329,6 +402,66 @@ class LeaderboardScreenState extends State<LeaderboardScreen> {
       entry: entry,
       index: index,
       onTap: () => _showDetails(entry),
+    );
+  }
+}
+
+class GroupSelectionModal extends StatefulWidget {
+  final Map group;
+  final Function(Map) onGroupChanged;
+
+  const GroupSelectionModal(
+      {super.key, required this.group, required this.onGroupChanged});
+
+  @override
+  GroupSelectionModalState createState() => GroupSelectionModalState();
+}
+
+class GroupSelectionModalState extends State<GroupSelectionModal> {
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+        left: 16,
+        right: 16,
+        top: 16,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          AccountSearchWidget(
+            onAccountSelected: (accountId, displayName) {
+              setState(() {
+                widget.group[accountId] = displayName;
+                widget.onGroupChanged(widget.group);
+              });
+            },
+          ),
+          const SizedBox(height: 16),
+          if (widget.group.isNotEmpty)
+            ListView.builder(
+              shrinkWrap: true,
+              itemCount: widget.group.length,
+              itemBuilder: (context, index) {
+                final accountId = widget.group.keys.elementAt(index);
+                final displayName = widget.group[accountId];
+                return ListTile(
+                  title: Text(displayName),
+                  trailing: IconButton(
+                    icon: Icon(Icons.delete),
+                    onPressed: () {
+                      setState(() {
+                        widget.group.remove(accountId);
+                        widget.onGroupChanged(widget.group);
+                      });
+                    },
+                  ),
+                );
+              },
+            ),
+        ],
+      ),
     );
   }
 }

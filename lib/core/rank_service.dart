@@ -316,6 +316,23 @@ class RankService {
     }
   }
 
+  Future<List<Map<String, dynamic>>> fetchEventLeaderboardWithAccountIds(
+      String eventId, String windowId, List<String> accountIds) async {
+    try {
+      await ApiService().postData(
+          Endpoints.eventLeaderboard,
+          {"accountIds": accountIds},
+          await getBasicAuthHeader(),
+          Constants.dataJson,
+          queryParams: {"eventId": eventId, "windowId": windowId});
+
+      return await getEventLeaderboard(eventId, windowId);
+    } catch (error) {
+      talker.error(error);
+      return [];
+    }
+  }
+
   Future<Map<String, dynamic>> getLeadeboardEntryInfo(
       int rank, String eventId, String windowId) async {
     final Map<String, dynamic> response = await ApiService().getData(
