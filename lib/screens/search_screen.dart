@@ -43,7 +43,7 @@ class _SearchScreenState extends State<SearchScreen> {
             Column(
               children: [
                 Center(child: AccountSearchWidget(
-                  onAccountSelected: (accountId, displayName) {
+                  onAccountSelected: (accountId, displayName, _) {
                     setState(() {
                       _selectedAccountId = accountId;
                       _selectedDisplayName = displayName;

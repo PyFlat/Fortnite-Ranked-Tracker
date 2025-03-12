@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fortnite_ranked_tracker/components/account_details_dialog.dart';
 import 'package:fortnite_ranked_tracker/core/rank_service.dart';
 import 'package:intl/intl.dart';
 
@@ -129,7 +130,7 @@ class _StatsDisplayState extends State<StatsDisplay> {
                 },
               ),
               onTap: () {
-                widget.openUser(name, accountId);
+                showAccountDetailsDialog(context, name, accountId, null);
               },
             ),
           );

@@ -4,7 +4,8 @@ import 'package:flutter_svg/svg.dart';
 import '../core/rank_service.dart';
 
 class AccountSearchWidget extends StatefulWidget {
-  final void Function(String accountId, String displayName) onAccountSelected;
+  final void Function(String accountId, String displayName, String platform)
+      onAccountSelected;
 
   const AccountSearchWidget({super.key, required this.onAccountSelected});
 
@@ -73,7 +74,8 @@ class AccountSearchWidgetState extends State<AccountSearchWidget> {
             ),
             title: Text(item['displayName'] ?? ''),
             onTap: () {
-              widget.onAccountSelected(item['accountId'], item['displayName']);
+              widget.onAccountSelected(
+                  item['accountId'], item['displayName'], item['platform']);
               _searchController.closeView(null);
             },
           );
