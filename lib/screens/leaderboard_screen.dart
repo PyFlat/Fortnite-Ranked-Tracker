@@ -44,6 +44,7 @@ class LeaderboardScreenState extends State<LeaderboardScreen> {
   Future<void>? _initialData;
   bool autoUpdate = false;
   Timer? _autoUpdateTimer;
+  int? selectedGroupIndex;
 
   @override
   void initState() {
@@ -87,9 +88,7 @@ class LeaderboardScreenState extends State<LeaderboardScreen> {
           widget.tournamentWindow["eventId"],
           widget.tournamentWindow["windowId"]);
     } else {
-      final selectedGroup = groups.firstWhere((element) => element["selected"]);
-
-      final accountIds = (selectedGroup["members"] as List)
+      final accountIds = (groups[selectedGroupIndex!]["members"] as List)
           .map((element) => element["accountId"] as String)
           .toList();
       _allLeaderboardData = await RankService()
@@ -301,9 +300,14 @@ class LeaderboardScreenState extends State<LeaderboardScreen> {
                     return SizedBox(
                       height: MediaQuery.of(context).size.height * 0.9,
                       child: GroupSelectionModal(
+                        selectedGroupIndex: selectedGroupIndex,
                         onGroupsChanged: (List<Map<String, dynamic>> groups) {
                           setState(() {
                             this.groups = groups;
+
+                            selectedGroupIndex = this
+                                .groups
+                                .indexWhere((element) => element["selected"]);
                           });
                         },
                       ),

@@ -310,24 +310,25 @@ class AccountListTile extends StatelessWidget {
                   ),
                 ),
               if (name != "Database")
-                Column(children: [
-                  ListTile(
-                    onTap: () {
-                      Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => GraphScreen()));
-                    },
-                    leading: CircleAvatar(
-                      backgroundImage:
-                          AssetImage(AvatarManager().getAvatar("default")),
+                if (suggestions.isNotEmpty)
+                  Column(children: [
+                    ListTile(
+                      onTap: () {
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => GraphScreen()));
+                      },
+                      leading: CircleAvatar(
+                        backgroundImage:
+                            AssetImage(AvatarManager().getAvatar("default")),
+                      ),
+                      title: const Text("[All Users]"),
+                      subtitle: Text(
+                          "All tracked seasons: ${suggestions.map((element) => element["trackedSeasons"]).toList().reduce((a, b) => a + b)}"),
                     ),
-                    title: const Text("[All Users]"),
-                    subtitle: Text(
-                        "All tracked seasons: ${suggestions.map((element) => element["trackedSeasons"]).toList().reduce((a, b) => a + b)}"),
-                  ),
-                  const Divider(height: 2),
-                ]),
+                    const Divider(height: 2),
+                  ]),
               ...suggestions.map((account) {
                 return IntrinsicWidth(
                   child: Column(children: [

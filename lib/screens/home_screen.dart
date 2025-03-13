@@ -235,8 +235,9 @@ class HomeScreenState extends State<HomeScreen>
                         }
                         final String mode = modes![index]["label"]!;
                         if (hasChanged ||
-                            item[mode]['TotalProgress'] !=
-                                item[mode]["AnimationEnd"]) {
+                            (item[mode] != null &&
+                                item[mode]['TotalProgress'] !=
+                                    item[mode]["AnimationEnd"])) {
                           cards.add(_buildAnimatedCard(item, i, index));
                         } else {
                           cards.add(_buildSimpleCard(
@@ -336,6 +337,7 @@ class HomeScreenState extends State<HomeScreen>
                 builder: (context, progress, child) {
                   final itemCopy = Map<String, dynamic>.from(item);
                   itemCopy[mode] = Map<String, dynamic>.from(item[mode]);
+                  itemCopy[mode]['TotalProgress'] = progress;
                   itemCopy[mode]['RankProgression'] = (progress % 100) / 100;
                   return Transform.scale(
                     scale: scale,

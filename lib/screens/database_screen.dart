@@ -64,7 +64,7 @@ class _DatabaseScreenState extends State<DatabaseScreen> {
     }
 
     return await RankService().getSeasonBySeasonId(
-        widget.account["accountId"], currentSeason["id"],
+        widget.account["accountId"], currentSeason["trackguid"],
         sortBy: columns2[_sortedColumn], isAscending: _isAscending);
   }
 

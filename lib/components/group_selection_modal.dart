@@ -7,8 +7,11 @@ import 'account_search_widget.dart';
 class GroupSelectionModal extends StatefulWidget {
   final Function(List<Map<String, dynamic>>) onGroupsChanged;
 
+  final int? selectedGroupIndex;
+
   const GroupSelectionModal({
     super.key,
+    this.selectedGroupIndex,
     required this.onGroupsChanged,
   });
 
@@ -30,15 +33,16 @@ class _GroupSelectionModalState extends State<GroupSelectionModal> {
   void initState() {
     _dataFuture = getGroups();
 
-    selectedGroupIndex = groups.indexWhere((item) => item["selected"]);
-    if (selectedGroupIndex == -1) {
-      selectedGroupIndex = null;
-    }
+    selectedGroupIndex = widget.selectedGroupIndex;
+
     super.initState();
   }
 
   Future<void> getGroups() async {
     final response = await RankService().getGroups();
+    if (selectedGroupIndex != null) {
+      response[selectedGroupIndex!]['selected'] = true;
+    }
     if (mounted) {
       setState(() {
         groups = response;
