@@ -48,4 +48,11 @@ class Endpoints {
   static const eventIdInfo = "$baseUrl/api/tournaments/eventIdInfo";
 
   static const eventEntryInfo = "$baseUrl/api/tournaments/eventEntryInfo";
+
+  static const changeGroupMetadata =
+      "$baseUrl/api/tournaments/changeGroupMetadata";
+
+  static const changeGroup = "$baseUrl/api/tournaments/changeGroup";
+
+  static const getGroups = "$baseUrl/api/tournaments/getGroups";
 }

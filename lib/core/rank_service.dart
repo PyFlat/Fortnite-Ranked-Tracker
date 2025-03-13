@@ -32,7 +32,6 @@ class RankService {
   Future<void> init() async {
     modes = await getRankedModes();
     Timer.periodic(Duration(hours: 1), (timer) async {
-      // emitDataRefresh();
       modes = await getRankedModes();
     });
   }
@@ -201,8 +200,11 @@ class RankService {
   Future<void> updateDataEdited(
     List<Map<String, dynamic>> data,
   ) async {
-    await ApiService().postData(Endpoints.updatePlayer, {"data": data},
-        await getBasicAuthHeader(), Constants.dataJson);
+    await ApiService().postData(
+        Endpoints.updatePlayer,
+        jsonEncode({"data": data}),
+        await getBasicAuthHeader(),
+        Constants.dataJson);
   }
 
   void emitDataRefresh({List? data}) {
@@ -214,15 +216,15 @@ class RankService {
   }
 
   Future<List<Map<String, dynamic>>> fetchEvents() async {
-    final List tournaments =
-        await ApiService().getData(Endpoints.eventInfo, "");
+    final List tournaments = await ApiService()
+        .getData(Endpoints.eventInfo, await getBasicAuthHeader());
 
     return tournaments.cast();
   }
 
   Future<List<Map<String, dynamic>>> fetchEventsHistory({int? days}) async {
     final List tournaments = await ApiService().getData(
-        Endpoints.eventInfoHistory, "",
+        Endpoints.eventInfoHistory, await getBasicAuthHeader(),
         queryParams: days != null ? {"days": days.toString()} : {});
 
     return tournaments.cast();
@@ -232,7 +234,7 @@ class RankService {
       String eventId, String windowId) async {
     try {
       final List<int> leaderboardResponse = await ApiService().getData(
-          Endpoints.eventLeaderboard, "",
+          Endpoints.eventLeaderboard, await getBasicAuthHeader(),
           queryParams: {"eventId": eventId, "windowId": windowId},
           responseType: ResponseType.bytes);
 
@@ -256,7 +258,8 @@ class RankService {
   Future<Map<String, List<Map<String, dynamic>>>> getEventScoringRules(
       String eventId, String windowId) async {
     try {
-      final data = await ApiService().getData(Endpoints.eventScoringRules, "",
+      final data = await ApiService().getData(
+          Endpoints.eventScoringRules, await getBasicAuthHeader(),
           queryParams: {"eventId": eventId, "windowId": windowId});
       return (data as Map<String, dynamic>).map((key, value) =>
           MapEntry(key, (value as List).cast<Map<String, dynamic>>()));
@@ -270,7 +273,7 @@ class RankService {
       String eventId, String windowId) async {
     try {
       final List data = await ApiService().getData(
-          Endpoints.eventPayoutTable, "",
+          Endpoints.eventPayoutTable, await getBasicAuthHeader(),
           queryParams: {"eventId": eventId, "windowId": windowId});
       return data.cast<Map<String, dynamic>>();
     } catch (error) {
@@ -281,8 +284,9 @@ class RankService {
 
   Future<Map<String, dynamic>> searchCosmetic(String id) async {
     try {
-      final Map data = await ApiService()
-          .getData(Endpoints.cosmeticSearch, "", queryParams: {"id": id});
+      final Map data = await ApiService().getData(
+          Endpoints.cosmeticSearch, await getBasicAuthHeader(),
+          queryParams: {"id": id});
 
       return (data["data"] as Map).cast<String, dynamic>();
     } catch (error) {
@@ -293,8 +297,9 @@ class RankService {
 
   Future<Map<String, dynamic>> getEventIdInfo(String id) async {
     try {
-      final Map data = await ApiService()
-          .getData(Endpoints.eventIdInfo, "", queryParams: {"id": id});
+      final Map data = await ApiService().getData(
+          Endpoints.eventIdInfo, await getBasicAuthHeader(),
+          queryParams: {"id": id});
 
       return data.cast<String, dynamic>();
     } catch (error) {
@@ -306,7 +311,8 @@ class RankService {
   Future<List<Map<String, dynamic>>> fetchEventLeaderboard(
       String eventId, String windowId) async {
     try {
-      await ApiService().getData(Endpoints.fetchLeaderboard, "",
+      await ApiService().getData(
+          Endpoints.fetchLeaderboard, await getBasicAuthHeader(),
           queryParams: {"eventId": eventId, "windowId": windowId});
 
       return await getEventLeaderboard(eventId, windowId);
@@ -321,7 +327,7 @@ class RankService {
     try {
       await ApiService().postData(
           Endpoints.eventLeaderboard,
-          {"accountIds": accountIds},
+          jsonEncode({"accountIds": accountIds}),
           await getBasicAuthHeader(),
           Constants.dataJson,
           queryParams: {"eventId": eventId, "windowId": windowId});
@@ -336,7 +342,7 @@ class RankService {
   Future<Map<String, dynamic>> getLeadeboardEntryInfo(
       int rank, String eventId, String windowId) async {
     final Map<String, dynamic> response = await ApiService().getData(
-        Endpoints.eventEntryInfo, "", queryParams: {
+        Endpoints.eventEntryInfo, await getBasicAuthHeader(), queryParams: {
       "rank": rank.toString(),
       "eventId": eventId,
       "windowId": windowId
@@ -357,6 +363,42 @@ class RankService {
         final map = item as Map<String, dynamic>;
         return map.map((key, value) => MapEntry(key, value.toString()));
       }).toList();
+    } catch (error) {
+      talker.error(error);
+      return [];
+    }
+  }
+
+  Future<void> changeGroupMetadata(String name, {int? id}) async {
+    try {
+      await ApiService().postData(
+          Endpoints.changeGroupMetadata,
+          jsonEncode({"name": name, "id": id.toString()}),
+          await getBasicAuthHeader(),
+          Constants.dataJson);
+    } catch (error) {
+      talker.error(error);
+    }
+  }
+
+  Future<void> updateGroup(String accountId, int id) async {
+    try {
+      await ApiService().postData(
+          Endpoints.changeGroup,
+          jsonEncode({"accountId": accountId, "id": id}),
+          await getBasicAuthHeader(),
+          Constants.dataJson);
+    } catch (error) {
+      talker.error(error);
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getGroups() async {
+    try {
+      final List<dynamic> result = await ApiService()
+          .getData(Endpoints.getGroups, await getBasicAuthHeader());
+
+      return result.cast<Map<String, dynamic>>();
     } catch (error) {
       talker.error(error);
       return [];

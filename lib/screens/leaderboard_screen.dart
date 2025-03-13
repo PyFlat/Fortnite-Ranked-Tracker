@@ -82,7 +82,6 @@ class LeaderboardScreenState extends State<LeaderboardScreen> {
   }
 
   Future<void> _fetchLeaderboardData() async {
-    print(groups);
     if (groups.isEmpty || groups.every((element) => !element["selected"])) {
       _allLeaderboardData = await RankService().fetchEventLeaderboard(
           widget.tournamentWindow["eventId"],
@@ -302,7 +301,6 @@ class LeaderboardScreenState extends State<LeaderboardScreen> {
                     return SizedBox(
                       height: MediaQuery.of(context).size.height * 0.9,
                       child: GroupSelectionModal(
-                        groups: groups,
                         onGroupsChanged: (List<Map<String, dynamic>> groups) {
                           setState(() {
                             this.groups = groups;

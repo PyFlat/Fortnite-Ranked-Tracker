@@ -1,15 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:fortnite_ranked_tracker/core/rank_service.dart';
 
 import 'account_search_widget.dart';
 
 class GroupSelectionModal extends StatefulWidget {
-  final List<Map<String, dynamic>> groups;
   final Function(List<Map<String, dynamic>>) onGroupsChanged;
 
   const GroupSelectionModal({
     super.key,
-    required this.groups,
     required this.onGroupsChanged,
   });
 
@@ -23,13 +22,28 @@ class _GroupSelectionModalState extends State<GroupSelectionModal> {
   int? editingIndex;
   final TextEditingController _editingController = TextEditingController();
 
+  List<Map<String, dynamic>> groups = [];
+
+  late Future<void> _dataFuture;
+
   @override
   void initState() {
-    selectedGroupIndex = widget.groups.indexWhere((item) => item["selected"]);
+    _dataFuture = getGroups();
+
+    selectedGroupIndex = groups.indexWhere((item) => item["selected"]);
     if (selectedGroupIndex == -1) {
       selectedGroupIndex = null;
     }
     super.initState();
+  }
+
+  Future<void> getGroups() async {
+    final response = await RankService().getGroups();
+    if (mounted) {
+      setState(() {
+        groups = response;
+      });
+    }
   }
 
   @override
@@ -48,7 +62,7 @@ class _GroupSelectionModalState extends State<GroupSelectionModal> {
   }
 
   Widget _buildGroupListView() {
-    final groupNames = widget.groups.map((element) => element["name"]).toList();
+    final groupNames = groups.map((element) => element["name"]).toList();
     return Container(
       key: const ValueKey('groupList'),
       margin: const EdgeInsets.all(16),
@@ -57,65 +71,74 @@ class _GroupSelectionModalState extends State<GroupSelectionModal> {
         color: Colors.black26,
         borderRadius: BorderRadius.circular(24),
       ),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              const Expanded(
-                child: Text(
-                  'Tournament Groups',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-              IconButton(
-                icon: const Icon(Icons.add, color: Colors.white),
-                onPressed: () {
-                  setState(() {
-                    if (widget.groups.any((item) => item["name"].isEmpty)) {
-                      widget.groups.removeWhere(
-                          (item) => (item["name"] as String).isEmpty);
-                    }
-
-                    widget.groups
-                        .add({"name": "", "selected": false, "members": []});
-                    editingIndex = widget.groups.length - 1;
-                    _editingController.text = '';
-                    widget.onGroupsChanged(widget.groups);
-                  });
-                },
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Divider(color: Colors.white54),
-          const SizedBox(height: 8),
-          Expanded(
-            child: groupNames.isEmpty
-                ? const Center(
-                    child: Text(
-                      'No groups yet.',
-                      style: TextStyle(color: Colors.white70),
+      child: FutureBuilder(
+          future: _dataFuture,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            } else if (snapshot.hasError) {
+              return const Center(child: Text('An error occurred.'));
+            }
+            return Column(
+              children: [
+                Row(
+                  children: [
+                    const Expanded(
+                      child: Text(
+                        'Tournament Groups',
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
                     ),
-                  )
-                : ListView.builder(
-                    itemCount: groupNames.length,
-                    itemBuilder: (context, index) {
-                      final oldName = groupNames[index];
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 4),
-                        child: editingIndex == index
-                            ? _buildEditingTile(oldName, index)
-                            : _buildGroupTile(oldName, index),
-                      );
-                    },
-                  ),
-          ),
-        ],
-      ),
+                    IconButton(
+                      icon: const Icon(Icons.add, color: Colors.white),
+                      onPressed: () {
+                        setState(() {
+                          if (groups.any((item) => item["name"].isEmpty)) {
+                            groups.removeWhere(
+                                (item) => (item["name"] as String).isEmpty);
+                          }
+
+                          groups.add(
+                              {"name": "", "selected": false, "members": []});
+                          editingIndex = groups.length - 1;
+                          _editingController.text = '';
+                          widget.onGroupsChanged(groups);
+                        });
+                      },
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Divider(color: Colors.white54),
+                const SizedBox(height: 8),
+                Expanded(
+                  child: groupNames.isEmpty
+                      ? const Center(
+                          child: Text(
+                            'No groups yet.',
+                            style: TextStyle(color: Colors.white70),
+                          ),
+                        )
+                      : ListView.builder(
+                          itemCount: groupNames.length,
+                          itemBuilder: (context, index) {
+                            final oldName = groupNames[index];
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 4),
+                              child: editingIndex == index
+                                  ? _buildEditingTile(oldName, index)
+                                  : _buildGroupTile(oldName, index),
+                            );
+                          },
+                        ),
+                ),
+              ],
+            );
+          }),
     );
   }
 
@@ -143,30 +166,33 @@ class _GroupSelectionModalState extends State<GroupSelectionModal> {
                   if (index == selectedGroupIndex) {
                     selectedGroupIndex = null;
                   }
-                  widget.groups.removeWhere((item) => item["name"] == oldName);
-                  widget.onGroupsChanged(widget.groups);
+                  groups.removeWhere((item) => item["name"] == oldName);
+                  widget.onGroupsChanged(groups);
                   editingIndex = null;
                 });
               },
             ),
             IconButton(
               icon: const Icon(Icons.done, color: Colors.green),
-              onPressed: () {
+              onPressed: () async {
                 final newName = _editingController.text.trim();
+                final previousEditingIndex = editingIndex!;
                 setState(() {
                   if (newName == oldName) {
                     editingIndex = null;
-                  } else if (widget.groups
-                      .any((item) => item["name"] == newName)) {
+                  } else if (groups.any((item) => item["name"] == newName)) {
                     return;
                   } else if (newName.isNotEmpty) {
-                    widget.groups[editingIndex!]['name'] = newName;
+                    groups[editingIndex!]['name'] = newName;
                   } else if (newName.isEmpty) {
-                    widget.groups
-                        .removeWhere((item) => item["name"] == oldName);
+                    groups.removeWhere((item) => item["name"] == oldName);
                   }
                   editingIndex = null;
                 });
+                if (newName.isNotEmpty && newName != oldName) {
+                  await RankService().changeGroupMetadata(newName,
+                      id: groups[previousEditingIndex]['id']);
+                }
               },
             ),
           ],
@@ -191,7 +217,7 @@ class _GroupSelectionModalState extends State<GroupSelectionModal> {
         title: Row(
           children: [
             Text(
-              '$groupName (${(widget.groups[index]["members"] as List).length} members)',
+              '$groupName (${(groups[index]["members"] as List).length} members)',
               style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
             ),
           ],
@@ -199,16 +225,16 @@ class _GroupSelectionModalState extends State<GroupSelectionModal> {
         onTap: () {
           setState(() {
             if (selectedGroupIndex != null) {
-              widget.groups[selectedGroupIndex!]['selected'] = false;
+              groups[selectedGroupIndex!]['selected'] = false;
             }
             if (selectedGroupIndex == index) {
               selectedGroupIndex = null;
             } else {
-              widget.groups[index]['selected'] = true;
+              groups[index]['selected'] = true;
               selectedGroupIndex = index;
             }
           });
-          widget.onGroupsChanged(widget.groups);
+          widget.onGroupsChanged(groups);
         },
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
@@ -218,8 +244,8 @@ class _GroupSelectionModalState extends State<GroupSelectionModal> {
               onPressed: () {
                 setState(() {
                   if (editingIndex != null) {
-                    if (widget.groups[editingIndex!]["name"].isEmpty) {
-                      widget.groups.removeAt(editingIndex!);
+                    if (groups[editingIndex!]["name"].isEmpty) {
+                      groups.removeAt(editingIndex!);
                     }
                   }
                   editingIndex = index;
@@ -242,7 +268,7 @@ class _GroupSelectionModalState extends State<GroupSelectionModal> {
   }
 
   Widget _buildGroupMembersView() {
-    final List members = widget.groups[memberEditingIndex!]['members'];
+    final List members = groups[memberEditingIndex!]['members'];
 
     return Container(
       key: const ValueKey('groupMembers'),
@@ -266,7 +292,7 @@ class _GroupSelectionModalState extends State<GroupSelectionModal> {
               ),
               Expanded(
                 child: Text(
-                  '${widget.groups[memberEditingIndex!]['name']} Group',
+                  '${groups[memberEditingIndex!]['name']} Group',
                   textAlign: TextAlign.center,
                   style: const TextStyle(
                     fontSize: 22,
@@ -281,15 +307,19 @@ class _GroupSelectionModalState extends State<GroupSelectionModal> {
           const Divider(color: Colors.white),
           const SizedBox(height: 8),
           AccountSearchWidget(
-            onAccountSelected: (accountId, displayName, platform) {
+            onAccountSelected: (accountId, displayName, platform) async {
               setState(() {
                 members.add({
                   "accountId": accountId,
                   "displayName": displayName,
                   "platform": platform
                 });
-                widget.onGroupsChanged(widget.groups);
+                widget.onGroupsChanged(groups);
               });
+              await RankService().updateGroup(
+                accountId,
+                groups[memberEditingIndex!]['id'],
+              );
             },
           ),
           const SizedBox(height: 16),
@@ -330,13 +360,18 @@ class _GroupSelectionModalState extends State<GroupSelectionModal> {
                             ),
                             trailing: IconButton(
                               icon: const Icon(Icons.delete, color: Colors.red),
-                              onPressed: () {
+                              onPressed: () async {
                                 setState(() {
                                   members.removeWhere((element) =>
                                       element['accountId'] ==
                                       item['accountId']);
-                                  widget.onGroupsChanged(widget.groups);
+                                  widget.onGroupsChanged(groups);
                                 });
+
+                                await RankService().updateGroup(
+                                  item["accountId"],
+                                  groups[memberEditingIndex!]['id'],
+                                );
                               },
                             ),
                           ),
